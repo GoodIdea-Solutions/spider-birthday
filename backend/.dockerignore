@@ -1,1 +1,4 @@
-target/
+*
+!Dockerfile
+!target/
+!target/spider-birthday-*.jar
