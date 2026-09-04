@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@500;700;800&display=swap');
+
+:root {
+  --spider-red: #e11d2e;
+  --spider-blue: #1e3a8a;
+  --ink: #0b1228;
+  --cream: #f8fafc;
+  --muted: #5b6472;
+  --balloon-yellow: #f5c518;
+  --web-line: rgba(225, 29, 46, 0.55);
+  --font-display: 'Bangers', 'Trebuchet MS', cursive;
+  --font-body: 'Nunito', 'Segoe UI', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: #f4f6fb;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+img {
+  max-width: 100%;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  .site-header,
+  .site-footer,
+  .fab,
+  .modal-overlay,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+}
+

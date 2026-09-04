@@ -1,0 +1,29 @@
+<section id="presentes" class="section presentes">
+  <div class="section-inner">
+    <h2>Lista de presentes</h2>
+    <p class="section-lead">Sugestões de missão para presentear o aniversariante.</p>
+
+    @if (loading()) {
+      <p class="status">Carregando presentes...</p>
+    } @else if (error()) {
+      <p class="status error">{{ error() }}</p>
+    } @else {
+      <div class="grid">
+        @for (item of presentes(); track item.id) {
+          <article class="card">
+            <div class="thumb" [style.backgroundImage]="item.imagemUrl ? 'url(' + item.imagemUrl + ')' : null">
+              @if (!item.imagemUrl) {
+                <span class="thumb-fallback" aria-hidden="true"></span>
+              }
+            </div>
+            <h3>{{ item.nome }}</h3>
+            <p>{{ item.descricao || 'Uma ótima escolha para a festa!' }}</p>
+            @if (item.link) {
+              <a class="btn" [href]="item.link" target="_blank" rel="noopener noreferrer">VER PRESENTE</a>
+            }
+          </article>
+        }
+      </div>
+    }
+  </div>
+</section>

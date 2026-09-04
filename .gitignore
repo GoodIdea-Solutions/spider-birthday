@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.angular/
+uploads/
+backend/target/
+backend/uploads/
+*.log
+.env
+.idea/
+.vscode/
+*.iml
+.DS_Store

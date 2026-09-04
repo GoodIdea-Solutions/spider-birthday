@@ -1,0 +1,59 @@
+<section class="convidados">
+  <div class="convidados-inner">
+    <h1>Lista de Heróis</h1>
+
+    @if (loading()) {
+      <p class="status">Carregando heróis...</p>
+    } @else if (error()) {
+      <p class="status error">{{ error() }}</p>
+    } @else {
+      <div class="totais" aria-label="Totais da festa">
+        <div class="total-item">
+          <strong>{{ totalPessoas() }}</strong>
+          <span>Pessoas</span>
+        </div>
+        <div class="total-item">
+          <strong>{{ totalAdultos() }}</strong>
+          <span>Adultos</span>
+        </div>
+        <div class="total-item">
+          <strong>{{ totalCriancas() }}</strong>
+          <span>Crianças</span>
+        </div>
+        <div class="total-item">
+          <strong>{{ totalGrupos() }}</strong>
+          <span>Grupos</span>
+        </div>
+      </div>
+
+      @if (convidados().length > 0) {
+        <div class="acoes no-print">
+          <button type="button" class="btn" (click)="imprimir()">Imprimir lista</button>
+        </div>
+      }
+
+      @if (convidados().length === 0) {
+        <p class="status">Nenhum herói confirmou presença ainda.</p>
+      } @else {
+        <ol class="lista-scroll">
+          @for (c of convidados(); track $index) {
+            <li class="lista-item">
+              <p class="item-role">Responsável</p>
+              <p class="item-name">{{ c.nome }}</p>
+              <p class="item-counts">
+                {{ c.quantidadeAdultos }} adulto{{ c.quantidadeAdultos !== 1 ? 's' : '' }},
+                {{ c.quantidadeCriancas }} criança{{ c.quantidadeCriancas !== 1 ? 's' : '' }}
+              </p>
+              <p class="item-detail">
+                <span>Adultos:</span> {{ adultosNomes(c) }}
+              </p>
+              <p class="item-detail">
+                <span>Crianças:</span> {{ criancasNomes(c) }}
+              </p>
+            </li>
+          }
+        </ol>
+      }
+    }
+  </div>
+</section>

@@ -1,0 +1,253 @@
+<section class="admin">
+  <div class="wrap">
+    <h1>HQ do Aniversário</h1>
+    <p class="lead">Painel da missão: RSVPs e moderação do mural.</p>
+
+    @if (!authenticated()) {
+      <form class="login" (ngSubmit)="entrar()">
+        <label>
+          Token de administrador
+          <input [(ngModel)]="tokenInput" name="token" type="password" placeholder="APP_ADMIN_TOKEN" />
+        </label>
+        <button type="submit" [disabled]="loading()">Entrar na HQ</button>
+      </form>
+    } @else {
+      @if (dashboard(); as dash) {
+        <div class="stats">
+          <article><span>RSVPs</span><strong>{{ dash.totalRsvps }}</strong></article>
+          <article><span>Adultos</span><strong>{{ dash.totalAdultos }}</strong></article>
+          <article><span>Crianças</span><strong>{{ dash.totalCriancas }}</strong></article>
+          <article><span>Pendentes</span><strong>{{ dash.fotosPendentes }}</strong></article>
+          <article><span>Aprovadas</span><strong>{{ dash.fotosAprovadas }}</strong></article>
+        </div>
+      }
+
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
+
+      <div class="panels">
+        <section>
+          <h2>Fotos pendentes</h2>
+          @if (pendentes().length === 0) {
+            <p class="empty">Nenhuma foto aguardando aprovação.</p>
+          }
+          <div class="pending-grid">
+            @for (foto of pendentes(); track foto.id) {
+              <article class="pending">
+                @if (foto.video) {
+                  <video [src]="foto.url" muted playsinline></video>
+                } @else {
+                  <img [src]="foto.url" [alt]="'Pendente ' + foto.id" />
+                }
+                <p class="empty">{{ rotuloMidia(foto) }}</p>
+                <div class="actions">
+                  <button type="button" class="ok" (click)="aprovar(foto.id)">Aprovar</button>
+                  <button type="button" class="edit" (click)="baixar(foto)">Baixar</button>
+                  <button type="button" class="danger" (click)="excluir(foto.id)">Excluir</button>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+
+        <section>
+          <h2>Arquivos enviados</h2>
+          <p class="empty">Baixe originais (mural, stories ativos e expirados).</p>
+          @if (error()) {
+            <p class="error">{{ error() }}</p>
+          }
+          @if (midias().length === 0) {
+            <p class="empty">Nenhum arquivo enviado ainda.</p>
+          }
+          <ul class="hq-list">
+            @for (foto of midias(); track foto.id) {
+              <li>
+                <div>
+                  <strong>#{{ foto.id }}</strong>
+                  <span>{{ rotuloMidia(foto) }} · {{ foto.nomeArquivo }}</span>
+                </div>
+                <div class="row-actions">
+                  <button type="button" class="edit" (click)="baixar(foto)">Baixar</button>
+                  <button type="button" class="danger" (click)="excluir(foto.id)">Excluir</button>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+
+        <section>
+          <h2>Confirmações RSVP</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Responsável</th>
+                  <th>Adultos</th>
+                  <th>Crianças</th>
+                  <th>Acompanhantes</th>
+                  <th>Telefone</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of rsvps(); track r.id) {
+                  @if (editingId() === r.id) {
+                    <tr class="editing">
+                      <td colspan="6">
+                        <div class="edit-grid">
+                          <label>
+                            Responsável
+                            <input [(ngModel)]="editNome" [name]="'nome-' + r.id" type="text" />
+                          </label>
+                          <label>
+                            Adultos
+                            <input [(ngModel)]="editAdultos" [name]="'adultos-' + r.id" type="number" min="0" />
+                          </label>
+                          <label>
+                            Crianças
+                            <input [(ngModel)]="editCriancas" [name]="'criancas-' + r.id" type="number" min="0" />
+                          </label>
+                          <label>
+                            Telefone
+                            <input [(ngModel)]="editTelefone" [name]="'telefone-' + r.id" type="text" />
+                          </label>
+                          <label class="span-2">
+                            Adultos extras (separar com |)
+                            <input
+                              [(ngModel)]="editNomesAdultos"
+                              [name]="'nomes-adultos-' + r.id"
+                              type="text"
+                              placeholder="Ex.: João | Maria"
+                            />
+                          </label>
+                          <label class="span-2">
+                            Nomes das crianças (separar com |)
+                            <input
+                              [(ngModel)]="editNomesCriancas"
+                              [name]="'nomes-criancas-' + r.id"
+                              type="text"
+                              placeholder="Ex.: Pedro | Ana"
+                            />
+                          </label>
+                          <div class="row-actions span-2">
+                            <button type="button" class="ok" (click)="salvarEdicao(r.id)">Salvar</button>
+                            <button type="button" class="ghost" (click)="cancelarEdicao()">Cancelar</button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  } @else {
+                    <tr>
+                      <td>{{ r.nome }}</td>
+                      <td>{{ r.quantidadeAdultos }}</td>
+                      <td>{{ r.quantidadeCriancas }}</td>
+                      <td class="acompanhantes">
+                        @if (r.nomesAdultos.length + r.nomesCriancas.length === 0) {
+                          —
+                        } @else {
+                          @if (r.nomesAdultos.length) {
+                            <div><span>Adultos:</span> {{ formatarNomes(r.nomesAdultos) }}</div>
+                          }
+                          @if (r.nomesCriancas.length) {
+                            <div><span>Crianças:</span> {{ formatarNomes(r.nomesCriancas) }}</div>
+                          }
+                        }
+                      </td>
+                      <td>{{ r.telefone || '—' }}</td>
+                      <td>
+                        <div class="row-actions">
+                          <button type="button" class="edit" (click)="iniciarEdicao(r)">Editar</button>
+                          <button type="button" class="danger" (click)="excluirRsvp(r)">Excluir</button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="hq-admin">
+          <h2>Revista HQ</h2>
+          <p class="empty">Monte páginas com fotos aprovadas (imagens, sem vídeo), layout e legendas. Visitantes leem em /hq.</p>
+
+          @if (aprovadas().length === 0) {
+            <p class="empty">Aprove fotos no mural antes de criar páginas.</p>
+          } @else {
+            <form class="hq-form" (ngSubmit)="salvarHq()">
+              <label>
+                Ordem
+                <input [(ngModel)]="hqOrdem" name="hqOrdem" type="number" min="0" />
+              </label>
+              <label>
+                Layout
+                <select [(ngModel)]="hqLayout" name="hqLayout" (ngModelChange)="onHqLayoutChange()">
+                  <option value="FULL">1 painel</option>
+                  <option value="DUPLO">2 painéis</option>
+                  <option value="TRIPLO">3 painéis</option>
+                </select>
+              </label>
+              <label class="span-2">
+                Título (opcional)
+                <input [(ngModel)]="hqTitulo" name="hqTitulo" type="text" placeholder="Capítulo 1" />
+              </label>
+              @for (painel of hqPaineis; track $index) {
+                <label class="span-2">
+                  Foto painel {{ $index + 1 }}
+                  <select [(ngModel)]="painel.fotoId" [name]="'foto-' + $index">
+                    <option [ngValue]="0">Escolha uma foto</option>
+                    @for (foto of aprovadas(); track foto.id) {
+                      <option [ngValue]="foto.id">Foto #{{ foto.id }}</option>
+                    }
+                  </select>
+                </label>
+                <label class="span-2">
+                  Legenda / balão {{ $index + 1 }}
+                  <input
+                    [(ngModel)]="painel.legenda"
+                    [name]="'legenda-' + $index"
+                    type="text"
+                    maxlength="280"
+                    placeholder="THWIP! Missão aceita!"
+                  />
+                </label>
+              }
+              <div class="row-actions span-2">
+                <button type="submit" class="ok">
+                  {{ editingHqId() ? 'Salvar página' : 'Adicionar página' }}
+                </button>
+                @if (editingHqId()) {
+                  <button type="button" class="ghost" (click)="resetHqForm()">Cancelar</button>
+                }
+              </div>
+            </form>
+          }
+
+          @if (hqPaginas().length === 0) {
+            <p class="empty">Nenhuma página na revista ainda.</p>
+          }
+          <ul class="hq-list">
+            @for (pagina of hqPaginas(); track pagina.id) {
+              <li>
+                <div>
+                  <strong>{{ pagina.titulo || 'Página #' + pagina.id }}</strong>
+                  <span>{{ pagina.layout }} · ordem {{ pagina.ordem }} · {{ pagina.paineis.length }} painel(is)</span>
+                </div>
+                <div class="row-actions">
+                  <button type="button" class="edit" (click)="iniciarEdicaoHq(pagina)">Editar</button>
+                  <button type="button" class="danger" (click)="excluirHq(pagina)">Excluir</button>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+    }
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+  </div>
+</section>

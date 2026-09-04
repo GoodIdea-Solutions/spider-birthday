@@ -1,0 +1,35 @@
+<header class="site-header">
+  <div class="header-bar">
+    <a class="brand" routerLink="/" (click)="closeMenu()">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-text">Samuel</span>
+    </a>
+    <button
+      type="button"
+      class="nav-toggle"
+      [attr.aria-expanded]="menuOpen()"
+      aria-controls="site-nav"
+      aria-label="Abrir ou fechar menu"
+      (click)="toggleMenu()"
+    >
+      <span class="nav-toggle-bars" [class.open]="menuOpen()" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
+    </button>
+  </div>
+  <nav
+    id="site-nav"
+    class="nav"
+    [class.open]="menuOpen()"
+    aria-label="Navegação principal"
+  >
+    <a href="#inicio" (click)="closeMenu()">Início</a>
+    <a href="#presentes" (click)="closeMenu()">Presentes</a>
+    <a routerLink="/fotos" routerLinkActive="active" (click)="closeMenu()">Mural</a>
+    <a routerLink="/hq" routerLinkActive="active" (click)="closeMenu()">Revista HQ</a>
+    <a routerLink="/convidados" routerLinkActive="active" (click)="closeMenu()">Lista de Heróis</a>
+    <a routerLink="/admin" routerLinkActive="active" (click)="closeMenu()">HQ</a>
+  </nav>
+</header>

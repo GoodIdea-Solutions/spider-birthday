@@ -1,0 +1,67 @@
+@if (modalService.isOpen()) {
+  <div class="modal-overlay" (click)="onOverlayClick($event)">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Confirmar Presença">
+      <button class="modal-close" (click)="close()" aria-label="Fechar">&times;</button>
+
+      @if (success()) {
+        <div class="success-state">
+          <h2>MISSÃO ACEITA!</h2>
+          <p class="hero-name">🕷️ {{ heroName() }} 🕷️</p>
+          <p>Presença confirmada. Nos vemos na base da operação!</p>
+          <button class="btn-close" (click)="close()">FECHAR</button>
+        </div>
+      } @else {
+        <h2>Aceitar a Missão</h2>
+        <p class="modal-lead">Diga quantos heróis vão aparecer!</p>
+
+        <form class="rsvp-form" [formGroup]="form" (ngSubmit)="submit()">
+          <label>
+            Nome do responsável
+            <input formControlName="nome" type="text" placeholder="Ex.: Tia Marina" />
+          </label>
+
+          <div class="row">
+            <label>Adultos<input formControlName="quantidadeAdultos" type="number" min="0" /></label>
+            <label>Crianças<input formControlName="quantidadeCriancas" type="number" min="0" /></label>
+          </div>
+
+          @if (nomesAdultos.length > 0) {
+            <fieldset class="names-group" formArrayName="nomesAdultos">
+              <legend>Adultos adicionais</legend>
+              @for (ctrl of nomesAdultos.controls; track $index) {
+                <label>
+                  Nome do adulto {{ $index + 2 }}
+                  <input [formControlName]="$index" type="text" [placeholder]="'Ex.: Adulto ' + ($index + 2)" />
+                </label>
+              }
+            </fieldset>
+          }
+
+          @if (nomesCriancas.length > 0) {
+            <fieldset class="names-group" formArrayName="nomesCriancas">
+              <legend>Crianças</legend>
+              @for (ctrl of nomesCriancas.controls; track $index) {
+                <label>
+                  Nome da criança {{ $index + 1 }}
+                  <input [formControlName]="$index" type="text" [placeholder]="'Ex.: Criança ' + ($index + 1)" />
+                </label>
+              }
+            </fieldset>
+          }
+
+          <label>
+            Telefone (opcional)
+            <input formControlName="telefone" type="tel" placeholder="(00) 00000-0000" />
+          </label>
+
+          @if (error()) {
+            <p class="error" role="alert">{{ error() }}</p>
+          }
+          <button type="submit" class="btn-submit" [disabled]="loading()">
+            {{ loading() ? 'Enviando...' : 'ACEITAR ESSA MISSÃO' }}
+          </button>
+        </form>
+      }
+    </div>
+  </div>
+}

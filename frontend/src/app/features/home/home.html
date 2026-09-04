@@ -1,0 +1,177 @@
+<section id="inicio" class="hero">
+  <img
+    class="hero-bg"
+    src="/assets/hero-samuel.png"
+    alt=""
+    width="768"
+    height="1024"
+    decoding="async"
+    fetchpriority="high"
+    aria-hidden="true"
+  />
+  <div class="hero-overlay" aria-hidden="true"></div>
+  <div class="hero-halftone" aria-hidden="true"></div>
+  <svg class="web web-tl" viewBox="0 0 200 200" aria-hidden="true">
+    <path d="M0 0 L90 70 M0 30 L70 90 M30 0 L95 55 M0 60 L50 100 M60 0 L100 40" />
+    <path d="M10 10 Q55 40 90 70 Q40 55 10 10" />
+    <path d="M20 5 Q60 35 85 60" />
+  </svg>
+  <svg class="web web-br" viewBox="0 0 200 200" aria-hidden="true">
+    <path d="M200 200 L110 130 M200 170 L130 110 M170 200 L105 145 M200 140 L150 100 M140 200 L100 160" />
+    <path d="M190 190 Q145 160 110 130 Q160 145 190 190" />
+  </svg>
+
+  <div class="hero-content">
+    <p class="hero-invite">Uma missão especial</p>
+
+    <h1 class="hero-name">{{ party()?.nomeCrianca || 'Samuel' }}</h1>
+
+    <div class="age-banner" aria-label="Idade">
+      <span class="age-banner__num">{{ party()?.idade || '3' }}</span>
+      <span class="age-banner__label">ANOS</span>
+    </div>
+
+    <ul class="hero-meta">
+      <li>
+        <span class="meta-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2" />
+            <path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </span>
+        <div>
+          <strong>{{ dataPorExtenso() }}</strong>
+          <span>{{ party()?.diaSemana || 'SÁBADO' }}</span>
+        </div>
+      </li>
+      <li>
+        <span class="meta-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
+            <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </span>
+        <div>
+          <strong>{{ party()?.horario || '17h às 21h' }}</strong>
+          <span>Horário</span>
+        </div>
+      </li>
+      <li>
+        <span class="meta-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"
+              stroke="currentColor"
+              stroke-width="2"
+            />
+            <circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="2" />
+          </svg>
+        </span>
+        <div>
+          <strong>{{ party()?.local || 'Salão de Festas — Condomínio Residencial Siena' }}</strong>
+          <span>{{ party()?.endereco || 'Águas Claras' }}</span>
+        </div>
+      </li>
+    </ul>
+
+    <div class="hero-actions">
+      <button type="button" class="cta" (click)="openRsvp()">Confirmar presença</button>
+      @if (mapsLink()) {
+        <a class="cta cta-secondary" [href]="mapsLink()!" target="_blank" rel="noopener noreferrer">
+          Como chegar
+        </a>
+      }
+    </div>
+  </div>
+</section>
+
+<section class="countdown-strip" [class.started]="countdown().started" aria-label="Contagem regressiva">
+  @if (countdown().parts; as parts) {
+    <p class="countdown-label">Falta pouco para a festa</p>
+    <div class="countdown-grid" aria-live="polite">
+      <div><strong>{{ parts.days }}</strong><span>dias</span></div>
+      <div><strong>{{ parts.hours }}</strong><span>hrs</span></div>
+      <div><strong>{{ parts.minutes }}</strong><span>min</span></div>
+      <div><strong>{{ parts.seconds }}</strong><span>seg</span></div>
+    </div>
+  } @else {
+    <p class="countdown-label">Contagem regressiva</p>
+    <strong class="countdown-single">{{ countdown().label }}</strong>
+  }
+</section>
+
+<section class="adventure-band" aria-label="Chamado à aventura">
+  <p>{{ party()?.mensagemFaixa || 'Prepare-se para uma mega aventura!' }}</p>
+</section>
+
+<section class="highlights" aria-label="Destaques da festa">
+  <div class="highlights-inner">
+    @for (item of destaques; track item.title) {
+      <article class="highlight">
+        <span class="highlight-icon" [attr.data-icon]="item.icon" aria-hidden="true"></span>
+        <h2>{{ item.title }}</h2>
+      </article>
+    }
+  </div>
+</section>
+
+<section id="missao" class="mission">
+  <div class="mission-inner">
+    <p class="mission-kicker">Informações da missão</p>
+    <h2>Quando e onde</h2>
+    <p class="mission-lead">
+      {{
+        party()?.textoApresentacao ||
+          'O amigável da vizinhança está fazendo 3 anos e conta com você nessa missão especial!'
+      }}
+    </p>
+
+    <ul class="mission-list">
+      <li>
+        <span class="mission-label">Data</span>
+        <strong>{{ dataPorExtenso() }}</strong>
+        <span>{{ party()?.diaSemana || 'Sábado' }}</span>
+      </li>
+      <li>
+        <span class="mission-label">Horário</span>
+        <strong>{{ party()?.horario || '17h às 21h' }}</strong>
+      </li>
+      <li>
+        <span class="mission-label">Local</span>
+        <strong>{{ party()?.local || 'Salão de Festas — Condomínio Residencial Siena' }}</strong>
+        <span>{{ party()?.endereco || 'Águas Claras — DF' }}</span>
+      </li>
+    </ul>
+
+    <div class="mission-actions">
+      @if (mapsLink()) {
+        <a class="cta cta-secondary mission-maps" [href]="mapsLink()!" target="_blank" rel="noopener noreferrer">
+          Como chegar
+        </a>
+      }
+      <button type="button" class="cta" (click)="openRsvp()">
+        {{ party()?.mensagemMissao || 'Confirmar presença' }}
+      </button>
+    </div>
+  </div>
+</section>
+
+<app-presentes-section />
+
+<section class="media-teaser" aria-label="Mural e revista">
+  <div class="media-teaser-inner">
+    <article>
+      <p class="teaser-kicker">Mural dos heróis</p>
+      <h2>Faça parte da história</h2>
+      <p>Quer fazer parte da história do Samuel? Envie uma foto e deixe uma mensagem para o aniversariante!</p>
+      <p class="teaser-note">A foto passa pela aprovação da HQ e depois aparece no mural.</p>
+      <a class="cta" routerLink="/fotos">Ver mural</a>
+    </article>
+    <article>
+      <p class="teaser-kicker">Revista do Samuel</p>
+      <h2>Edição especial — 3 anos</h2>
+      <p>Uma aventura inesquecível está começando!</p>
+      <a class="cta" routerLink="/hq">Ver revista</a>
+    </article>
+  </div>
+</section>
