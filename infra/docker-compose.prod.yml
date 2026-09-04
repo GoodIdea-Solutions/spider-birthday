@@ -1,0 +1,84 @@
+version: '3.9'
+
+# Production deploy compose for the Digital Ocean droplet.
+# Pulls pre-built images from GHCR (built by .github/workflows/docker-build.yml).
+# Joins the "nginx_gi-network" external network, created by the standalone
+# nginx+certbot stack at /opt/nginx/docker-compose.yml, so that nginx container
+# can reach these containers by name.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: spider-birthday-db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-aniversario}
+      POSTGRES_USER: ${DB_USERNAME:-aniversario}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    expose:
+      - "5432"
+    volumes:
+      - spider_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-aniversario} -d ${DB_NAME:-aniversario}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - spider-birthday-network
+
+  spider-birthday-backend:
+    image: ${REGISTRY:-ghcr.io}/${BACKEND_IMAGE:-goodidea-solutions/spider-birthday-backend}:latest
+    container_name: spider-birthday-backend
+    expose:
+      - "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-aniversario}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-aniversario}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      APP_ADMIN_TOKEN: ${APP_ADMIN_TOKEN:?APP_ADMIN_TOKEN is required}
+      APP_CORS_ORIGINS: ${APP_CORS_ORIGINS:-https://spider-birthday.goodidea.com.br}
+      APP_UPLOAD_DIR: /app/uploads
+      APP_PUBLIC_BASE_URL: ${APP_PUBLIC_BASE_URL:-https://spider-birthday.goodidea.com.br/uploads}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      CLOUDINARY_FOLDER: ${CLOUDINARY_FOLDER:-spider-birthday}
+    volumes:
+      - spider_uploads:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/party >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - spider-birthday-network
+      - nginx_gi-network
+
+  spider-birthday-frontend:
+    image: ${REGISTRY:-ghcr.io}/${FRONTEND_IMAGE:-goodidea-solutions/spider-birthday-frontend}:latest
+    container_name: spider-birthday-frontend
+    expose:
+      - "80"
+    depends_on:
+      spider-birthday-backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - spider-birthday-network
+      - nginx_gi-network
+
+networks:
+  spider-birthday-network:
+    driver: bridge
+  nginx_gi-network:
+    external: true
+
+volumes:
+  spider_pg_data:
+  spider_uploads:
