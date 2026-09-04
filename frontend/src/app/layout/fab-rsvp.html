@@ -1,1 +1,3 @@
-<button class="fab" (click)="openRsvp()" aria-label="Confirmar presença">CONFIRMAR PRESENÇA</button>
+@if (visible()) {
+  <button class="fab" (click)="openRsvp()" aria-label="Confirmar presença">Confirmar presença</button>
+}

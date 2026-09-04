@@ -1,6 +1,6 @@
 .hq {
   min-height: 80vh;
-  padding: 2rem 1rem 3rem;
+  padding: 2rem 1rem calc(5.5rem + env(safe-area-inset-bottom, 0px));
   background:
     radial-gradient(circle at 10% 0%, rgba(225, 29, 46, 0.18), transparent 40%),
     linear-gradient(165deg, #0b1228 0%, #1a0a0f 100%);
@@ -31,9 +31,24 @@ h1 {
 }
 
 .lead,
+.sublead,
 .status {
   text-align: center;
-  color: rgba(248, 250, 252, 0.75);
+  color: rgba(248, 250, 252, 0.78);
+}
+
+.sublead {
+  margin: -0.35rem auto 1.5rem;
+  max-width: 28rem;
+  font-size: 0.95rem;
+}
+
+.status.empty {
+  margin: 1.5rem auto 0;
+  max-width: 28rem;
+  padding: 1.1rem 1rem;
+  border: 3px dashed rgba(248, 250, 252, 0.28);
+  color: rgba(248, 250, 252, 0.88);
 }
 
 .status.error {

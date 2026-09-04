@@ -1,6 +1,6 @@
 .site-footer {
   margin-top: 0;
-  padding: 2rem 1rem;
+  padding: 2rem 1rem calc(2rem + env(safe-area-inset-bottom, 0px));
   text-align: center;
   background:
     linear-gradient(180deg, #0b1228 0%, #050814 100%);

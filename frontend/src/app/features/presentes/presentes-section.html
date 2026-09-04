@@ -1,26 +1,33 @@
 <section id="presentes" class="section presentes">
   <div class="section-inner">
     <h2>Lista de presentes</h2>
-    <p class="section-lead">Sugestões de missão para presentear o aniversariante.</p>
+    <p class="section-lead">
+      Escolha qualquer presente que combine com o Samuel.
+      O importante é celebrar com a gente!
+    </p>
 
     @if (loading()) {
       <p class="status">Carregando presentes...</p>
     } @else if (error()) {
-      <p class="status error">{{ error() }}</p>
+      <p class="status error" role="alert">{{ error() }}</p>
     } @else {
       <div class="grid">
         @for (item of presentes(); track item.id) {
           <article class="card">
-            <div class="thumb" [style.backgroundImage]="item.imagemUrl ? 'url(' + item.imagemUrl + ')' : null">
-              @if (!item.imagemUrl) {
+            <div class="thumb">
+              @if (item.imagemUrl) {
+                <img [src]="item.imagemUrl" [alt]="item.nome" loading="lazy" />
+              } @else {
                 <span class="thumb-fallback" aria-hidden="true"></span>
               }
             </div>
-            <h3>{{ item.nome }}</h3>
-            <p>{{ item.descricao || 'Uma ótima escolha para a festa!' }}</p>
-            @if (item.link) {
-              <a class="btn" [href]="item.link" target="_blank" rel="noopener noreferrer">VER PRESENTE</a>
-            }
+            <div class="card-body">
+              <h3>{{ item.nome }}</h3>
+              <p>{{ item.descricao || 'Uma ótima escolha para a festa!' }}</p>
+              @if (item.link) {
+                <a class="btn" [href]="item.link" target="_blank" rel="noopener noreferrer">Ver presente</a>
+              }
+            </div>
           </article>
         }
       </div>

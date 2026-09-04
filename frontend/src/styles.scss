@@ -34,11 +34,59 @@ body {
 
 img {
   max-width: 100%;
+  height: auto;
 }
 
 button,
-input {
+input,
+a {
   font: inherit;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: -4.5rem;
+  z-index: 200;
+  padding: 0.7rem 1rem;
+  background: var(--balloon-yellow);
+  color: var(--ink);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 0.75rem;
+}
+
+:focus-visible {
+  outline: 2px solid var(--balloon-yellow);
+  outline-offset: 3px;
+}
+
+.section {
+  padding: 2.5rem 1.25rem 3rem;
+}
+
+.section-inner {
+  max-width: 68rem;
+  margin: 0 auto;
+}
+
+body.nav-locked,
+body.modal-open,
+body.media-open {
+  overflow: hidden;
+}
+
+#inicio,
+#presentes,
+#missao,
+#fotos,
+#enviar-foto,
+#ver-mural,
+#conteudo-principal {
+  scroll-margin-top: 5.5rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

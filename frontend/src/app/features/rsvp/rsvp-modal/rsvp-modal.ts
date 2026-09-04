@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormArray,
@@ -18,7 +18,7 @@ import { PartyConfigService } from '../../../core/services/party-config.service'
   templateUrl: './rsvp-modal.html',
   styleUrl: './rsvp-modal.scss',
 })
-export class RsvpModalComponent implements OnInit {
+export class RsvpModalComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly rsvpService = inject(RsvpService);
@@ -29,6 +29,9 @@ export class RsvpModalComponent implements OnInit {
   readonly success = signal(false);
   readonly error = signal<string | null>(null);
   readonly heroName = signal('');
+
+  @ViewChild('dialog') dialogRef?: ElementRef<HTMLElement>;
+  private previouslyFocused: HTMLElement | null = null;
 
   readonly form = this.fb.nonNullable.group({
     nome: ['', [Validators.required, Validators.maxLength(120)]],
@@ -47,6 +50,26 @@ export class RsvpModalComponent implements OnInit {
     return this.form.controls.nomesCriancas;
   }
 
+  constructor() {
+    effect(() => {
+      if (this.modalService.isOpen()) {
+        this.previouslyFocused = document.activeElement as HTMLElement | null;
+        document.body.classList.add('modal-open');
+        queueMicrotask(() => {
+          const dialog = this.dialogRef?.nativeElement;
+          const focusable = dialog?.querySelector<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          (focusable ?? dialog)?.focus();
+        });
+      } else {
+        document.body.classList.remove('modal-open');
+        this.previouslyFocused?.focus?.();
+        this.previouslyFocused = null;
+      }
+    });
+  }
+
   ngOnInit() {
     this.form.controls.quantidadeAdultos.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -55,6 +78,10 @@ export class RsvpModalComponent implements OnInit {
     this.form.controls.quantidadeCriancas.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((qtd) => this.sincronizarCriancas(qtd));
+  }
+
+  ngOnDestroy() {
+    document.body.classList.remove('modal-open');
   }
 
   close() {
@@ -69,6 +96,21 @@ export class RsvpModalComponent implements OnInit {
   onOverlayClick(event: MouseEvent) {
     if ((event.target as HTMLElement).classList.contains('modal-overlay')) {
       this.close();
+    }
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(event: KeyboardEvent) {
+    if (!this.modalService.isOpen()) {
+      return;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.close();
+      return;
+    }
+    if (event.key === 'Tab') {
+      this.trapFocus(event);
     }
   }
 
@@ -118,6 +160,36 @@ export class RsvpModalComponent implements OnInit {
           this.error.set(err?.error?.message || 'Falha ao confirmar. Tente de novo, herói!');
         },
       });
+  }
+
+  private trapFocus(event: KeyboardEvent) {
+    const dialog = this.dialogRef?.nativeElement;
+    if (!dialog) {
+      return;
+    }
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+    ).filter((el) => !el.hasAttribute('disabled') && el.tabIndex !== -1);
+
+    if (focusable.length === 0) {
+      event.preventDefault();
+      dialog.focus();
+      return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement as HTMLElement | null;
+
+    if (event.shiftKey && (active === first || !dialog.contains(active))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   private sincronizarAdultos(quantidade: number) {

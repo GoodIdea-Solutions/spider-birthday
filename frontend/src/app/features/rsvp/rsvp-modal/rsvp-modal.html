@@ -1,28 +1,38 @@
 @if (modalService.isOpen()) {
   <div class="modal-overlay" (click)="onOverlayClick($event)">
-    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Confirmar Presença">
-      <button class="modal-close" (click)="close()" aria-label="Fechar">&times;</button>
+    <div
+      #dialog
+      class="modal-content"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="rsvp-title"
+      tabindex="-1"
+    >
+      <button type="button" class="modal-close" (click)="close()" aria-label="Fechar confirmação">&times;</button>
 
       @if (success()) {
         <div class="success-state">
-          <h2>MISSÃO ACEITA!</h2>
-          <p class="hero-name">🕷️ {{ heroName() }} 🕷️</p>
-          <p>Presença confirmada. Nos vemos na base da operação!</p>
-          <button class="btn-close" (click)="close()">FECHAR</button>
+          <h2 id="rsvp-title">Missão aceita!</h2>
+          <p class="hero-name">{{ heroName() }}</p>
+          <p>
+            Sua presença foi confirmada.
+            Esperamos você na festa do Samuel!
+          </p>
+          <button type="button" class="btn-close" (click)="close()">Fechar</button>
         </div>
       } @else {
-        <h2>Aceitar a Missão</h2>
-        <p class="modal-lead">Diga quantos heróis vão aparecer!</p>
+        <h2 id="rsvp-title">Sua missão começa aqui!</h2>
+        <p class="modal-lead">Você vai nessa aventura?</p>
 
         <form class="rsvp-form" [formGroup]="form" (ngSubmit)="submit()">
           <label>
             Nome do responsável
-            <input formControlName="nome" type="text" placeholder="Ex.: Tia Marina" />
+            <input formControlName="nome" type="text" autocomplete="name" placeholder="Ex.: Tia Marina" />
           </label>
 
           <div class="row">
-            <label>Adultos<input formControlName="quantidadeAdultos" type="number" min="0" /></label>
-            <label>Crianças<input formControlName="quantidadeCriancas" type="number" min="0" /></label>
+            <label>Adultos<input formControlName="quantidadeAdultos" type="number" min="0" inputmode="numeric" /></label>
+            <label>Crianças<input formControlName="quantidadeCriancas" type="number" min="0" inputmode="numeric" /></label>
           </div>
 
           @if (nomesAdultos.length > 0) {
@@ -51,14 +61,14 @@
 
           <label>
             Telefone (opcional)
-            <input formControlName="telefone" type="tel" placeholder="(00) 00000-0000" />
+            <input formControlName="telefone" type="tel" autocomplete="tel" placeholder="(00) 00000-0000" />
           </label>
 
           @if (error()) {
             <p class="error" role="alert">{{ error() }}</p>
           }
           <button type="submit" class="btn-submit" [disabled]="loading()">
-            {{ loading() ? 'Enviando...' : 'ACEITAR ESSA MISSÃO' }}
+            {{ loading() ? 'Enviando...' : 'Sim, vou!' }}
           </button>
         </form>
       }

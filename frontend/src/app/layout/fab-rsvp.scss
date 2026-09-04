@@ -3,27 +3,41 @@
   right: calc(1rem + env(safe-area-inset-right, 0px));
   bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   z-index: 50;
-  padding: 1.1rem 1.6rem;
-  border: none;
+  min-height: 3rem;
+  padding: 0.85rem 1.2rem;
+  border: 3px solid #fff;
   border-radius: 999px;
   background: linear-gradient(135deg, var(--spider-red), #b00020);
   color: #fff;
   font-weight: 800;
-  font-size: 0.95rem;
-  cursor: pointer;
+  font-size: 0.82rem;
   letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
   text-decoration: none;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
-  animation: fabPulse 2.4s ease-in-out infinite;
+  animation: fabGlow 3s ease-in-out infinite;
 }
 
-@keyframes fabPulse {
+.fab:focus-visible {
+  outline: 3px solid var(--balloon-yellow);
+  outline-offset: 3px;
+}
+
+@keyframes fabGlow {
   0%,
   100% {
-    transform: translateY(0);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
   }
   50% {
-    transform: translateY(-4px);
+    box-shadow: 0 10px 28px rgba(225, 29, 46, 0.42);
+  }
+}
+
+@media (min-width: 721px) {
+  .fab {
+    font-size: 0.9rem;
+    padding: 1rem 1.45rem;
   }
 }
 

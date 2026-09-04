@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Foto } from '../../core/models/party.models';
 import { FotoService } from '../../core/services/foto.service';
 import { PhotoWebSocketService } from '../../core/services/photo-websocket.service';
@@ -93,8 +93,8 @@ export class FotosSectionComponent implements OnInit, OnDestroy {
         this.uploading.set(false);
         this.info.set(
           tipo === 'STORY'
-            ? 'Story enviado! Aparece no topo por 7 dias após a aprovação da HQ.'
-            : 'Enviado ao mural! Aparece depois da aprovação da HQ.'
+            ? 'Missão enviada! Seu story entra no mural depois da aprovação da HQ e fica no topo por 7 dias.'
+            : 'Missão enviada! Sua foto entra no mural depois da aprovação da HQ.'
         );
         this.selectedFile = null;
         if (this.previewUrl()) {
@@ -113,16 +113,32 @@ export class FotosSectionComponent implements OnInit, OnDestroy {
   openLightbox(foto: Foto) {
     this.lightboxUrl.set(foto.url);
     this.lightboxVideo.set(!!foto.video);
+    document.body.classList.add('media-open');
   }
 
   closeLightbox() {
     this.lightboxUrl.set(null);
     this.lightboxVideo.set(false);
+    if (this.storyIndex() === null) {
+      document.body.classList.remove('media-open');
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape() {
+    if (this.lightboxUrl()) {
+      this.closeLightbox();
+      return;
+    }
+    if (this.storyIndex() !== null) {
+      this.closeStory();
+    }
   }
 
   openStory(index: number) {
     this.storyIndex.set(index);
     this.storyProgress.set(0);
+    document.body.classList.add('media-open');
     this.scheduleStoryAdvance();
   }
 
@@ -130,6 +146,9 @@ export class FotosSectionComponent implements OnInit, OnDestroy {
     this.clearStoryTimer();
     this.storyIndex.set(null);
     this.storyProgress.set(0);
+    if (!this.lightboxUrl()) {
+      document.body.classList.remove('media-open');
+    }
   }
 
   storyTap(event: MouseEvent) {
@@ -179,15 +198,18 @@ export class FotosSectionComponent implements OnInit, OnDestroy {
 
   instagramNote(): string {
     const handle = this.instagram()?.instagramHandle?.trim();
-    const tag =
-      handle && !handle.includes('[') ? (handle.startsWith('@') ? handle : '@' + handle) : '@perfil';
-    return `Marque ${tag} nos stories — e envie a mídia aqui para entrar na festa.`;
+    if (!handle || handle.includes('[')) {
+      return '';
+    }
+    const tag = handle.startsWith('@') ? handle : '@' + handle;
+    return `Se quiser, marque ${tag} também nos stories.`;
   }
 
   ngOnDestroy() {
     this.sub?.unsubscribe();
     this.ws.disconnect();
     this.clearStoryTimer();
+    document.body.classList.remove('media-open');
     if (this.previewUrl()) {
       URL.revokeObjectURL(this.previewUrl()!);
     }

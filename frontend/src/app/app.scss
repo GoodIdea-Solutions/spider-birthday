@@ -2,3 +2,13 @@
   display: block;
   min-height: 100svh;
 }
+
+main {
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 721px) {
+  main {
+    padding-bottom: 2rem;
+  }
+}

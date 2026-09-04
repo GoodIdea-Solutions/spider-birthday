@@ -1,24 +1,38 @@
 <section id="fotos" class="section fotos">
   <div class="section-inner">
-    <h2>Mural de fotos</h2>
-    <p class="section-lead">Stories no topo (7 dias). Mural permanente abaixo.</p>
-    <p class="ig-note">{{ instagramNote() }}</p>
+    <p class="kicker">Mural dos heróis</p>
+    <h2>Faça parte da história do Samuel</h2>
+    <p class="section-lead">
+      Quer fazer parte da história do Samuel?
+      Envie uma foto sua e deixe uma mensagem para o aniversariante!
+    </p>
+    <p class="ig-note">
+      A foto passa pela aprovação da HQ e só aparece no mural depois de aprovada.
+      {{ instagramNote() }}
+    </p>
+
+    <div class="mural-actions">
+      <a class="cta-link" href="#enviar-foto">Enviar foto</a>
+      <a class="cta-link secondary" href="#ver-mural">Ver mural</a>
+    </div>
 
     @if (stories().length > 0) {
-      <div class="stories-rail" aria-label="Stories">
+      <div class="stories-rail" aria-label="Stories da festa">
         @for (story of stories(); track story.id; let i = $index) {
-          <button type="button" class="story-ring" (click)="openStory(i)">
+          <button type="button" class="story-ring" (click)="openStory(i)" [attr.aria-label]="'Abrir story ' + (i + 1)">
             @if (story.video) {
               <video [src]="story.url" muted playsinline></video>
             } @else {
-              <img [src]="story.url" [alt]="'Story ' + story.id" />
+              <img [src]="story.url" alt="" />
             }
           </button>
         }
       </div>
     }
 
-    <div class="uploader">
+    <div id="enviar-foto" class="uploader">
+      <h3>Enviar foto</h3>
+      <p class="uploader-lead">Escolha uma imagem ou vídeo. A HQ revisa antes de publicar.</p>
       <label class="file-btn">
         Escolher foto ou vídeo
         <input type="file" accept="image/*,video/mp4,video/webm" (change)="onFileChange($event)" />
@@ -28,7 +42,7 @@
         @if (previewVideo()) {
           <video class="preview" [src]="previewUrl()!" controls playsinline></video>
         } @else {
-          <img class="preview" [src]="previewUrl()!" alt="Pré-visualização" />
+          <img class="preview" [src]="previewUrl()!" alt="Pré-visualização do envio" />
         }
       }
 
@@ -42,47 +56,53 @@
       </div>
 
       @if (info()) {
-        <p class="info">{{ info() }}</p>
+        <p class="info" role="status">{{ info() }}</p>
       }
       @if (error()) {
-        <p class="error">{{ error() }}</p>
+        <p class="error" role="alert">{{ error() }}</p>
       }
     </div>
 
-    @if (loading()) {
-      <p class="status">Carregando mural...</p>
-    } @else {
-      <div class="grid">
-        @for (foto of fotos(); track foto.id) {
-          <button type="button" class="photo" (click)="openLightbox(foto)">
-            @if (foto.video) {
-              <video [src]="foto.url" muted playsinline></video>
-              <span class="badge">Vídeo</span>
-            } @else {
-              <img [src]="foto.url" [alt]="'Foto ' + foto.id" loading="lazy" />
-            }
-          </button>
+    <div id="ver-mural">
+      <h3 class="mural-title">O mural</h3>
+      @if (loading()) {
+        <p class="status">Carregando mural...</p>
+      } @else {
+        <div class="grid">
+          @for (foto of fotos(); track foto.id) {
+            <button type="button" class="photo" (click)="openLightbox(foto)" [attr.aria-label]="'Ampliar foto ' + foto.id">
+              @if (foto.video) {
+                <video [src]="foto.url" muted playsinline></video>
+                <span class="badge">Vídeo</span>
+              } @else {
+                <img [src]="foto.url" [alt]="'Foto enviada pelos convidados'" loading="lazy" />
+              }
+            </button>
+          }
+        </div>
+        @if (fotos().length === 0) {
+          <p class="status">Ainda sem fotos no mural. Seja o primeiro herói a enviar!</p>
         }
-      </div>
-      @if (fotos().length === 0) {
-        <p class="status">Ainda sem fotos no mural. Seja o primeiro herói a enviar!</p>
       }
-    }
+    </div>
   </div>
 </section>
 
 @if (lightboxUrl()) {
-  <div class="lightbox" (click)="closeLightbox()" role="dialog" aria-modal="true">
+  <div class="lightbox" (click)="closeLightbox()" role="dialog" aria-modal="true" aria-label="Foto ampliada">
+    <button type="button" class="lightbox-close" (click)="closeLightbox(); $event.stopPropagation()" aria-label="Fechar foto">
+      ×
+    </button>
     @if (lightboxVideo()) {
       <video [src]="lightboxUrl()!" controls autoplay playsinline (click)="$event.stopPropagation()"></video>
     } @else {
-      <img [src]="lightboxUrl()!" alt="Foto ampliada" />
+      <img [src]="lightboxUrl()!" alt="Foto ampliada do mural" (click)="$event.stopPropagation()" />
     }
   </div>
 }
 
 @if (storyIndex() !== null && currentStory(); as story) {
-  <div class="story-player" role="dialog" aria-modal="true">
+  <div class="story-player" role="dialog" aria-modal="true" aria-label="Story da festa">
     <div class="story-frame">
       <div class="story-bars">
         @for (s of stories(); track s.id; let i = $index) {
@@ -93,12 +113,12 @@
           </span>
         }
       </div>
-      <button type="button" class="story-close" (click)="closeStory()" aria-label="Fechar">×</button>
+      <button type="button" class="story-close" (click)="closeStory()" aria-label="Fechar story">×</button>
       <div class="story-hit" (click)="storyTap($event)">
         @if (story.video) {
           <video [src]="story.url" autoplay playsinline (ended)="onStoryVideoEnded()"></video>
         } @else {
-          <img [src]="story.url" [alt]="'Story ' + story.id" />
+          <img [src]="story.url" alt="Story da festa" />
         }
       </div>
     </div>

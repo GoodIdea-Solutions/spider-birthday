@@ -1,15 +1,19 @@
 <section class="hq">
   <div class="hq-inner">
-    <p class="kicker">Edição especial</p>
-    <h1>Revista HQ</h1>
-    <p class="lead">Histórias da festa em páginas de quadrinhos, montadas com as fotos do mural.</p>
+    <p class="kicker">Edição especial — 3 anos</p>
+    <h1>Revista do Samuel</h1>
+    <p class="lead">Uma aventura inesquecível está começando!</p>
+    <p class="sublead">As fotos do mural viram páginas de quadrinhos com balões e aventura.</p>
 
     @if (loading()) {
       <p class="status">Abrindo a revista...</p>
     } @else if (error()) {
-      <p class="status error">{{ error() }}</p>
+      <p class="status error" role="alert">{{ error() }}</p>
     } @else if (paginas().length === 0) {
-      <p class="status">Ainda não há páginas na revista. A HQ monta as histórias depois que as fotos forem aprovadas.</p>
+      <p class="status empty">
+        A revista ainda está sendo montada pela HQ.
+        Depois que as fotos do mural forem aprovadas, as páginas aparecem aqui.
+      </p>
     } @else {
       @for (pagina of paginas(); track pagina.id) {
         <article class="page" [attr.data-layout]="pagina.layout">
@@ -19,7 +23,7 @@
           <div class="panels" [attr.data-layout]="pagina.layout">
             @for (painel of pagina.paineis; track painel.posicao) {
               <figure class="panel">
-                <img [src]="painel.fotoUrl" [alt]="painel.legenda || 'Painel da HQ'" />
+                <img [src]="painel.fotoUrl" [alt]="painel.legenda || 'Painel da revista do Samuel'" />
                 @if (painel.legenda) {
                   <figcaption class="bubble">{{ painel.legenda }}</figcaption>
                 }
