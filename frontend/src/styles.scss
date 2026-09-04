@@ -79,6 +79,10 @@ body.media-open {
   overflow: hidden;
 }
 
+body.capture-mode {
+  overflow-x: hidden;
+}
+
 #inicio,
 #presentes,
 #missao,

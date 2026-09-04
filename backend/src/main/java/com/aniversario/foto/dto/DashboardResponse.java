@@ -5,6 +5,8 @@ public record DashboardResponse(
         long totalAdultos,
         long totalCriancas,
         long fotosPendentes,
-        long fotosAprovadas
+        long fotosAprovadas,
+        long storiesAtivos,
+        long muralCount
 ) {
 }

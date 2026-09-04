@@ -3,10 +3,12 @@ import { Foto } from '../../core/models/party.models';
 import { FotoService } from '../../core/services/foto.service';
 import { PhotoWebSocketService } from '../../core/services/photo-websocket.service';
 import { PartyConfigService } from '../../core/services/party-config.service';
+import { PublicarMidiaComponent } from './publicar-midia';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-fotos-section',
+  imports: [PublicarMidiaComponent],
   templateUrl: './fotos-section.html',
   styleUrl: './fotos-section.scss',
 })
@@ -18,107 +20,45 @@ export class FotosSectionComponent implements OnInit, OnDestroy {
   readonly instagram = this.party.config;
   private sub?: Subscription;
   private storyTimer?: ReturnType<typeof setTimeout>;
+  private muralPage = 0;
+  private readonly muralSize = 12;
 
   readonly fotos = signal<Foto[]>([]);
   readonly stories = signal<Foto[]>([]);
   readonly loading = signal(true);
-  readonly uploading = signal(false);
+  readonly loadingMore = signal(false);
+  readonly hasMore = signal(false);
   readonly error = signal<string | null>(null);
-  readonly info = signal<string | null>(null);
-  readonly previewUrl = signal<string | null>(null);
-  readonly previewVideo = signal(false);
-  readonly lightboxUrl = signal<string | null>(null);
-  readonly lightboxVideo = signal(false);
+  readonly shareNote = signal<string | null>(null);
+  readonly lightboxFoto = signal<Foto | null>(null);
   readonly storyIndex = signal<number | null>(null);
   readonly storyProgress = signal(0);
 
-  private selectedFile: File | null = null;
-
   ngOnInit() {
-    this.fotoService.listarAprovadas().subscribe({
-      next: (items) => {
-        this.fotos.set(items);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Não foi possível carregar o mural agora.');
-        this.loading.set(false);
-      },
-    });
+    this.carregarMural(true);
     this.fotoService.listarStories().subscribe({
       next: (items) => this.stories.set(items),
       error: () => undefined,
     });
 
     this.ws.connect();
-    this.sub = this.ws.foto$.subscribe((foto) => {
-      if (foto.tipo === 'STORY') {
-        this.stories.update((list) => (list.some((f) => f.id === foto.id) ? list : [foto, ...list]));
-      } else {
-        this.fotos.update((list) => (list.some((f) => f.id === foto.id) ? list : [foto, ...list]));
-      }
-    });
+    this.sub = this.ws.foto$.subscribe((foto) => this.aplicarFotoAprovada(foto));
   }
 
-  onFileChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    this.selectedFile = file;
-    this.info.set(null);
-    this.error.set(null);
-
-    if (this.previewUrl()) {
-      URL.revokeObjectURL(this.previewUrl()!);
-    }
-
-    if (file) {
-      this.previewVideo.set(file.type.startsWith('video/'));
-      this.previewUrl.set(URL.createObjectURL(file));
-    } else {
-      this.previewVideo.set(false);
-      this.previewUrl.set(null);
-    }
-  }
-
-  upload(tipo: 'MURAL' | 'STORY') {
-    if (!this.selectedFile) {
-      this.error.set('Escolha uma foto ou vídeo para enviar.');
-      return;
-    }
-
-    this.uploading.set(true);
-    this.error.set(null);
-    this.fotoService.upload(this.selectedFile, tipo).subscribe({
-      next: () => {
-        this.uploading.set(false);
-        this.info.set(
-          tipo === 'STORY'
-            ? 'Missão enviada! Seu story entra no mural depois da aprovação da HQ e fica no topo por 7 dias.'
-            : 'Missão enviada! Sua foto entra no mural depois da aprovação da HQ.'
-        );
-        this.selectedFile = null;
-        if (this.previewUrl()) {
-          URL.revokeObjectURL(this.previewUrl()!);
-          this.previewUrl.set(null);
-        }
-        this.previewVideo.set(false);
-      },
-      error: (err) => {
-        this.uploading.set(false);
-        this.error.set(err?.error?.message || 'Falha no envio. Imagem até 10MB ou vídeo MP4/WEBM até 50MB.');
-      },
-    });
+  carregarMais() {
+    this.muralPage += 1;
+    this.carregarMural(false);
   }
 
   openLightbox(foto: Foto) {
-    this.lightboxUrl.set(foto.url);
-    this.lightboxVideo.set(!!foto.video);
+    this.lightboxFoto.set(foto);
+    this.shareNote.set(null);
     document.body.classList.add('media-open');
   }
 
   closeLightbox() {
-    this.lightboxUrl.set(null);
-    this.lightboxVideo.set(false);
+    this.lightboxFoto.set(null);
+    this.shareNote.set(null);
     if (this.storyIndex() === null) {
       document.body.classList.remove('media-open');
     }
@@ -126,7 +66,7 @@ export class FotosSectionComponent implements OnInit, OnDestroy {
 
   @HostListener('document:keydown.escape')
   onEscape() {
-    if (this.lightboxUrl()) {
+    if (this.lightboxFoto()) {
       this.closeLightbox();
       return;
     }
@@ -146,7 +86,7 @@ export class FotosSectionComponent implements OnInit, OnDestroy {
     this.clearStoryTimer();
     this.storyIndex.set(null);
     this.storyProgress.set(0);
-    if (!this.lightboxUrl()) {
+    if (!this.lightboxFoto()) {
       document.body.classList.remove('media-open');
     }
   }
@@ -188,12 +128,38 @@ export class FotosSectionComponent implements OnInit, OnDestroy {
     this.nextStory();
   }
 
+  onStoryVideoProgress(event: Event) {
+    const video = event.target as HTMLVideoElement;
+    if (video.duration > 0) {
+      this.storyProgress.set((video.currentTime / video.duration) * 100);
+    }
+  }
+
   currentStory(): Foto | null {
     const i = this.storyIndex();
     if (i === null) {
       return null;
     }
     return this.stories()[i] ?? null;
+  }
+
+  tempoRestante(foto: Foto | null): string {
+    if (!foto?.expiresAt) {
+      return 'Até 7 dias';
+    }
+    const ms = new Date(foto.expiresAt).getTime() - Date.now();
+    if (ms <= 0) {
+      return 'Expirado';
+    }
+    const days = Math.floor(ms / 86_400_000);
+    const hours = Math.ceil((ms % 86_400_000) / 3_600_000);
+    if (days >= 1) {
+      return days === 1 ? '1 dia restante' : `${days} dias restantes`;
+    }
+    if (hours <= 1) {
+      return 'Menos de 1 hora';
+    }
+    return `${hours} horas restantes`;
   }
 
   instagramNote(): string {
@@ -205,14 +171,77 @@ export class FotosSectionComponent implements OnInit, OnDestroy {
     return `Se quiser, marque ${tag} também nos stories.`;
   }
 
+  async baixarFoto(foto: Foto, event?: Event) {
+    event?.stopPropagation();
+    try {
+      const response = await fetch(foto.url);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = foto.nomeArquivo || `mural-${foto.id}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      this.shareNote.set('Não foi possível baixar agora.');
+    }
+  }
+
+  async compartilharFoto(foto: Foto, event?: Event) {
+    event?.stopPropagation();
+    const url = foto.url.startsWith('http') ? foto.url : `${window.location.origin}${foto.url}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Mural dos Heróis', url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      this.shareNote.set('Link copiado!');
+    } catch {
+      this.shareNote.set('Não foi possível compartilhar agora.');
+    }
+  }
+
   ngOnDestroy() {
     this.sub?.unsubscribe();
     this.ws.disconnect();
     this.clearStoryTimer();
     document.body.classList.remove('media-open');
-    if (this.previewUrl()) {
-      URL.revokeObjectURL(this.previewUrl()!);
+  }
+
+  private aplicarFotoAprovada(foto: Foto) {
+    const destinos = foto.destinos?.length ? foto.destinos : [foto.tipo];
+    if (destinos.includes('STORY')) {
+      this.stories.update((list) => (list.some((f) => f.id === foto.id) ? list : [foto, ...list]));
     }
+    if (destinos.includes('MURAL')) {
+      this.fotos.update((list) => (list.some((f) => f.id === foto.id) ? list : [foto, ...list]));
+    }
+  }
+
+  private carregarMural(reset: boolean) {
+    if (reset) {
+      this.muralPage = 0;
+      this.loading.set(true);
+    } else {
+      this.loadingMore.set(true);
+    }
+    this.fotoService.listarAprovadas(this.muralPage, this.muralSize).subscribe({
+      next: (page) => {
+        this.fotos.update((list) => (reset ? page.items : [...list, ...page.items]));
+        this.hasMore.set(page.hasMore);
+        this.loading.set(false);
+        this.loadingMore.set(false);
+      },
+      error: () => {
+        this.error.set('Não foi possível carregar o mural agora.');
+        this.loading.set(false);
+        this.loadingMore.set(false);
+        if (!reset) {
+          this.muralPage = Math.max(0, this.muralPage - 1);
+        }
+      },
+    });
   }
 
   private scheduleStoryAdvance() {

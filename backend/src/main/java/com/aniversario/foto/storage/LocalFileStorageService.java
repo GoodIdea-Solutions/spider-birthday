@@ -6,24 +6,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Locale;
-import java.util.Set;
 import java.util.UUID;
 
 import com.aniversario.config.StorageProperties;
 import com.aniversario.exception.ApiException;
 import jakarta.annotation.PostConstruct;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-@Service
 public class LocalFileStorageService implements FileStorageService {
-
-    private static final long MAX_IMAGE_BYTES = 10L * 1024 * 1024;
-    private static final long MAX_VIDEO_BYTES = 50L * 1024 * 1024;
-    private static final Set<String> IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
-    private static final Set<String> VIDEO_TYPES = Set.of("video/mp4", "video/webm");
 
     private final StorageProperties storageProperties;
     private Path uploadRoot;
@@ -44,24 +38,8 @@ public class LocalFileStorageService implements FileStorageService {
 
     @Override
     public StoredFile store(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Arquivo é obrigatório.");
-        }
-
-        String contentType = file.getContentType() == null ? "" : file.getContentType().toLowerCase(Locale.ROOT);
-        boolean video = VIDEO_TYPES.contains(contentType);
-        boolean image = IMAGE_TYPES.contains(contentType);
-        if (!image && !video) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Formato inválido. Use JPEG, PNG, WEBP, MP4 ou WEBM.");
-        }
-
-        long max = video ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
-        if (file.getSize() > max) {
-            throw new ApiException(
-                    HttpStatus.BAD_REQUEST,
-                    video ? "Vídeo muito grande. Máximo: 50MB." : "Imagem muito grande. Máximo: 10MB."
-            );
-        }
+        MediaUploadValidator.validate(file);
+        String contentType = MediaUploadValidator.contentType(file);
 
         String original = StringUtils.cleanPath(file.getOriginalFilename() == null ? "foto" : file.getOriginalFilename());
         String extension = resolveExtension(original, contentType);
@@ -87,11 +65,8 @@ public class LocalFileStorageService implements FileStorageService {
 
     @Override
     public void delete(String fileName) {
-        if (fileName == null || fileName.isBlank()) {
-            return;
-        }
-        Path target = uploadRoot.resolve(fileName).normalize();
-        if (!target.startsWith(uploadRoot)) {
+        Path target = localPathIfExists(fileName);
+        if (target == null) {
             return;
         }
         try {
@@ -102,13 +77,21 @@ public class LocalFileStorageService implements FileStorageService {
     }
 
     @Override
-    public Path resolve(String fileName) {
-        if (fileName == null || fileName.isBlank()) {
+    public Resource open(String fileName) {
+        Path target = localPathIfExists(fileName);
+        if (target == null) {
             throw new ApiException(HttpStatus.NOT_FOUND, "Arquivo não encontrado.");
+        }
+        return new FileSystemResource(target);
+    }
+
+    private Path localPathIfExists(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return null;
         }
         Path target = uploadRoot.resolve(fileName).normalize();
         if (!target.startsWith(uploadRoot) || !Files.isRegularFile(target)) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Arquivo não encontrado.");
+            return null;
         }
         return target;
     }

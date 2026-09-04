@@ -19,6 +19,7 @@ public class PartyController {
     public PartyConfigResponse getParty() {
         return new PartyConfigResponse(
                 partyProperties.getNomeCrianca(),
+                partyProperties.getSlug(),
                 partyProperties.getIdade(),
                 partyProperties.getDataFesta(),
                 partyProperties.getDiaSemana(),

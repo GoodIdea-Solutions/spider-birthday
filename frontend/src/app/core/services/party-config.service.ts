@@ -5,6 +5,7 @@ import { PartyConfig } from '../models/party.models';
 
 const FALLBACK_CONFIG: PartyConfig = {
   nomeCrianca: 'Samuel',
+  slug: 'samuel-3-anos',
   idade: '3',
   dataFesta: '14/11/2026',
   diaSemana: 'SÁBADO',
@@ -39,5 +40,10 @@ export class PartyConfigService {
         return of(FALLBACK_CONFIG);
       })
     );
+  }
+
+  slug() {
+    const value = this.configSignal()?.slug?.trim();
+    return value || 'samuel-3-anos';
   }
 }

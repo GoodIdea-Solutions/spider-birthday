@@ -1,5 +1,6 @@
 export interface PartyConfig {
   nomeCrianca: string;
+  slug?: string;
   idade: string;
   dataFesta: string;
   diaSemana: string;
@@ -57,16 +58,31 @@ export interface Presente {
   ativo: boolean;
 }
 
+export type FotoDestinos = 'MURAL' | 'STORY' | 'AMBOS';
+export type FotoStatus = 'PENDENTE' | 'APROVADA' | 'REJEITADA';
+export type FotoDestino = 'MURAL' | 'STORY';
+
 export interface Foto {
   id: number;
   nomeArquivo: string;
   url: string;
   aprovada: boolean;
   createdAt: string;
-  tipo: 'MURAL' | 'STORY';
+  tipo: FotoDestino;
   mimeType: string | null;
   expiresAt: string | null;
   video: boolean;
+  status?: FotoStatus;
+  destinosSolicitados?: FotoDestinos;
+  destinos?: FotoDestino[];
+}
+
+export interface FotoPage {
+  items: Foto[];
+  page: number;
+  size: number;
+  total: number;
+  hasMore: boolean;
 }
 
 export type HqLayout = 'FULL' | 'DUPLO' | 'TRIPLO';
@@ -106,4 +122,6 @@ export interface Dashboard {
   totalCriancas: number;
   fotosPendentes: number;
   fotosAprovadas: number;
+  storiesAtivos?: number;
+  muralCount?: number;
 }

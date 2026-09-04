@@ -100,8 +100,12 @@ App: `http://localhost:4200` (proxy para `/api`, `/uploads` e `/ws`)
 |---|---|---|
 | `APP_ADMIN_TOKEN` | `troque-este-token` | Token do admin (`X-Admin-Token`) |
 | `APP_CORS_ORIGINS` | `http://localhost:4200` | Origens CORS (separadas por vírgula) |
-| `APP_UPLOAD_DIR` | `uploads` | Pasta local de fotos |
-| `APP_PUBLIC_BASE_URL` | `http://localhost:8080/uploads` | URL pública das fotos |
+| `APP_UPLOAD_DIR` | `uploads` | Pasta local de fotos (legado e fallback sem Cloudinary) |
+| `APP_PUBLIC_BASE_URL` | `http://localhost:8080/uploads` | URL pública das fotos locais |
+| `CLOUDINARY_CLOUD_NAME` | _(vazio)_ | Cloud name do Cloudinary. Se as 3 vars estiverem preenchidas, uploads novos vão para a nuvem |
+| `CLOUDINARY_API_KEY` | _(vazio)_ | API key do Cloudinary |
+| `CLOUDINARY_API_SECRET` | _(vazio)_ | API secret do Cloudinary (não commitar) |
+| `CLOUDINARY_FOLDER` | `spider-birthday` | Pasta no Cloudinary |
 | `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/aniversario` | JDBC |
 | `SPRING_DATASOURCE_USERNAME` | `aniversario` | Usuário DB |
 | `SPRING_DATASOURCE_PASSWORD` | `aniversario` | Senha DB |
@@ -110,8 +114,15 @@ Exemplo (PowerShell):
 
 ```powershell
 $env:APP_ADMIN_TOKEN = "segredo-forte"
+$env:CLOUDINARY_CLOUD_NAME = "seu-cloud"
+$env:CLOUDINARY_API_KEY = "sua-key"
+$env:CLOUDINARY_API_SECRET = "seu-secret"
 .\scripts\backend-run.ps1
 ```
+
+Sem as 3 variáveis Cloudinary, o backend usa disco local (`uploads/`) — `mvn spring-boot:run` continua funcionando.
+
+Há um `.env.example` na raiz com os nomes das variáveis (sem segredos).
 
 ## Configuração da festa
 
@@ -153,8 +164,9 @@ No topo da página, use **Imprimir lista**. O navegador abre a caixa de impress�
 ## Storage de fotos e stories
 
 - Interface: `FileStorageService`
-- Implementação atual: `LocalFileStorageService` (pasta `uploads/`)
-- Preparado para futura `CloudStorageService`
+- **Cloudinary** se `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` e `CLOUDINARY_API_SECRET` estiverem definidas; senão **disco local** (`LocalFileStorageService`, pasta `uploads/`)
+- Uploads novos no Cloudinary: pasta `spider-birthday`, URL HTTPS em `foto.url`; `nomeArquivo` guarda o `public_id` (com `resource_type`)
+- Arquivos antigos em `/uploads/**` continuam sendo servidos pelo `WebConfig` (não são migrados automaticamente)
 - Upload: JPEG/PNG/WEBP até **10 MB**; MP4/WEBM até **50 MB**
 - Destino no envio: **mural** (permanente) ou **stories** (some da faixa **7 dias após a aprovação**)
 - Mídias nascem com `aprovada=false`

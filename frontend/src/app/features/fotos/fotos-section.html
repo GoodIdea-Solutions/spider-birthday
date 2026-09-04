@@ -11,56 +11,26 @@
       {{ instagramNote() }}
     </p>
 
-    <div class="mural-actions">
-      <a class="cta-link" href="#enviar-foto">Enviar foto</a>
-      <a class="cta-link secondary" href="#ver-mural">Ver mural</a>
+    <div class="stories-block">
+      @if (stories().length > 0) {
+        <div class="stories-rail" aria-label="Stories da festa">
+          @for (story of stories(); track story.id; let i = $index) {
+            <button type="button" class="story-ring" (click)="openStory(i)" [attr.aria-label]="'Abrir story ' + (i + 1)">
+              @if (story.video) {
+                <video [src]="story.url" muted playsinline></video>
+              } @else {
+                <img [src]="story.url" alt="" />
+              }
+            </button>
+          }
+        </div>
+      } @else {
+        <p class="stories-empty">Ainda não há stories da festa. O próximo momento pode ser o seu!</p>
+      }
     </div>
 
-    @if (stories().length > 0) {
-      <div class="stories-rail" aria-label="Stories da festa">
-        @for (story of stories(); track story.id; let i = $index) {
-          <button type="button" class="story-ring" (click)="openStory(i)" [attr.aria-label]="'Abrir story ' + (i + 1)">
-            @if (story.video) {
-              <video [src]="story.url" muted playsinline></video>
-            } @else {
-              <img [src]="story.url" alt="" />
-            }
-          </button>
-        }
-      </div>
-    }
-
     <div id="enviar-foto" class="uploader">
-      <h3>Enviar foto</h3>
-      <p class="uploader-lead">Escolha uma imagem ou vídeo. A HQ revisa antes de publicar.</p>
-      <label class="file-btn">
-        Escolher foto ou vídeo
-        <input type="file" accept="image/*,video/mp4,video/webm" (change)="onFileChange($event)" />
-      </label>
-
-      @if (previewUrl()) {
-        @if (previewVideo()) {
-          <video class="preview" [src]="previewUrl()!" controls playsinline></video>
-        } @else {
-          <img class="preview" [src]="previewUrl()!" alt="Pré-visualização do envio" />
-        }
-      }
-
-      <div class="upload-actions">
-        <button type="button" (click)="upload('MURAL')" [disabled]="uploading()">
-          {{ uploading() ? 'Enviando...' : 'Enviar ao mural' }}
-        </button>
-        <button type="button" class="secondary" (click)="upload('STORY')" [disabled]="uploading()">
-          {{ uploading() ? 'Enviando...' : 'Enviar aos stories' }}
-        </button>
-      </div>
-
-      @if (info()) {
-        <p class="info" role="status">{{ info() }}</p>
-      }
-      @if (error()) {
-        <p class="error" role="alert">{{ error() }}</p>
-      }
+      <app-publicar-midia />
     </div>
 
     <div id="ver-mural">
@@ -83,20 +53,35 @@
         @if (fotos().length === 0) {
           <p class="status">Ainda sem fotos no mural. Seja o primeiro herói a enviar!</p>
         }
+        @if (hasMore()) {
+          <button type="button" class="load-more" (click)="carregarMais()" [disabled]="loadingMore()">
+            {{ loadingMore() ? 'Carregando...' : 'Carregar mais' }}
+          </button>
+        }
+      }
+      @if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
       }
     </div>
   </div>
 </section>
 
-@if (lightboxUrl()) {
+@if (lightboxFoto(); as foto) {
   <div class="lightbox" (click)="closeLightbox()" role="dialog" aria-modal="true" aria-label="Foto ampliada">
     <button type="button" class="lightbox-close" (click)="closeLightbox(); $event.stopPropagation()" aria-label="Fechar foto">
       ×
     </button>
-    @if (lightboxVideo()) {
-      <video [src]="lightboxUrl()!" controls autoplay playsinline (click)="$event.stopPropagation()"></video>
+    @if (foto.video) {
+      <video [src]="foto.url" controls autoplay playsinline (click)="$event.stopPropagation()"></video>
     } @else {
-      <img [src]="lightboxUrl()!" alt="Foto ampliada do mural" (click)="$event.stopPropagation()" />
+      <img [src]="foto.url" alt="Foto ampliada do mural" (click)="$event.stopPropagation()" />
+    }
+    <div class="lightbox-actions" (click)="$event.stopPropagation()">
+      <button type="button" (click)="baixarFoto(foto, $event)">Baixar</button>
+      <button type="button" class="secondary" (click)="compartilharFoto(foto, $event)">Compartilhar</button>
+    </div>
+    @if (shareNote()) {
+      <p class="lightbox-note">{{ shareNote() }}</p>
     }
   </div>
 }
@@ -110,13 +95,25 @@
             @if (i === storyIndex() && !story.video) {
               <i class="fill"></i>
             }
+            @if (i === storyIndex() && story.video) {
+              <i class="fill video" [style.width.%]="storyProgress()"></i>
+            }
           </span>
         }
       </div>
+      <p class="story-ttl">{{ tempoRestante(story) }}</p>
       <button type="button" class="story-close" (click)="closeStory()" aria-label="Fechar story">×</button>
+      <button type="button" class="story-nav prev" (click)="prevStory()" [disabled]="storyIndex() === 0" aria-label="Story anterior"></button>
+      <button type="button" class="story-nav next" (click)="nextStory()" aria-label="Próximo story"></button>
       <div class="story-hit" (click)="storyTap($event)">
         @if (story.video) {
-          <video [src]="story.url" autoplay playsinline (ended)="onStoryVideoEnded()"></video>
+          <video
+            [src]="story.url"
+            autoplay
+            playsinline
+            (timeupdate)="onStoryVideoProgress($event)"
+            (ended)="onStoryVideoEnded()"
+          ></video>
         } @else {
           <img [src]="story.url" alt="Story da festa" />
         }

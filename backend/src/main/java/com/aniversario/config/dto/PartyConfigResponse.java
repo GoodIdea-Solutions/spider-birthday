@@ -2,6 +2,7 @@ package com.aniversario.config.dto;
 
 public record PartyConfigResponse(
         String nomeCrianca,
+        String slug,
         String idade,
         String dataFesta,
         String diaSemana,

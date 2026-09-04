@@ -1,5 +1,6 @@
 party:
   nome-crianca: "Samuel"
+  slug: "samuel-3-anos"
   idade: "3"
   data-festa: "14/11/2026"
   dia-semana: "SÁBADO"

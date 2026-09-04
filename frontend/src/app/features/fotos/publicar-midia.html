@@ -1,0 +1,77 @@
+<div class="publicar" [class.camera]="variant === 'camera'">
+  @if (success()) {
+    <div class="sucesso" role="status">
+      <p class="sucesso-kicker">Momento enviado!</p>
+      <h3>Sua foto foi enviada para aprovação.</h3>
+      <p>A HQ revisa antes de publicar nos Stories ou no Mural dos Heróis.</p>
+      <div class="sucesso-actions">
+        @if (variant === 'camera') {
+          <a class="cta" routerLink="/fotos">Ver mural</a>
+        }
+        <button type="button" class="ghost" (click)="enviarOutro()">Enviar outro momento</button>
+      </div>
+    </div>
+  } @else {
+    @if (variant === 'mural') {
+      <p class="lead">Compartilhe um momento da festa!</p>
+    }
+
+    <label class="file-btn">
+      Escolher foto ou vídeo
+      <input type="file" accept="image/*,video/mp4,video/webm" (change)="onFileChange($event)" />
+    </label>
+
+    @if (previewUrl()) {
+      <div class="preview-wrap">
+        @if (previewVideo()) {
+          <video class="preview" [src]="previewUrl()!" controls playsinline></video>
+        } @else {
+          <img class="preview" [src]="previewUrl()!" alt="Pré-visualização do envio" />
+        }
+      </div>
+
+      <p class="destino-title">Onde você quer publicar?</p>
+      <div class="destinos" role="group" aria-label="Destino da publicação">
+        <button
+          type="button"
+          [class.selected]="destinos() === 'STORY'"
+          (click)="escolherDestino('STORY')"
+        >
+          <strong>Stories</strong>
+          <span>7 dias</span>
+        </button>
+        <button
+          type="button"
+          [class.selected]="destinos() === 'MURAL'"
+          (click)="escolherDestino('MURAL')"
+        >
+          <strong>Mural</strong>
+          <span>Permanente</span>
+        </button>
+        <button
+          type="button"
+          [class.selected]="destinos() === 'AMBOS'"
+          (click)="escolherDestino('AMBOS')"
+        >
+          <strong>Stories + Mural</strong>
+          <span>Os dois</span>
+        </button>
+      </div>
+    }
+
+    @if (previewUrl()) {
+      <button
+        type="button"
+        class="enviar"
+        (click)="enviar()"
+        [disabled]="uploading() || !destinos()"
+      >
+        {{ uploading() ? 'Enviando...' : 'Enviar' }}
+      </button>
+    }
+  }
+
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+</div>

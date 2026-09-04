@@ -1,8 +1,6 @@
 package com.aniversario.foto.controller;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 
 import com.aniversario.foto.dto.DashboardResponse;
@@ -10,7 +8,6 @@ import com.aniversario.foto.dto.FotoResponse;
 import com.aniversario.foto.model.Foto;
 import com.aniversario.foto.service.FotoService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -58,19 +55,39 @@ public class AdminController {
     @GetMapping("/fotos/{id}/download")
     public ResponseEntity<Resource> download(@PathVariable Long id) throws IOException {
         Foto foto = fotoService.findOrThrow(id);
-        Path path = fotoService.arquivoParaDownload(id);
-        Resource resource = new FileSystemResource(path);
+        Resource resource = fotoService.arquivoParaDownload(id);
         String mime = foto.getMimeType() == null ? MediaType.APPLICATION_OCTET_STREAM_VALUE : foto.getMimeType();
-        return ResponseEntity.ok()
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(mime))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + foto.getNomeArquivo() + "\"")
-                .contentLength(Files.size(path))
-                .body(resource);
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + downloadFileName(foto) + "\"");
+        long length = resource.contentLength();
+        if (length >= 0) {
+            builder.contentLength(length);
+        }
+        return builder.body(resource);
+    }
+
+    private static String downloadFileName(Foto foto) {
+        String name = foto.getNomeArquivo();
+        if (name == null || name.isBlank()) {
+            return "midia-" + foto.getId();
+        }
+        int colon = name.indexOf(':');
+        if (colon >= 0 && colon < name.length() - 1) {
+            name = name.substring(colon + 1);
+        }
+        name = name.replace('\\', '-').replace('/', '-').replace('"', '_');
+        return name.isBlank() ? "midia-" + foto.getId() : name;
     }
 
     @PatchMapping("/fotos/{id}/aprovar")
     public FotoResponse aprovar(@PathVariable Long id) {
         return fotoService.aprovar(id);
+    }
+
+    @PatchMapping("/fotos/{id}/rejeitar")
+    public FotoResponse rejeitar(@PathVariable Long id) {
+        return fotoService.rejeitar(id);
     }
 
     @DeleteMapping("/fotos/{id}")

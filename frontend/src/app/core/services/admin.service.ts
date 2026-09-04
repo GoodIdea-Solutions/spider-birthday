@@ -39,6 +39,10 @@ export class AdminService {
     return this.http.patch<Foto>(`/api/admin/fotos/${id}/aprovar`, {}, this.headers());
   }
 
+  rejeitar(id: number) {
+    return this.http.patch<Foto>(`/api/admin/fotos/${id}/rejeitar`, {}, this.headers());
+  }
+
   excluir(id: number) {
     // 204 No Content — evitar parse JSON do body vazio
     return this.http.delete(`/api/admin/fotos/${id}`, {

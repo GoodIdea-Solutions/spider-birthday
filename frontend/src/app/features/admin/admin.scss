@@ -117,6 +117,10 @@ button {
   background: #15803d;
 }
 
+.warn {
+  background: #c2410c;
+}
+
 .danger {
   background: #b91c1c;
 }
@@ -208,6 +212,14 @@ td {
   color: var(--muted);
 }
 
+.pending .empty {
+  padding: 0 0.75rem;
+}
+
+.pending .actions {
+  padding-top: 0.4rem;
+}
+
 .hq-form {
   display: grid;
   gap: 0.75rem;
@@ -253,9 +265,32 @@ td {
   color: #b91c1c;
 }
 
+.qr-panel {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.qr-image {
+  display: block;
+  width: min(100%, 16rem);
+  aspect-ratio: 1;
+  margin: 0.75rem 0;
+  border: 3px solid #111;
+  background: #fff;
+}
+
+.qr-url {
+  margin: 0;
+  word-break: break-all;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 @media (min-width: 720px) {
   .stats {
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 
   .pending-grid {

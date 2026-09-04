@@ -9,6 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "party")
 public class PartyProperties {
     private String nomeCrianca;
+    private String slug;
     private String idade;
     private String dataFesta;
     private String diaSemana;

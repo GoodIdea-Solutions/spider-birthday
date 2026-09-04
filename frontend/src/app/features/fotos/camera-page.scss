@@ -1,0 +1,48 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  min-width: 0;
+}
+
+.camera-page {
+  min-height: 100dvh;
+  min-width: 0;
+  overflow-x: hidden;
+  padding:
+    calc(1.1rem + env(safe-area-inset-top, 0px))
+    calc(1rem + env(safe-area-inset-right, 0px))
+    calc(1.25rem + env(safe-area-inset-bottom, 0px))
+    calc(1rem + env(safe-area-inset-left, 0px));
+  background:
+    radial-gradient(circle at top right, rgba(225, 29, 46, 0.16), transparent 18rem),
+    linear-gradient(180deg, #fff7ed, #f4f6fb 42%);
+}
+
+.card {
+  width: min(100%, 28rem);
+  margin: 0 auto;
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1.15rem 1rem 1.3rem;
+  background: #fff;
+  border: 3px solid #111;
+  box-shadow: 6px 6px 0 var(--spider-red);
+}
+
+.kicker {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--spider-red);
+}
+
+h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 7vw, 2.15rem);
+  letter-spacing: 0.03em;
+  line-height: 1.05;
+}

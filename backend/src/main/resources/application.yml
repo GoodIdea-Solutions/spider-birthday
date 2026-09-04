@@ -33,6 +33,11 @@ app:
   storage:
     upload-dir: ${APP_UPLOAD_DIR:uploads}
     public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:8080/uploads}
+    cloudinary:
+      cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+      api-key: ${CLOUDINARY_API_KEY:}
+      api-secret: ${CLOUDINARY_API_SECRET:}
+      folder: ${CLOUDINARY_FOLDER:spider-birthday}
 
 springdoc:
   api-docs:

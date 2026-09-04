@@ -1,8 +1,8 @@
 package com.aniversario.foto.storage;
 
 /**
- * Placeholder para futura implementação em nuvem (S3, GCS, etc.).
- * A aplicação usa {@link LocalFileStorageService} por padrão.
+ * Storage em nuvem. Ativo quando as credenciais Cloudinary estão definidas;
+ * caso contrário a aplicação usa {@link LocalFileStorageService}.
  */
 public interface CloudStorageService extends FileStorageService {
 }

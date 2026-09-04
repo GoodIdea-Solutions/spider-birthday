@@ -1,7 +1,6 @@
 package com.aniversario.foto.storage;
 
-import java.nio.file.Path;
-
+import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface FileStorageService {
@@ -9,5 +8,12 @@ public interface FileStorageService {
 
     void delete(String fileName);
 
-    Path resolve(String fileName);
+    /**
+     * Abre o arquivo para download (disco local ou URL remota do Cloudinary).
+     */
+    Resource open(String fileName);
+
+    default Resource open(String fileName, String publicUrl) {
+        return open(fileName);
+    }
 }

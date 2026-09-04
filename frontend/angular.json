@@ -34,7 +34,8 @@
             ],
             "allowedCommonJsDependencies": [
               "sockjs-client",
-              "@stomp/stompjs"
+              "@stomp/stompjs",
+              "qrcode"
             ]
           },
           "configurations": {

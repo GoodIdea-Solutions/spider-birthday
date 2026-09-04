@@ -2,6 +2,8 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Dashboard, Foto, HqLayout, HqPagina, HqPainelPayload, RsvpResponse } from '../../core/models/party.models';
 import { AdminService } from '../../core/services/admin.service';
+import { PartyConfigService } from '../../core/services/party-config.service';
+import { QrCodeService } from '../../core/services/qr-code.service';
 
 @Component({
   selector: 'app-admin',
@@ -11,6 +13,8 @@ import { AdminService } from '../../core/services/admin.service';
 })
 export class AdminComponent implements OnInit {
   private readonly admin = inject(AdminService);
+  private readonly party = inject(PartyConfigService);
+  private readonly qr = inject(QrCodeService);
 
   tokenInput = this.admin.getToken();
   readonly authenticated = signal(false);
@@ -22,6 +26,8 @@ export class AdminComponent implements OnInit {
   readonly aprovadas = signal<Foto[]>([]);
   readonly hqPaginas = signal<HqPagina[]>([]);
   readonly midias = signal<Foto[]>([]);
+  readonly qrDataUrl = signal<string | null>(null);
+  readonly cameraUrl = signal('');
   readonly editingId = signal<number | null>(null);
   readonly editingHqId = signal<number | null>(null);
 
@@ -54,6 +60,7 @@ export class AdminComponent implements OnInit {
         this.dashboard.set(dash);
         this.authenticated.set(true);
         this.refreshLists();
+        this.montarQr();
       },
       error: () => {
         this.loading.set(false);
@@ -113,8 +120,20 @@ export class AdminComponent implements OnInit {
         }
         this.admin.aprovadas().subscribe({ next: (fotos) => this.aprovadas.set(fotos) });
         this.admin.todasMidias().subscribe({ next: (items) => this.midias.set(items) });
+        this.refreshDashboard();
       },
       error: () => this.error.set('Não foi possível aprovar a foto.'),
+    });
+  }
+
+  rejeitar(id: number) {
+    this.admin.rejeitar(id).subscribe({
+      next: () => {
+        this.pendentes.update((list) => list.filter((f) => f.id !== id));
+        this.admin.todasMidias().subscribe({ next: (items) => this.midias.set(items) });
+        this.refreshDashboard();
+      },
+      error: () => this.error.set('Não foi possível rejeitar a mídia.'),
     });
   }
 
@@ -353,11 +372,61 @@ export class AdminComponent implements OnInit {
   }
 
   rotuloMidia(foto: Foto): string {
-    const tipo = foto.tipo === 'STORY' ? 'Story' : 'Mural';
+    const dest = this.rotuloDestinos(foto);
     const kind = foto.video ? 'vídeo' : 'foto';
-    const expired =
-      foto.tipo === 'STORY' && foto.expiresAt && new Date(foto.expiresAt).getTime() < Date.now();
-    return expired ? `${tipo} · ${kind} · expirado` : `${tipo} · ${kind}`;
+    const status =
+      foto.status === 'REJEITADA' ? 'rejeitada' : foto.status === 'PENDENTE' ? 'pendente' : 'aprovada';
+    const expired = this.storyExpirado(foto);
+    return expired ? `${dest} · ${kind} · ${status} · story expirado` : `${dest} · ${kind} · ${status}`;
+  }
+
+  rotuloDestinos(foto: Foto): string {
+    const destinos = foto.destinosSolicitados;
+    if (destinos === 'AMBOS') {
+      return 'Stories + Mural';
+    }
+    if (destinos === 'STORY') {
+      return 'Stories';
+    }
+    return 'Mural';
+  }
+
+  storyExpirado(foto: Foto): boolean {
+    const hasStory = foto.destinosSolicitados === 'STORY' || foto.destinosSolicitados === 'AMBOS';
+    return !!(hasStory && foto.expiresAt && new Date(foto.expiresAt).getTime() < Date.now() && !foto.destinos?.includes('STORY'));
+  }
+
+  storiesAtivos(): Foto[] {
+    return this.midias().filter((foto) => foto.aprovada && foto.destinos?.includes('STORY'));
+  }
+
+  muralAtivo(): Foto[] {
+    return this.midias().filter((foto) => foto.aprovada && foto.destinos?.includes('MURAL'));
+  }
+
+  formatExpires(foto: Foto): string {
+    if (!foto.expiresAt) {
+      return 'Permanente';
+    }
+    return new Date(foto.expiresAt).toLocaleString('pt-BR');
+  }
+
+  baixarQr() {
+    const data = this.qrDataUrl();
+    if (!data) {
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = data;
+    a.download = 'qr-mural-herois.png';
+    a.click();
+  }
+
+  private montarQr() {
+    const slug = this.party.slug();
+    const url = `${window.location.origin}/festa/${slug}/camera`;
+    this.cameraUrl.set(url);
+    void this.qr.toDataUrl(url).then((data) => this.qrDataUrl.set(data));
   }
 
   baixar(foto: Foto) {

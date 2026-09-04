@@ -1,11 +1,11 @@
 package com.aniversario.foto.controller;
 
-import java.util.List;
-
 import com.aniversario.config.AdminTokenInterceptor;
 import com.aniversario.config.AppProperties;
 import com.aniversario.exception.ApiException;
+import com.aniversario.foto.dto.FotoPageResponse;
 import com.aniversario.foto.dto.FotoResponse;
+import com.aniversario.foto.model.FotoDestinos;
 import com.aniversario.foto.model.FotoTipo;
 import com.aniversario.foto.service.FotoService;
 import org.springframework.http.HttpStatus;
@@ -38,14 +38,18 @@ public class FotoController {
     @ResponseStatus(HttpStatus.CREATED)
     public FotoResponse upload(
             @RequestPart("file") MultipartFile file,
-            @RequestParam(name = "tipo", defaultValue = "MURAL") FotoTipo tipo
+            @RequestParam(name = "destinos", required = false) FotoDestinos destinos,
+            @RequestParam(name = "tipo", required = false) FotoTipo tipo
     ) {
-        return fotoService.upload(file, tipo);
+        return fotoService.upload(file, destinos, tipo);
     }
 
     @GetMapping
-    public List<FotoResponse> listarMural() {
-        return fotoService.listarMural();
+    public FotoPageResponse listarMural(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "12") int size
+    ) {
+        return fotoService.listarMural(page, size);
     }
 
     @DeleteMapping("/{id}")

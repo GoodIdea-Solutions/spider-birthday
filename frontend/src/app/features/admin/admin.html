@@ -19,6 +19,8 @@
           <article><span>Crianças</span><strong>{{ dash.totalCriancas }}</strong></article>
           <article><span>Pendentes</span><strong>{{ dash.fotosPendentes }}</strong></article>
           <article><span>Aprovadas</span><strong>{{ dash.fotosAprovadas }}</strong></article>
+          <article><span>Stories</span><strong>{{ dash.storiesAtivos ?? 0 }}</strong></article>
+          <article><span>Mural</span><strong>{{ dash.muralCount ?? 0 }}</strong></article>
         </div>
       }
 
@@ -43,6 +45,66 @@
                 <p class="empty">{{ rotuloMidia(foto) }}</p>
                 <div class="actions">
                   <button type="button" class="ok" (click)="aprovar(foto.id)">Aprovar</button>
+                  <button type="button" class="warn" (click)="rejeitar(foto.id)">Rejeitar</button>
+                  <button type="button" class="edit" (click)="baixar(foto)">Baixar</button>
+                  <button type="button" class="danger" (click)="excluir(foto.id)">Excluir</button>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+
+        <section class="qr-panel">
+          <h2>QR Code da festa</h2>
+          <p class="empty">Um único código abre a captura. Imprima e deixe na festa.</p>
+          @if (qrDataUrl()) {
+            <img class="qr-image" [src]="qrDataUrl()!" alt="QR Code para enviar fotos ao mural" />
+          }
+          <p class="qr-url">{{ cameraUrl() }}</p>
+          <div class="actions">
+            <button type="button" class="edit" (click)="baixarQr()" [disabled]="!qrDataUrl()">Baixar QR</button>
+          </div>
+        </section>
+
+        <section>
+          <h2>Stories ativos</h2>
+          @if (storiesAtivos().length === 0) {
+            <p class="empty">Nenhum story ativo agora.</p>
+          }
+          <div class="pending-grid">
+            @for (foto of storiesAtivos(); track foto.id) {
+              <article class="pending">
+                @if (foto.video) {
+                  <video [src]="foto.url" muted playsinline></video>
+                } @else {
+                  <img [src]="foto.url" [alt]="'Story ' + foto.id" />
+                }
+                <p class="empty">{{ rotuloMidia(foto) }}</p>
+                <p class="empty">Expira: {{ formatExpires(foto) }}</p>
+                <div class="actions">
+                  <button type="button" class="edit" (click)="baixar(foto)">Baixar</button>
+                  <button type="button" class="danger" (click)="excluir(foto.id)">Excluir</button>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+
+        <section>
+          <h2>Mural</h2>
+          @if (muralAtivo().length === 0) {
+            <p class="empty">Nenhuma mídia no mural.</p>
+          }
+          <div class="pending-grid">
+            @for (foto of muralAtivo(); track foto.id) {
+              <article class="pending">
+                @if (foto.video) {
+                  <video [src]="foto.url" muted playsinline></video>
+                } @else {
+                  <img [src]="foto.url" [alt]="'Mural ' + foto.id" />
+                }
+                <p class="empty">{{ rotuloMidia(foto) }}</p>
+                <div class="actions">
                   <button type="button" class="edit" (click)="baixar(foto)">Baixar</button>
                   <button type="button" class="danger" (click)="excluir(foto.id)">Excluir</button>
                 </div>
