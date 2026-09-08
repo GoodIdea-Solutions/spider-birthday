@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class ConvidadoService {
 
     private static final String SEPARADOR = " | ";
+    private static final int IDADE_MIN = 0;
+    private static final int IDADE_MAX = 17;
 
     private final ConvidadoRepository convidadoRepository;
 
@@ -32,7 +34,9 @@ public class ConvidadoService {
         validarQuantidades(request.quantidadeAdultos(), request.quantidadeCriancas());
         List<String> nomesAdultos = normalizarLista(request.nomesAdultos());
         List<String> nomesCriancas = normalizarLista(request.nomesCriancas());
+        List<Integer> idadesCriancas = normalizarIdades(request.idadesCriancas());
         validarNomes(request.quantidadeAdultos(), request.quantidadeCriancas(), nomesAdultos, nomesCriancas);
+        validarIdades(request.quantidadeCriancas(), idadesCriancas);
 
         Convidado convidado = new Convidado();
         aplicarDados(
@@ -42,7 +46,8 @@ public class ConvidadoService {
                 request.quantidadeCriancas(),
                 request.telefone(),
                 nomesAdultos,
-                nomesCriancas
+                nomesCriancas,
+                idadesCriancas
         );
         convidado.setConfirmado(true);
 
@@ -54,7 +59,9 @@ public class ConvidadoService {
         validarQuantidades(request.quantidadeAdultos(), request.quantidadeCriancas());
         List<String> nomesAdultos = normalizarLista(request.nomesAdultos());
         List<String> nomesCriancas = normalizarLista(request.nomesCriancas());
+        List<Integer> idadesCriancas = normalizarIdades(request.idadesCriancas());
         validarNomes(request.quantidadeAdultos(), request.quantidadeCriancas(), nomesAdultos, nomesCriancas);
+        validarIdades(request.quantidadeCriancas(), idadesCriancas);
 
         Convidado convidado = findOrThrow(id);
         aplicarDados(
@@ -64,7 +71,8 @@ public class ConvidadoService {
                 request.quantidadeCriancas(),
                 request.telefone(),
                 nomesAdultos,
-                nomesCriancas
+                nomesCriancas,
+                idadesCriancas
         );
 
         return toResponse(convidadoRepository.save(convidado));
@@ -91,7 +99,8 @@ public class ConvidadoService {
                         c.getQuantidadeAdultos(),
                         c.getQuantidadeCriancas(),
                         desserializar(c.getNomesAdultos()),
-                        desserializar(c.getNomesCriancas())
+                        desserializar(c.getNomesCriancas()),
+                        desserializarIdades(c.getIdadesCriancas())
                 ))
                 .toList();
     }
@@ -139,6 +148,23 @@ public class ConvidadoService {
         }
     }
 
+    private void validarIdades(int quantidadeCriancas, List<Integer> idadesCriancas) {
+        if (idadesCriancas.size() != quantidadeCriancas) {
+            throw new ApiException(
+                    HttpStatus.BAD_REQUEST,
+                    quantidadeCriancas == 0
+                            ? "Não informe idades de crianças quando a quantidade é zero."
+                            : "Informe a idade de cada criança (" + quantidadeCriancas + ")."
+            );
+        }
+        if (idadesCriancas.stream().anyMatch(idade -> idade == null || idade < IDADE_MIN || idade > IDADE_MAX)) {
+            throw new ApiException(
+                    HttpStatus.BAD_REQUEST,
+                    "Informe a idade de cada criança (0 a 17 anos)."
+            );
+        }
+    }
+
     private List<String> normalizarLista(List<String> nomes) {
         if (nomes == null || nomes.isEmpty()) {
             return List.of();
@@ -148,6 +174,13 @@ public class ConvidadoService {
                 .toList();
     }
 
+    private List<Integer> normalizarIdades(List<Integer> idades) {
+        if (idades == null || idades.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(idades);
+    }
+
     private void aplicarDados(
             Convidado convidado,
             String nome,
@@ -155,7 +188,8 @@ public class ConvidadoService {
             Integer quantidadeCriancas,
             String telefone,
             List<String> nomesAdultos,
-            List<String> nomesCriancas
+            List<String> nomesCriancas,
+            List<Integer> idadesCriancas
     ) {
         convidado.setNome(nome.trim());
         convidado.setQuantidadeAdultos(quantidadeAdultos);
@@ -163,6 +197,7 @@ public class ConvidadoService {
         convidado.setTelefone(telefone == null || telefone.isBlank() ? null : telefone.trim());
         convidado.setNomesAdultos(serializar(nomesAdultos));
         convidado.setNomesCriancas(serializar(nomesCriancas));
+        convidado.setIdadesCriancas(serializarIdades(idadesCriancas));
     }
 
     static String serializar(List<String> nomes) {
@@ -185,6 +220,26 @@ public class ConvidadoService {
                 .toList();
     }
 
+    static String serializarIdades(List<Integer> idades) {
+        if (idades == null || idades.isEmpty()) {
+            return null;
+        }
+        return idades.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(SEPARADOR));
+    }
+
+    static List<Integer> desserializarIdades(String valor) {
+        if (valor == null || valor.isBlank()) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(valor.split("\\s*\\|\\s*"))
+                .map(String::trim)
+                .filter(n -> !n.isEmpty())
+                .map(Integer::valueOf)
+                .toList();
+    }
+
     private RsvpResponse toResponse(Convidado convidado) {
         return new RsvpResponse(
                 convidado.getId(),
@@ -194,6 +249,7 @@ public class ConvidadoService {
                 convidado.getTelefone(),
                 desserializar(convidado.getNomesAdultos()),
                 desserializar(convidado.getNomesCriancas()),
+                desserializarIdades(convidado.getIdadesCriancas()),
                 convidado.getConfirmado(),
                 convidado.getCreatedAt()
         );

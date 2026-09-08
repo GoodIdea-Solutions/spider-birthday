@@ -25,6 +25,8 @@ public record RsvpUpdateRequest(
 
         List<String> nomesAdultos,
 
-        List<String> nomesCriancas
+        List<String> nomesCriancas,
+
+        List<Integer> idadesCriancas
 ) {
 }

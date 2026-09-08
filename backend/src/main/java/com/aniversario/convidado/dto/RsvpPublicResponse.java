@@ -7,6 +7,7 @@ public record RsvpPublicResponse(
         int quantidadeAdultos,
         int quantidadeCriancas,
         List<String> nomesAdultos,
-        List<String> nomesCriancas
+        List<String> nomesCriancas,
+        List<Integer> idadesCriancas
 ) {
 }

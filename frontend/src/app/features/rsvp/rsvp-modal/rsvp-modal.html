@@ -47,14 +47,20 @@
             </fieldset>
           }
 
-          @if (nomesCriancas.length > 0) {
-            <fieldset class="names-group" formArrayName="nomesCriancas">
+          @if (criancas.length > 0) {
+            <fieldset class="names-group" formArrayName="criancas">
               <legend>Crianças</legend>
-              @for (ctrl of nomesCriancas.controls; track $index) {
-                <label>
-                  Nome da criança {{ $index + 1 }}
-                  <input [formControlName]="$index" type="text" [placeholder]="'Ex.: Criança ' + ($index + 1)" />
-                </label>
+              @for (ctrl of criancas.controls; track $index) {
+                <div class="row child-row" [formGroupName]="$index">
+                  <label>
+                    Nome da criança {{ $index + 1 }}
+                    <input formControlName="nome" type="text" [placeholder]="'Ex.: Criança ' + ($index + 1)" />
+                  </label>
+                  <label>
+                    Idade (anos)
+                    <input formControlName="idade" type="number" min="0" max="17" step="1" inputmode="numeric" placeholder="Ex.: 3" />
+                  </label>
+                </div>
               }
             </fieldset>
           }

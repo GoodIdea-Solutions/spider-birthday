@@ -40,6 +40,10 @@ public class Convidado extends AuditableEntity {
     @Column(name = "nomes_criancas", columnDefinition = "TEXT")
     private String nomesCriancas;
 
+    /** Idades das crianças em anos, separadas por " | ". */
+    @Column(name = "idades_criancas", columnDefinition = "TEXT")
+    private String idadesCriancas;
+
     @Column(nullable = false)
     private Boolean confirmado = true;
 }

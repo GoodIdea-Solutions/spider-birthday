@@ -24,6 +24,7 @@ export interface RsvpPublicResponse {
   quantidadeCriancas: number;
   nomesAdultos: string[];
   nomesCriancas: string[];
+  idadesCriancas: number[];
 }
 
 export interface RsvpRequest {
@@ -35,6 +36,8 @@ export interface RsvpRequest {
   nomesAdultos?: string[];
   /** Todas as crianças. */
   nomesCriancas?: string[];
+  /** Idade em anos de cada criança (alinhada a nomesCriancas). */
+  idadesCriancas?: number[];
 }
 
 export interface RsvpResponse {
@@ -45,6 +48,7 @@ export interface RsvpResponse {
   telefone: string | null;
   nomesAdultos: string[];
   nomesCriancas: string[];
+  idadesCriancas: number[];
   confirmado: boolean;
   createdAt: string;
 }

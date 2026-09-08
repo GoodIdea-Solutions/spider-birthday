@@ -4,6 +4,7 @@ import {
   FormArray,
   FormBuilder,
   FormControl,
+  FormGroup,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
@@ -39,15 +40,18 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
     quantidadeCriancas: [0, [Validators.required, Validators.min(0)]],
     telefone: [''],
     nomesAdultos: this.fb.array<FormControl<string>>([]),
-    nomesCriancas: this.fb.array<FormControl<string>>([]),
+    criancas: this.fb.array<FormGroup<{
+      nome: FormControl<string>;
+      idade: FormControl<number | null>;
+    }>>([]),
   });
 
   get nomesAdultos(): FormArray<FormControl<string>> {
     return this.form.controls.nomesAdultos;
   }
 
-  get nomesCriancas(): FormArray<FormControl<string>> {
-    return this.form.controls.nomesCriancas;
+  get criancas() {
+    return this.form.controls.criancas;
   }
 
   constructor() {
@@ -118,7 +122,7 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
     this.error.set(null);
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.error.set('Preencha o nome do responsável e de todos os acompanhantes.');
+      this.error.set('Preencha o nome do responsável, de todos os acompanhantes e a idade de cada criança.');
       return;
     }
     const value = this.form.getRawValue();
@@ -128,11 +132,19 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
     }
 
     const nomesAdultos = value.nomesAdultos.map((n) => n.trim()).filter(Boolean);
-    const nomesCriancas = value.nomesCriancas.map((n) => n.trim()).filter(Boolean);
+    const nomesCriancas = value.criancas.map((c) => c.nome.trim()).filter(Boolean);
+    const idadesCriancas = value.criancas
+      .map((c) => c.idade)
+      .filter((idade): idade is number => idade !== null && idade !== undefined && !Number.isNaN(idade));
 
     const extrasEsperados = value.quantidadeAdultos > 1 ? value.quantidadeAdultos - 1 : 0;
     if (nomesAdultos.length !== extrasEsperados || nomesCriancas.length !== value.quantidadeCriancas) {
       this.error.set('Preencha o nome de cada adulto e criança.');
+      this.form.markAllAsTouched();
+      return;
+    }
+    if (idadesCriancas.length !== value.quantidadeCriancas) {
+      this.error.set('Informe a idade de cada criança.');
       this.form.markAllAsTouched();
       return;
     }
@@ -147,13 +159,14 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
         telefone: value.telefone.trim() || null,
         nomesAdultos,
         nomesCriancas,
+        idadesCriancas,
       })
       .subscribe({
         next: () => {
           this.loading.set(false);
           this.success.set(true);
           this.heroName.set(nome);
-          this.openWhatsApp(nome, value.quantidadeAdultos, nomesAdultos, nomesCriancas);
+          this.openWhatsApp(nome, value.quantidadeAdultos, nomesAdultos, nomesCriancas, idadesCriancas);
         },
         error: (err) => {
           this.loading.set(false);
@@ -198,7 +211,23 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
   }
 
   private sincronizarCriancas(quantidade: number) {
-    this.ajustarFormArray(this.nomesCriancas, Math.max(0, quantidade ?? 0));
+    const array = this.criancas;
+    const tamanho = Math.max(0, quantidade ?? 0);
+    while (array.length > tamanho) {
+      array.removeAt(array.length - 1);
+    }
+    while (array.length < tamanho) {
+      array.push(this.novaCrianca());
+    }
+  }
+
+  private novaCrianca() {
+    return this.fb.group({
+      nome: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(120)]),
+      idade: this.fb.control<number | null>(null, {
+        validators: [Validators.required, Validators.min(0), Validators.max(17)],
+      }),
+    });
   }
 
   private ajustarFormArray(array: FormArray<FormControl<string>>, tamanho: number) {
@@ -214,7 +243,8 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
     responsavel: string,
     quantidadeAdultos: number,
     nomesAdultos: string[],
-    nomesCriancas: string[]
+    nomesCriancas: string[],
+    idadesCriancas: number[]
   ) {
     const cfg = this.partyConfig.config();
     const rawNumber = cfg?.whatsappNumber;
@@ -230,7 +260,8 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
       responsavel,
       quantidadeAdultos,
       nomesAdultos,
-      nomesCriancas
+      nomesCriancas,
+      idadesCriancas
     );
     const url = `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
@@ -241,11 +272,12 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
     responsavel: string,
     quantidadeAdultos: number,
     nomesAdultos: string[],
-    nomesCriancas: string[]
+    nomesCriancas: string[],
+    idadesCriancas: number[]
   ): string {
     const listaAdultos =
       quantidadeAdultos >= 1 ? [responsavel, ...nomesAdultos].join(', ') : '—';
-    const listaCriancas = nomesCriancas.length > 0 ? nomesCriancas.join(', ') : '—';
+    const listaCriancas = this.formatarListaCriancas(nomesCriancas, idadesCriancas);
     return [
       '*HOMEM-ARANHA*',
       '━━━━━━━━━━━━━━━━',
@@ -259,6 +291,22 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
       '━━━━━━━━━━━━━━━━',
       '*MISSÃO ACEITA!*',
     ].join('\n');
+  }
+
+  private formatarListaCriancas(nomes: string[], idades: number[]): string {
+    if (nomes.length === 0) {
+      return '—';
+    }
+    return nomes
+      .map((nome, i) => this.formatarCrianca(nome, idades[i]))
+      .join(', ');
+  }
+
+  private formatarCrianca(nome: string, idade?: number): string {
+    if (idade === undefined || idade === null || Number.isNaN(idade)) {
+      return nome;
+    }
+    return `${nome} (${idade} ${idade === 1 ? 'ano' : 'anos'})`;
   }
 
   private sanitizeWhatsAppNumber(value: string): string {

@@ -27,6 +27,9 @@ public record RsvpRequest(
         List<String> nomesAdultos,
 
         /** Nomes de todas as crianças. */
-        List<String> nomesCriancas
+        List<String> nomesCriancas,
+
+        /** Idade em anos de cada criança (alinhada a nomesCriancas). */
+        List<Integer> idadesCriancas
 ) {
 }

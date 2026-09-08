@@ -192,6 +192,15 @@
                               placeholder="Ex.: Pedro | Ana"
                             />
                           </label>
+                          <label class="span-2">
+                            Idades das crianças em anos (separar com |)
+                            <input
+                              [(ngModel)]="editIdadesCriancas"
+                              [name]="'idades-criancas-' + r.id"
+                              type="text"
+                              placeholder="Ex.: 3 | 5"
+                            />
+                          </label>
                           <div class="row-actions span-2">
                             <button type="button" class="ok" (click)="salvarEdicao(r.id)">Salvar</button>
                             <button type="button" class="ghost" (click)="cancelarEdicao()">Cancelar</button>
@@ -212,7 +221,7 @@
                             <div><span>Adultos:</span> {{ formatarNomes(r.nomesAdultos) }}</div>
                           }
                           @if (r.nomesCriancas.length) {
-                            <div><span>Crianças:</span> {{ formatarNomes(r.nomesCriancas) }}</div>
+                            <div><span>Crianças:</span> {{ formatarCriancas(r.nomesCriancas, r.idadesCriancas) }}</div>
                           }
                         }
                       </td>

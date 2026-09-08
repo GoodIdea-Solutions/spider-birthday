@@ -39,6 +39,8 @@ export class AdminComponent implements OnInit {
   editNomesAdultos = '';
   /** Nomes das crianças separados por " | " */
   editNomesCriancas = '';
+  /** Idades das crianças em anos, separadas por " | " */
+  editIdadesCriancas = '';
 
   hqOrdem = 0;
   hqLayout: HqLayout = 'FULL';
@@ -164,6 +166,20 @@ export class AdminComponent implements OnInit {
     return nomes.join(', ');
   }
 
+  formatarCriancas(nomes: string[] | null | undefined, idades: number[] | null | undefined): string {
+    if (!nomes || nomes.length === 0) {
+      return '—';
+    }
+    return nomes.map((nome, i) => this.formatarCrianca(nome, idades?.[i])).join(', ');
+  }
+
+  private formatarCrianca(nome: string, idade?: number | null): string {
+    if (idade === undefined || idade === null || Number.isNaN(idade)) {
+      return nome;
+    }
+    return `${nome} (${idade} ${idade === 1 ? 'ano' : 'anos'})`;
+  }
+
   iniciarEdicao(rsvp: RsvpResponse) {
     this.editingId.set(rsvp.id);
     this.editNome = rsvp.nome;
@@ -172,6 +188,7 @@ export class AdminComponent implements OnInit {
     this.editTelefone = rsvp.telefone ?? '';
     this.editNomesAdultos = (rsvp.nomesAdultos ?? []).join(' | ');
     this.editNomesCriancas = (rsvp.nomesCriancas ?? []).join(' | ');
+    this.editIdadesCriancas = (rsvp.idadesCriancas ?? []).join(' | ');
     this.error.set(null);
   }
 
@@ -192,6 +209,7 @@ export class AdminComponent implements OnInit {
 
     const nomesAdultos = this.parseNomes(this.editNomesAdultos);
     const nomesCriancas = this.parseNomes(this.editNomesCriancas);
+    const idadesCriancas = this.parseIdades(this.editIdadesCriancas);
     const extrasEsperados = this.editAdultos > 1 ? this.editAdultos - 1 : 0;
 
     if (nomesAdultos.length !== extrasEsperados) {
@@ -210,6 +228,18 @@ export class AdminComponent implements OnInit {
       );
       return;
     }
+    if (idadesCriancas.length !== this.editCriancas) {
+      this.error.set(
+        this.editCriancas === 0
+          ? 'Deixe "Idades das crianças" vazio quando a quantidade é zero.'
+          : `Informe ${this.editCriancas} idade(s) de criança(s) (0 a 17), separadas por | .`
+      );
+      return;
+    }
+    if (idadesCriancas.some((idade) => idade < 0 || idade > 17 || !Number.isInteger(idade))) {
+      this.error.set('Informe a idade de cada criança (0 a 17 anos).');
+      return;
+    }
 
     this.admin
       .atualizarRsvp(id, {
@@ -219,6 +249,7 @@ export class AdminComponent implements OnInit {
         telefone: this.editTelefone.trim() || null,
         nomesAdultos,
         nomesCriancas,
+        idadesCriancas,
       })
       .subscribe({
         next: (atualizado) => {
@@ -258,6 +289,17 @@ export class AdminComponent implements OnInit {
       .split('|')
       .map((n) => n.trim())
       .filter(Boolean);
+  }
+
+  private parseIdades(valor: string): number[] {
+    if (!valor?.trim()) {
+      return [];
+    }
+    return valor
+      .split('|')
+      .map((n) => n.trim())
+      .filter(Boolean)
+      .map((n) => Number(n));
   }
 
   painelCount(layout: HqLayout): number {

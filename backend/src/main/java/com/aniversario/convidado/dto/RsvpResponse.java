@@ -11,6 +11,7 @@ public record RsvpResponse(
         String telefone,
         List<String> nomesAdultos,
         List<String> nomesCriancas,
+        List<Integer> idadesCriancas,
         Boolean confirmado,
         Instant createdAt
 ) {

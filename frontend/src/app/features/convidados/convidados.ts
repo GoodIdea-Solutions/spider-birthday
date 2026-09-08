@@ -49,7 +49,20 @@ export class ConvidadosComponent implements OnInit {
 
   criancasNomes(c: RsvpPublicResponse): string {
     const nomes = c.nomesCriancas ?? [];
-    return nomes.length ? nomes.join(', ') : '—';
+    if (!nomes.length) {
+      return '—';
+    }
+    const idades = c.idadesCriancas ?? [];
+    return nomes
+      .map((nome, i) => this.formatarCrianca(nome, idades[i]))
+      .join(', ');
+  }
+
+  private formatarCrianca(nome: string, idade?: number): string {
+    if (idade === undefined || idade === null || Number.isNaN(idade)) {
+      return nome;
+    }
+    return `${nome} (${idade} ${idade === 1 ? 'ano' : 'anos'})`;
   }
 
   imprimir() {

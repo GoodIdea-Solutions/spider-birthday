@@ -108,6 +108,10 @@ input {
   gap: 0.8rem;
 }
 
+.child-row {
+  grid-template-columns: 1fr 6.5rem;
+}
+
 .names-group {
   margin: 0;
   padding: 0.85rem 0.9rem;
@@ -200,7 +204,8 @@ input {
 }
 
 @media (max-width: 520px) {
-  .row {
+  .row,
+  .child-row {
     grid-template-columns: 1fr;
   }
   .modal-content {
