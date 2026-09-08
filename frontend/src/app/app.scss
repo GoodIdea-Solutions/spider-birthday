@@ -7,9 +7,12 @@ main {
   padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
 }
 
-main.capture {
+main.capture,
+main.invite {
   padding-bottom: 0;
+  height: 100dvh;
   min-height: 100dvh;
+  overflow: hidden;
 }
 
 @media (min-width: 721px) {

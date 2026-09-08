@@ -1,11 +1,11 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PartyConfigService } from '../../core/services/party-config.service';
-import { PublicarMidiaComponent } from './publicar-midia';
+import { CameraCapturaComponent } from './camera-captura';
 
 @Component({
   selector: 'app-camera-page',
-  imports: [PublicarMidiaComponent],
+  imports: [CameraCapturaComponent],
   templateUrl: './camera-page.html',
   styleUrl: './camera-page.scss',
 })

@@ -1,12 +1,14 @@
 <a class="skip-link" href="#conteudo-principal">Ir para o conteúdo</a>
-@if (!captureMode()) {
+@if (!captureMode() && !inviteMode()) {
   <app-header />
 }
-<main id="conteudo-principal" [class.capture]="captureMode()">
+<main id="conteudo-principal" [class.capture]="captureMode()" [class.invite]="inviteMode()">
   <router-outlet />
 </main>
-@if (!captureMode()) {
+@if (!captureMode() && !inviteMode()) {
   <app-footer />
   <app-fab-rsvp />
+}
+@if (!captureMode()) {
   <app-rsvp-modal />
 }

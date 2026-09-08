@@ -27,9 +27,19 @@ export class App implements OnInit {
     { initialValue: this.isCapture(this.router.url) }
   );
 
+  readonly inviteMode = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map(() => this.isInvite(this.router.url)),
+      startWith(this.isInvite(this.router.url))
+    ),
+    { initialValue: this.isInvite(this.router.url) }
+  );
+
   constructor() {
     effect(() => {
       document.body.classList.toggle('capture-mode', !!this.captureMode());
+      document.body.classList.toggle('invite-mode', !!this.inviteMode());
     });
   }
 
@@ -39,5 +49,9 @@ export class App implements OnInit {
 
   private isCapture(url: string) {
     return /\/festa\/[^/]+\/camera(?:[/?#]|$)/.test(url);
+  }
+
+  private isInvite(url: string) {
+    return /(?:^|\/)convite(?:[/?#]|$)/.test(url);
   }
 }

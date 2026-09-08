@@ -80,7 +80,13 @@ body.media-open {
 }
 
 body.capture-mode {
-  overflow-x: hidden;
+  overflow: hidden;
+  background: #050508;
+}
+
+body.invite-mode {
+  overflow: hidden;
+  background: #050814;
 }
 
 #inicio,

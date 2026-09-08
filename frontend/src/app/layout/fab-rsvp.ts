@@ -24,7 +24,7 @@ export class FabRsvpComponent {
 
   readonly visible = computed(() => {
     const path = (this.url() ?? '').split('?')[0].split('#')[0];
-    if (this.rsvpModalService.isOpen() || path.startsWith('/admin')) {
+    if (this.rsvpModalService.isOpen() || path.startsWith('/admin') || path.startsWith('/convite')) {
       return false;
     }
     return path !== '/' && path !== '';

@@ -1,0 +1,128 @@
+<div class="captura" [attr.data-mode]="mode()">
+  <div class="stage" [class.off]="mode() !== 'live' && mode() !== 'starting'">
+    <video
+      #preview
+      class="feed"
+      [class.mirror]="facing() === 'user'"
+      autoplay
+      muted
+      playsinline
+      disablepictureinpicture
+      [attr.playsinline]="''"
+      [attr.webkit-playsinline]="''"
+      (loadeddata)="onVideoReady()"
+    ></video>
+
+    @if (mode() === 'live' || mode() === 'starting') {
+      <div class="overlay" [attr.data-filter]="filtro()" aria-hidden="true">
+        @if (filtro() === 'teia') {
+          <svg class="web web-tl" viewBox="0 0 200 200">
+            <path [attr.d]="teiaTl" />
+          </svg>
+          <svg class="web web-br" viewBox="0 0 200 200">
+            <path [attr.d]="teiaBr" />
+          </svg>
+        }
+        @if (filtro() === 'samuel') {
+          <p class="stamp-name">{{ nome() }}</p>
+        }
+        @if (filtro() === 'anos') {
+          <p class="stamp-age">
+            <span>{{ idade() }}</span>
+            ANOS
+          </p>
+        }
+        @if (filtro() === 'moldura') {
+          <div class="hq-frame"></div>
+        }
+      </div>
+    }
+  </div>
+
+  @if (previewUrl(); as url) {
+    <img class="shot" [src]="url" alt="Prévia da foto capturada" />
+  }
+
+  @if (mode() === 'starting') {
+    <div class="sheet start" role="status">
+      <p class="kicker">{{ nome() }} {{ idade() }} anos</p>
+      <h1>Abrindo a câmera...</h1>
+      <p>Aponte para a festa e escolha um filtro de HQ.</p>
+    </div>
+  }
+
+  @if (mode() === 'live') {
+    <div class="hud">
+      <p class="live-kicker">{{ nome() }} {{ idade() }} anos</p>
+      <button type="button" class="flip" (click)="alternarCamera()" aria-label="Virar câmera">
+        Virar
+      </button>
+
+      <div class="dock">
+        <div class="chips" role="listbox" aria-label="Filtros">
+          @for (chip of filtros(); track chip.id) {
+            <button
+              type="button"
+              role="option"
+              [attr.aria-selected]="filtro() === chip.id"
+              [class.on]="filtro() === chip.id"
+              (click)="escolherFiltro(chip.id)"
+            >
+              {{ chip.label }}
+            </button>
+          }
+        </div>
+
+        <button
+          type="button"
+          class="shutter"
+          (click)="capturar()"
+          [disabled]="!pronta() || capturing()"
+          aria-label="Tirar foto"
+        >
+          <span></span>
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (mode() === 'review') {
+    <div class="sheet review">
+      <p class="kicker">Ficou legal?</p>
+      <h1>Enviar para a festa</h1>
+      <p>A foto vai para Stories e Mural depois da aprovação da HQ.</p>
+      <button type="button" class="cta" (click)="enviar()" [disabled]="uploading()">
+        {{ uploading() ? 'Enviando...' : 'Enviar para a festa' }}
+      </button>
+      <button type="button" class="ghost" (click)="tirarOutra()" [disabled]="uploading()">
+        Tirar outra
+      </button>
+    </div>
+  }
+
+  @if (mode() === 'success') {
+    <div class="sheet success" role="status">
+      <p class="kicker boom">Momento enviado!</p>
+      <h1>Sua foto vai para Stories e Mural depois da HQ.</h1>
+      <button type="button" class="cta" (click)="tirarOutra()">Tirar outra</button>
+      <a class="link" routerLink="/fotos">Ver mural</a>
+    </div>
+  }
+
+  @if (mode() === 'fallback') {
+    <div class="sheet fallback">
+      <p class="kicker">Câmera indisponível</p>
+      <h1>Envie uma foto mesmo assim</h1>
+      <p>{{ cameraError() }}</p>
+      <label class="cta file">
+        Escolher foto
+        <input type="file" accept="image/*" (change)="onFallbackFile($event)" />
+      </label>
+      <button type="button" class="ghost" (click)="tentarCamera()">Tentar câmera de novo</button>
+    </div>
+  }
+
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+</div>
