@@ -9,6 +9,9 @@
   <app-footer />
   <app-fab-rsvp />
 }
+@if (!captureMode() && !inviteMode() && !adminMode()) {
+  <app-spider-crawl />
+}
 @if (!captureMode()) {
   <app-rsvp-modal />
 }

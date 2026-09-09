@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { PartyConfigService } from '../../core/services/party-config.service';
 import { RsvpModalService } from '../../core/services/rsvp-modal.service';
 import { PresentesSectionComponent } from '../presentes/presentes-section';
+import { WebCornerComponent } from '../../layout/web-corner';
 
 const MESES = [
   'janeiro',
@@ -21,7 +22,7 @@ const MESES = [
 
 @Component({
   selector: 'app-home',
-  imports: [PresentesSectionComponent, RouterLink],
+  imports: [PresentesSectionComponent, RouterLink, WebCornerComponent],
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })

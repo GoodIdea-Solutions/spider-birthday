@@ -1,0 +1,122 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.spider-drop {
+  position: absolute;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 2.15rem;
+  height: 5.75rem;
+  overflow: hidden;
+  --spider-travel: min(40vh, 20rem);
+  animation: spider-descend 22s ease-in-out infinite;
+  animation-delay: -6.5s;
+}
+
+.spider-drop--left {
+  left: max(0.45rem, env(safe-area-inset-left, 0px));
+}
+
+.spider-drop--right {
+  display: none;
+  right: max(0.45rem, env(safe-area-inset-right, 0px));
+  animation-duration: 27s;
+  animation-delay: -18s;
+}
+
+.silk {
+  width: 2px;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.12), rgba(225, 29, 46, 0.8));
+}
+
+.spider-hit {
+  display: block;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  line-height: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.spider-svg {
+  display: block;
+  width: 1.85rem;
+  height: auto;
+  pointer-events: none;
+  filter:
+    drop-shadow(0 0 2px rgba(248, 250, 252, 0.45))
+    drop-shadow(0 1px 2px rgba(11, 18, 40, 0.55));
+}
+
+.legs {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: spider-wiggle 0.55s ease-in-out infinite alternate;
+}
+
+.spider-drop.flee {
+  animation: spider-flee 0.65s ease-in forwards;
+  pointer-events: none;
+}
+
+.spider-drop.flee .legs {
+  animation: none;
+}
+
+@media (min-width: 900px) {
+  .spider-drop {
+    width: 2.75rem;
+    --spider-travel: min(68vh, 34rem);
+  }
+
+  .spider-svg {
+    width: 2.65rem;
+  }
+
+  .spider-drop--right {
+    display: flex;
+  }
+}
+
+@keyframes spider-descend {
+  0%,
+  100% {
+    height: 5.75rem;
+  }
+
+  40% {
+    height: var(--spider-travel);
+  }
+
+  56% {
+    height: var(--spider-travel);
+  }
+}
+
+@keyframes spider-flee {
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes spider-wiggle {
+  from {
+    transform: rotate(-7deg);
+  }
+
+  to {
+    transform: rotate(7deg);
+  }
+}

@@ -11,15 +11,8 @@
   />
   <div class="hero-overlay" aria-hidden="true"></div>
   <div class="hero-halftone" aria-hidden="true"></div>
-  <svg class="web web-tl" viewBox="0 0 200 200" aria-hidden="true">
-    <path d="M0 0 L90 70 M0 30 L70 90 M30 0 L95 55 M0 60 L50 100 M60 0 L100 40" />
-    <path d="M10 10 Q55 40 90 70 Q40 55 10 10" />
-    <path d="M20 5 Q60 35 85 60" />
-  </svg>
-  <svg class="web web-br" viewBox="0 0 200 200" aria-hidden="true">
-    <path d="M200 200 L110 130 M200 170 L130 110 M170 200 L105 145 M200 140 L150 100 M140 200 L100 160" />
-    <path d="M190 190 Q145 160 110 130 Q160 145 190 190" />
-  </svg>
+  <app-web-corner corner="tl" />
+  <app-web-corner class="hero-web-br" corner="br" />
 
   <div class="hero-content">
     <p class="hero-invite">Uma missão especial</p>
@@ -116,6 +109,8 @@
 </section>
 
 <section id="missao" class="mission">
+  <app-web-corner corner="tl" [opacity]="0.45" />
+  <app-web-corner corner="br" [opacity]="0.35" />
   <div class="mission-inner">
     <p class="mission-kicker">Informações da missão</p>
     <h2>Quando e onde</h2>

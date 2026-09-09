@@ -48,25 +48,8 @@
   pointer-events: none;
 }
 
-.web {
-  position: absolute;
-  z-index: 1;
-  width: min(38vw, 12rem);
-  height: min(38vw, 12rem);
-  stroke: rgba(248, 250, 252, 0.18);
-  stroke-width: 2;
-  fill: none;
-  pointer-events: none;
-}
-
-.web-tl {
-  top: -0.5rem;
-  left: -0.5rem;
-}
-
-.web-br {
-  right: -0.5rem;
-  bottom: 4rem;
+.hero-web-br {
+  --web-inset-y: 4rem;
   opacity: 0.55;
 }
 
@@ -391,6 +374,8 @@
 }
 
 .mission {
+  position: relative;
+  overflow: hidden;
   padding: 2.5rem 1.25rem 3rem;
   background:
     radial-gradient(circle at 80% 20%, rgba(225, 29, 46, 0.12), transparent 35%),
@@ -399,6 +384,8 @@
 }
 
 .mission-inner {
+  position: relative;
+  z-index: 2;
   display: grid;
   justify-items: stretch;
   gap: 0.85rem;
@@ -611,7 +598,7 @@
     opacity: 0.22;
   }
 
-  .web-br {
+  .hero-web-br {
     opacity: 0.35;
   }
 

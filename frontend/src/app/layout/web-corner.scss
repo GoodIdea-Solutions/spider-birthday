@@ -1,0 +1,37 @@
+:host {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  width: min(38vw, 12rem);
+  height: min(38vw, 12rem);
+  pointer-events: none;
+}
+
+:host([data-corner='tl']) {
+  top: var(--web-inset-y, -0.5rem);
+  left: var(--web-inset-x, -0.5rem);
+}
+
+:host([data-corner='tr']) {
+  top: var(--web-inset-y, -0.5rem);
+  right: var(--web-inset-x, -0.5rem);
+}
+
+:host([data-corner='bl']) {
+  bottom: var(--web-inset-y, -0.5rem);
+  left: var(--web-inset-x, -0.5rem);
+}
+
+:host([data-corner='br']) {
+  bottom: var(--web-inset-y, -0.5rem);
+  right: var(--web-inset-x, -0.5rem);
+}
+
+.web-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: rgba(248, 250, 252, 0.18);
+  stroke-width: 2;
+}

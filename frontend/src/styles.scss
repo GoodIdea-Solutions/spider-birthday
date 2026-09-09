@@ -111,6 +111,16 @@ body.invite-mode {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+
+  .spider-crawl {
+    display: none !important;
+  }
+}
+
+body.modal-open .spider-crawl {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 @media print {
@@ -118,6 +128,7 @@ body.invite-mode {
   .site-footer,
   .fab,
   .modal-overlay,
+  .spider-crawl,
   .no-print {
     display: none !important;
   }

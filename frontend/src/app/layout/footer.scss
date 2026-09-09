@@ -1,4 +1,6 @@
 .site-footer {
+  position: relative;
+  overflow: hidden;
   margin-top: 0;
   padding: 2rem 1rem calc(2rem + env(safe-area-inset-bottom, 0px));
   text-align: center;
@@ -6,6 +8,11 @@
     linear-gradient(180deg, #0b1228 0%, #050814 100%);
   color: var(--cream);
   border-top: 3px solid var(--spider-red);
+}
+
+.site-footer p {
+  position: relative;
+  z-index: 2;
 }
 
 .tiny {
