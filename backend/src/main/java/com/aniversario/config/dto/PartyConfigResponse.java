@@ -18,7 +18,10 @@ public record PartyConfigResponse(
         String whatsappNumber,
         String emailRecepcao,
         String instagramHandle,
-        Caixa18AnosConfig caixa18Anos
+        Caixa18AnosConfig caixa18Anos,
+        String prazoConfirmacao,
+        boolean confirmacaoLiberada,
+        boolean confirmacaoAberta
 ) {
     public record Caixa18AnosConfig(
             String titulo,

@@ -24,13 +24,18 @@ public class ConvidadoService {
     private static final int IDADE_MAX = 17;
 
     private final ConvidadoRepository convidadoRepository;
+    private final RsvpConfigService rsvpConfigService;
 
-    public ConvidadoService(ConvidadoRepository convidadoRepository) {
+    public ConvidadoService(ConvidadoRepository convidadoRepository, RsvpConfigService rsvpConfigService) {
         this.convidadoRepository = convidadoRepository;
+        this.rsvpConfigService = rsvpConfigService;
     }
 
     @Transactional
     public RsvpResponse confirmar(RsvpRequest request) {
+        if (!rsvpConfigService.isAberta()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, rsvpConfigService.mensagemEncerrada());
+        }
         validarQuantidades(request.quantidadeAdultos(), request.quantidadeCriancas());
         List<String> nomesAdultos = normalizarLista(request.nomesAdultos());
         List<String> nomesCriancas = normalizarLista(request.nomesCriancas());

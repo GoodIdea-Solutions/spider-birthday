@@ -17,6 +17,9 @@ export interface PartyConfig {
   emailRecepcao: string;
   instagramHandle: string;
   caixa18Anos?: Caixa18AnosConfig;
+  prazoConfirmacao?: string | null;
+  confirmacaoLiberada?: boolean;
+  confirmacaoAberta?: boolean;
 }
 
 export interface Caixa18AnosConfig {
@@ -136,4 +139,10 @@ export interface Dashboard {
   fotosAprovadas: number;
   storiesAtivos?: number;
   muralCount?: number;
+}
+
+export interface RsvpConfig {
+  confirmacaoLiberada: boolean;
+  prazoConfirmacao: string | null;
+  confirmacaoAberta: boolean;
 }

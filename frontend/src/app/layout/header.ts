@@ -1,6 +1,7 @@
 import { ViewportScroller } from '@angular/common';
 import { Component, HostListener, OnDestroy, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { PartyConfigService } from '../core/services/party-config.service';
 import { RsvpModalService } from '../core/services/rsvp-modal.service';
 
 @Component({
@@ -13,8 +14,10 @@ export class HeaderComponent implements OnDestroy {
   private readonly router = inject(Router);
   private readonly viewport = inject(ViewportScroller);
   private readonly rsvpModal = inject(RsvpModalService);
+  private readonly party = inject(PartyConfigService);
 
   readonly menuOpen = signal(false);
+  readonly confirmacaoAberta = this.party.confirmacaoAberta;
 
   constructor() {
     effect(() => {

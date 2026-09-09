@@ -30,6 +30,8 @@
     <a routerLink="/fotos" routerLinkActive="active" (click)="closeMenu()">Mural</a>
     <a routerLink="/hq" routerLinkActive="active" (click)="closeMenu()">Revista</a>
     <a routerLink="/convidados" routerLinkActive="active" (click)="closeMenu()">Lista de Heróis</a>
-    <button type="button" class="nav-rsvp" (click)="openRsvp()">Confirmar presença</button>
+    @if (confirmacaoAberta()) {
+      <button type="button" class="nav-rsvp" (click)="openRsvp()">Confirmar presença</button>
+    }
   </nav>
 </header>

@@ -351,6 +351,34 @@ td {
   color: var(--muted);
 }
 
+.rsvp-prazo {
+  margin-bottom: 1rem;
+}
+
+.rsvp-status {
+  margin: 0;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.rsvp-status.aberta {
+  color: #15803d;
+}
+
+.rsvp-status.encerrada {
+  color: #b91c1c;
+}
+
+.rsvp-prazo input[type='date'] {
+  width: 100%;
+  max-width: 16rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.7rem;
+  border: 1px solid #d6d3d1;
+  font: inherit;
+  background: #fff;
+}
+
 @media (min-width: 720px) {
   .stats {
     grid-template-columns: repeat(4, 1fr);

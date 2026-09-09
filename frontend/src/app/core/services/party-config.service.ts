@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, of, tap } from 'rxjs';
 import { Caixa18AnosConfig, PartyConfig } from '../models/party.models';
@@ -31,12 +31,34 @@ const FALLBACK_CONFIG: PartyConfig = {
   emailRecepcao: '[EMAIL_RECEPCAO]',
   instagramHandle: '[INSTAGRAM]',
   caixa18Anos: FALLBACK_CAIXA_18,
+  prazoConfirmacao: null,
+  confirmacaoLiberada: true,
+  confirmacaoAberta: true,
 };
 
 @Injectable({ providedIn: 'root' })
 export class PartyConfigService {
   private readonly configSignal = signal<PartyConfig | null>(null);
   readonly config = this.configSignal.asReadonly();
+
+  readonly confirmacaoAberta = computed(() => this.configSignal()?.confirmacaoAberta !== false);
+
+  readonly textoPrazo = computed(() => {
+    const formatado = formatIsoToBr(this.configSignal()?.prazoConfirmacao);
+    return formatado ? `Confirmar presença até ${formatado}` : null;
+  });
+
+  readonly mensagemEncerrada = computed(() => {
+    const cfg = this.configSignal();
+    if (cfg?.confirmacaoLiberada === false) {
+      return 'As confirmações estão encerradas.';
+    }
+    const formatado = formatIsoToBr(cfg?.prazoConfirmacao);
+    if (formatado) {
+      return `O prazo para confirmar presença encerrou em ${formatado}.`;
+    }
+    return 'As confirmações estão encerradas.';
+  });
 
   constructor(private readonly http: HttpClient) {}
 
@@ -59,4 +81,15 @@ export class PartyConfigService {
   caixa18Anos(): Caixa18AnosConfig {
     return this.configSignal()?.caixa18Anos ?? FALLBACK_CAIXA_18;
   }
+}
+
+function formatIsoToBr(iso: string | null | undefined): string | null {
+  if (!iso) {
+    return null;
+  }
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+  if (!match) {
+    return null;
+  }
+  return `${match[3]}/${match[2]}/${match[1]}`;
 }

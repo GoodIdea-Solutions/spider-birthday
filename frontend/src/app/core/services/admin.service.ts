@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Dashboard, Foto, HqPagina, HqPaginaPayload, Presente, RsvpRequest, RsvpResponse } from '../models/party.models';
+import { Dashboard, Foto, HqPagina, HqPaginaPayload, Presente, RsvpConfig, RsvpRequest, RsvpResponse } from '../models/party.models';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -65,6 +65,14 @@ export class AdminService {
 
   atualizarRsvp(id: number, payload: RsvpRequest) {
     return this.http.put<RsvpResponse>(`/api/admin/rsvp/${id}`, payload, this.headers());
+  }
+
+  rsvpConfig() {
+    return this.http.get<RsvpConfig>('/api/admin/rsvp/config', this.headers());
+  }
+
+  salvarRsvpConfig(payload: { confirmacaoLiberada: boolean; prazoConfirmacao: string | null }) {
+    return this.http.put<RsvpConfig>('/api/admin/rsvp/config', payload, this.headers());
   }
 
   aprovadas() {

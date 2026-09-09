@@ -68,7 +68,14 @@
     </ul>
 
     <div class="hero-actions">
-      <button type="button" class="cta" (click)="openRsvp()">Confirmar presença</button>
+      @if (textoPrazo()) {
+        <p class="rsvp-deadline">{{ textoPrazo() }}</p>
+      }
+      @if (confirmacaoAberta()) {
+        <button type="button" class="cta" (click)="openRsvp()">Confirmar presença</button>
+      } @else {
+        <p class="rsvp-closed">{{ mensagemEncerrada() }}</p>
+      }
       @if (mapsLink()) {
         <a class="cta cta-secondary" [href]="mapsLink()!" target="_blank" rel="noopener noreferrer">
           Como chegar
@@ -139,14 +146,21 @@
     </ul>
 
     <div class="mission-actions">
+      @if (textoPrazo()) {
+        <p class="rsvp-deadline mission-deadline">{{ textoPrazo() }}</p>
+      }
       @if (mapsLink()) {
         <a class="cta cta-secondary mission-maps" [href]="mapsLink()!" target="_blank" rel="noopener noreferrer">
           Como chegar
         </a>
       }
-      <button type="button" class="cta" (click)="openRsvp()">
-        {{ party()?.mensagemMissao || 'Confirmar presença' }}
-      </button>
+      @if (confirmacaoAberta()) {
+        <button type="button" class="cta" (click)="openRsvp()">
+          {{ party()?.mensagemMissao || 'Confirmar presença' }}
+        </button>
+      } @else {
+        <p class="rsvp-closed">{{ mensagemEncerrada() }}</p>
+      }
     </div>
   </div>
 </section>

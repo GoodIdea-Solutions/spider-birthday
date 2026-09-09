@@ -31,6 +31,9 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
   readonly success = signal(false);
   readonly error = signal<string | null>(null);
   readonly heroName = signal('');
+  readonly confirmacaoAberta = this.partyConfig.confirmacaoAberta;
+  readonly textoPrazo = this.partyConfig.textoPrazo;
+  readonly mensagemEncerrada = this.partyConfig.mensagemEncerrada;
 
   @ViewChild('dialog') dialogRef?: ElementRef<HTMLElement>;
   private previouslyFocused: HTMLElement | null = null;
@@ -121,6 +124,10 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
 
   submit() {
     this.error.set(null);
+    if (!this.confirmacaoAberta()) {
+      this.error.set(this.mensagemEncerrada());
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.error.set('Preencha o nome do responsável, de todos os acompanhantes e a idade de cada criança.');

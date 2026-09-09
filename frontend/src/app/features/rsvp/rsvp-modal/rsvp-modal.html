@@ -23,9 +23,18 @@
             <button type="button" class="btn-close" (click)="close()">Fechar</button>
           </div>
         </div>
+      } @else if (!confirmacaoAberta()) {
+        <div class="closed-state">
+          <h2 id="rsvp-title">Confirmações encerradas</h2>
+          <p class="modal-lead">{{ mensagemEncerrada() }}</p>
+          <button type="button" class="btn-close" (click)="close()">Fechar</button>
+        </div>
       } @else {
         <h2 id="rsvp-title">Sua missão começa aqui!</h2>
         <p class="modal-lead">Você vai nessa aventura?</p>
+        @if (textoPrazo()) {
+          <p class="rsvp-deadline">{{ textoPrazo() }}</p>
+        }
 
         <form class="rsvp-form" [formGroup]="form" (ngSubmit)="submit()">
           <label>

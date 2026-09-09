@@ -31,6 +31,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   private timerId: ReturnType<typeof setInterval> | null = null;
 
   readonly party = this.partyService.config;
+  readonly confirmacaoAberta = this.partyService.confirmacaoAberta;
+  readonly textoPrazo = this.partyService.textoPrazo;
+  readonly mensagemEncerrada = this.partyService.mensagemEncerrada;
 
   readonly destaques = [
     { title: 'Muita diversão', icon: 'star' },

@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Dashboard, Foto, HqLayout, HqPagina, HqPainelPayload, Presente, RsvpResponse } from '../../core/models/party.models';
+import { Dashboard, Foto, HqLayout, HqPagina, HqPainelPayload, Presente, RsvpConfig, RsvpResponse } from '../../core/models/party.models';
 import { AdminService } from '../../core/services/admin.service';
 import { PartyConfigService } from '../../core/services/party-config.service';
 import { QrCodeService } from '../../core/services/qr-code.service';
@@ -58,6 +58,12 @@ export class AdminComponent implements OnInit {
   giftFile: File | null = null;
   giftPreview: string | null = null;
 
+  rsvpPrazo = '';
+  rsvpLiberada = true;
+  readonly rsvpConfirmacaoAberta = signal(true);
+  readonly rsvpSaving = signal(false);
+  readonly rsvpSaveMsg = signal<string | null>(null);
+
   ngOnInit() {
     if (this.tokenInput) {
       this.entrar();
@@ -97,6 +103,10 @@ export class AdminComponent implements OnInit {
         this.loading.set(false);
         this.error.set('Falha ao carregar RSVPs.');
       },
+    });
+    this.admin.rsvpConfig().subscribe({
+      next: (cfg) => this.aplicarRsvpConfig(cfg),
+      error: () => this.error.set('Falha ao carregar o prazo de confirmação.'),
     });
     this.admin.aprovadas().subscribe({
       next: (fotos) => this.aprovadas.set(fotos),
@@ -294,6 +304,35 @@ export class AdminComponent implements OnInit {
       error: (err) =>
         this.error.set(this.mensagemErro(err, 'Não foi possível excluir o RSVP.')),
     });
+  }
+
+  private aplicarRsvpConfig(cfg: RsvpConfig) {
+    this.rsvpLiberada = cfg.confirmacaoLiberada;
+    this.rsvpPrazo = cfg.prazoConfirmacao ?? '';
+    this.rsvpConfirmacaoAberta.set(cfg.confirmacaoAberta);
+  }
+
+  salvarRsvpConfig() {
+    this.rsvpSaving.set(true);
+    this.rsvpSaveMsg.set(null);
+    this.error.set(null);
+    this.admin
+      .salvarRsvpConfig({
+        confirmacaoLiberada: this.rsvpLiberada,
+        prazoConfirmacao: this.rsvpPrazo.trim() || null,
+      })
+      .subscribe({
+        next: (cfg) => {
+          this.rsvpSaving.set(false);
+          this.aplicarRsvpConfig(cfg);
+          this.rsvpSaveMsg.set('Prazo de confirmação salvo.');
+          this.party.load().subscribe();
+        },
+        error: (err) => {
+          this.rsvpSaving.set(false);
+          this.error.set(this.mensagemErro(err, 'Não foi possível salvar o prazo de confirmação.'));
+        },
+      });
   }
 
   private parseNomes(valor: string): string[] {

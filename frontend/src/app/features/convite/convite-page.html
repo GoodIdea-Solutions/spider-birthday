@@ -11,8 +11,15 @@
   </div>
 
   <div class="convite-cta">
-    <p class="convite-hint">Toque no botão vermelho para dizer que vem à festa</p>
-    <button type="button" class="convite-btn" (click)="openRsvp()">Confirmar presença</button>
+    @if (textoPrazo()) {
+      <p class="convite-deadline">{{ textoPrazo() }}</p>
+    }
+    @if (confirmacaoAberta()) {
+      <p class="convite-hint">Toque no botão vermelho para dizer que vem à festa</p>
+      <button type="button" class="convite-btn" (click)="openRsvp()">Confirmar presença</button>
+    } @else {
+      <p class="convite-hint">{{ mensagemEncerrada() }}</p>
+    }
     <a routerLink="/" class="convite-site">Ver o site da festa</a>
   </div>
 </section>

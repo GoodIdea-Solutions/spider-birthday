@@ -171,6 +171,33 @@
   animation: fadeUp 1.1s ease both;
 }
 
+.rsvp-deadline {
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--balloon-yellow, #f5c518);
+}
+
+.rsvp-closed {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 2px dashed rgba(255, 255, 255, 0.35);
+  border-radius: 0.7rem;
+  font-weight: 700;
+  color: rgba(248, 250, 252, 0.92);
+}
+
+.hero-actions .rsvp-deadline,
+.hero-actions .rsvp-closed,
+.mission-actions .rsvp-deadline,
+.mission-actions .rsvp-closed {
+  grid-column: 1 / -1;
+}
+
+.mission-deadline {
+  color: var(--balloon-yellow, #f5c518);
+}
+
 .cta {
   display: inline-flex;
   align-items: center;

@@ -1,6 +1,10 @@
 package com.aniversario.config;
 
+import java.time.format.DateTimeFormatter;
+
 import com.aniversario.config.dto.PartyConfigResponse;
+import com.aniversario.convidado.dto.RsvpConfigResponse;
+import com.aniversario.convidado.service.RsvpConfigService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,14 +13,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/party")
 public class PartyController {
 
-    private final PartyProperties partyProperties;
+    private static final DateTimeFormatter ISO_DATE = DateTimeFormatter.ISO_LOCAL_DATE;
 
-    public PartyController(PartyProperties partyProperties) {
+    private final PartyProperties partyProperties;
+    private final RsvpConfigService rsvpConfigService;
+
+    public PartyController(PartyProperties partyProperties, RsvpConfigService rsvpConfigService) {
         this.partyProperties = partyProperties;
+        this.rsvpConfigService = rsvpConfigService;
     }
 
     @GetMapping
     public PartyConfigResponse getParty() {
+        RsvpConfigResponse rsvp = rsvpConfigService.obter();
         return new PartyConfigResponse(
                 partyProperties.getNomeCrianca(),
                 partyProperties.getSlug(),
@@ -35,7 +44,10 @@ public class PartyController {
                 partyProperties.getWhatsappNumber(),
                 partyProperties.getEmailRecepcao(),
                 partyProperties.getInstagramHandle(),
-                toCaixa18Anos(partyProperties.getCaixa18Anos())
+                toCaixa18Anos(partyProperties.getCaixa18Anos()),
+                rsvp.prazoConfirmacao() == null ? null : rsvp.prazoConfirmacao().format(ISO_DATE),
+                rsvp.confirmacaoLiberada(),
+                rsvp.confirmacaoAberta()
         );
     }
 
