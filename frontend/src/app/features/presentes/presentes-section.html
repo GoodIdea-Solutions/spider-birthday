@@ -10,6 +10,8 @@
       <p class="status">Carregando presentes...</p>
     } @else if (error()) {
       <p class="status error" role="alert">{{ error() }}</p>
+    } @else if (presentes().length === 0) {
+      <p class="status empty">A lista ainda está sendo montada pela HQ.</p>
     } @else {
       <div class="grid">
         @for (item of presentes(); track item.id) {

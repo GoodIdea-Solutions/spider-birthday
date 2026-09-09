@@ -240,6 +240,115 @@
           </div>
         </section>
 
+        <section class="presentes-admin">
+          <h2>Lista de presentes</h2>
+          <p class="empty">
+            Cadastre nome, foto e o link da loja. O que estiver visível aparece em /presentes para os convidados.
+          </p>
+
+          <form class="hq-form" (ngSubmit)="salvarPresente()">
+            <label class="span-2">
+              Nome
+              <input
+                [(ngModel)]="giftNome"
+                name="giftNome"
+                type="text"
+                maxlength="150"
+                required
+                placeholder="Ex.: Kit de aventura"
+              />
+            </label>
+            <label class="span-2">
+              Descrição (opcional)
+              <input
+                [(ngModel)]="giftDescricao"
+                name="giftDescricao"
+                type="text"
+                maxlength="500"
+                placeholder="Uma frase curta sobre o presente"
+              />
+            </label>
+            <label class="span-2">
+              Link da loja (opcional)
+              <input
+                [(ngModel)]="giftLink"
+                name="giftLink"
+                type="url"
+                maxlength="2000"
+                placeholder="https://www.amazon.com.br/..."
+              />
+            </label>
+            <label class="span-2">
+              Foto do presente
+              <input
+                #giftFileInput
+                name="giftFile"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                (change)="onGiftFile($event)"
+              />
+            </label>
+            <label class="span-2">
+              Ou cole a URL da imagem
+              <input
+                [(ngModel)]="giftImagemUrl"
+                name="giftImagemUrl"
+                type="url"
+                maxlength="2000"
+                placeholder="https://..."
+                (ngModelChange)="onGiftImagemUrlChange()"
+              />
+            </label>
+            @if (giftPreview) {
+              <div class="gift-preview span-2">
+                <img [src]="giftPreview" [alt]="giftNome || 'Prévia do presente'" />
+              </div>
+            }
+            <label class="check span-2">
+              <input [(ngModel)]="giftAtivo" name="giftAtivo" type="checkbox" />
+              Visível na lista pública
+            </label>
+            <div class="row-actions span-2">
+              <button type="submit" class="ok">
+                {{ editingGiftId() ? 'Salvar presente' : 'Adicionar presente' }}
+              </button>
+              @if (editingGiftId()) {
+                <button type="button" class="ghost" (click)="resetGiftForm()">Cancelar</button>
+              }
+            </div>
+          </form>
+
+          @if (presentes().length === 0) {
+            <p class="empty">Nenhum presente cadastrado ainda.</p>
+          }
+          <ul class="hq-list">
+            @for (item of presentes(); track item.id) {
+              <li>
+                <div class="gift-row">
+                  @if (item.imagemUrl) {
+                    <img class="gift-thumb" [src]="item.imagemUrl" [alt]="item.nome" />
+                  } @else {
+                    <span class="gift-thumb gift-thumb--empty" aria-hidden="true"></span>
+                  }
+                  <div>
+                    <strong>{{ item.nome }}</strong>
+                    <span>
+                      {{ item.ativo ? 'Visível' : 'Oculto' }}
+                      @if (item.link) {
+                        · tem link da loja
+                      }
+                    </span>
+                  </div>
+                </div>
+                <div class="row-actions">
+                  <button type="button" class="edit" (click)="iniciarEdicaoPresente(item)">Editar</button>
+                  <button type="button" class="danger" (click)="excluirPresente(item)">Excluir</button>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+
         <section class="hq-admin">
           <h2>Revista HQ</h2>
           <p class="empty">Monte páginas com fotos aprovadas (imagens, sem vídeo), layout e legendas. Visitantes leem em /hq.</p>

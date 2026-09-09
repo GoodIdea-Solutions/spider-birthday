@@ -29,7 +29,7 @@ spring:
 app:
   admin-token: ${APP_ADMIN_TOKEN:troque-este-token}
   cors:
-    allowed-origins: ${APP_CORS_ORIGINS:http://localhost:4200}
+    allowed-origins: ${APP_CORS_ORIGINS:http://localhost:*,http://127.0.0.1:*}
   storage:
     upload-dir: ${APP_UPLOAD_DIR:uploads}
     public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:8080/uploads}

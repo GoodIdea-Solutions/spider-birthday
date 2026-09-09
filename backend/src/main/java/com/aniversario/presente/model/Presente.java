@@ -26,10 +26,13 @@ public class Presente extends AuditableEntity {
     @Column(length = 500)
     private String descricao;
 
-    @Column(name = "imagem_url", length = 500)
+    @Column(name = "imagem_url", length = 2000)
     private String imagemUrl;
 
-    @Column(length = 500)
+    @Column(name = "imagem_arquivo", length = 255)
+    private String imagemArquivo;
+
+    @Column(length = 2000)
     private String link;
 
     @Column(nullable = false)

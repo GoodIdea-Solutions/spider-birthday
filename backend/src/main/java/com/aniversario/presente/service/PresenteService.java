@@ -1,20 +1,32 @@
 package com.aniversario.presente.service;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
+import com.aniversario.exception.ApiException;
+import com.aniversario.foto.storage.FileStorageService;
+import com.aniversario.foto.storage.StoredFile;
 import com.aniversario.presente.dto.PresenteResponse;
 import com.aniversario.presente.model.Presente;
 import com.aniversario.presente.repository.PresenteRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class PresenteService {
 
-    private final PresenteRepository presenteRepository;
+    private static final Set<String> IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
+    private static final long MAX_IMAGE_BYTES = 10L * 1024 * 1024;
 
-    public PresenteService(PresenteRepository presenteRepository) {
+    private final PresenteRepository presenteRepository;
+    private final FileStorageService fileStorageService;
+
+    public PresenteService(PresenteRepository presenteRepository, FileStorageService fileStorageService) {
         this.presenteRepository = presenteRepository;
+        this.fileStorageService = fileStorageService;
     }
 
     @Transactional(readOnly = true)
@@ -22,6 +34,143 @@ public class PresenteService {
         return presenteRepository.findByAtivoTrueOrderByNomeAsc().stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<PresenteResponse> listarAdmin() {
+        return presenteRepository.findAllByOrderByNomeAsc().stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional
+    public PresenteResponse criar(
+            String nome,
+            String descricao,
+            String link,
+            Boolean ativo,
+            String imagemUrl,
+            MultipartFile file
+    ) {
+        Presente presente = new Presente();
+        aplicarCampos(presente, nome, descricao, link, ativo);
+        aplicarImagem(presente, imagemUrl, file, false);
+        return toResponse(presenteRepository.save(presente));
+    }
+
+    @Transactional
+    public PresenteResponse atualizar(
+            Long id,
+            String nome,
+            String descricao,
+            String link,
+            Boolean ativo,
+            String imagemUrl,
+            MultipartFile file
+    ) {
+        Presente presente = presenteRepository.findById(id)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Presente não encontrado."));
+        aplicarCampos(presente, nome, descricao, link, ativo);
+        aplicarImagem(presente, imagemUrl, file, true);
+        return toResponse(presenteRepository.save(presente));
+    }
+
+    @Transactional
+    public void excluir(Long id) {
+        Presente presente = presenteRepository.findById(id)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Presente não encontrado."));
+        apagarArquivo(presente.getImagemArquivo());
+        presenteRepository.delete(presente);
+    }
+
+    private void aplicarCampos(Presente presente, String nome, String descricao, String link, Boolean ativo) {
+        String nomeLimpo = trimToNull(nome);
+        if (nomeLimpo == null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Nome é obrigatório.");
+        }
+        if (nomeLimpo.length() > 150) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Nome deve ter no máximo 150 caracteres.");
+        }
+        presente.setNome(nomeLimpo);
+        presente.setDescricao(limitar(trimToNull(descricao), 500, "Descrição"));
+        presente.setLink(validarUrl(trimToNull(link), "Link da loja"));
+        presente.setAtivo(ativo == null || ativo);
+    }
+
+    private void aplicarImagem(Presente presente, String imagemUrl, MultipartFile file, boolean atualizar) {
+        boolean temArquivo = file != null && !file.isEmpty();
+        String urlInformada = validarUrl(trimToNull(imagemUrl), "URL da imagem");
+
+        if (!temArquivo && urlInformada == null && atualizar) {
+            return;
+        }
+
+        if (temArquivo) {
+            validarImagem(file);
+            StoredFile stored = fileStorageService.store(file);
+            apagarArquivo(presente.getImagemArquivo());
+            presente.setImagemArquivo(stored.fileName());
+            presente.setImagemUrl(stored.url());
+            return;
+        }
+
+        if (urlInformada != null) {
+            if (atualizar && urlInformada.equals(presente.getImagemUrl())) {
+                return;
+            }
+            apagarArquivo(presente.getImagemArquivo());
+            presente.setImagemArquivo(null);
+            presente.setImagemUrl(urlInformada);
+        }
+    }
+
+    private void validarImagem(MultipartFile file) {
+        String contentType = file.getContentType() == null ? "" : file.getContentType().toLowerCase(Locale.ROOT);
+        if (!IMAGE_TYPES.contains(contentType)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Formato inválido. Use JPEG, PNG ou WEBP.");
+        }
+        if (file.getSize() > MAX_IMAGE_BYTES) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Imagem muito grande. Máximo: 10MB.");
+        }
+    }
+
+    private String validarUrl(String value, String campo) {
+        if (value == null) {
+            return null;
+        }
+        if (!value.startsWith("http://") && !value.startsWith("https://")) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, campo + " deve começar com http:// ou https://.");
+        }
+        if (value.length() > 2000) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, campo + " deve ter no máximo 2000 caracteres.");
+        }
+        return value;
+    }
+
+    private String limitar(String value, int max, String campo) {
+        if (value != null && value.length() > max) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, campo + " deve ter no máximo " + max + " caracteres.");
+        }
+        return value;
+    }
+
+    private void apagarArquivo(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return;
+        }
+        try {
+            fileStorageService.delete(fileName);
+        } catch (RuntimeException ignored) {
+            // A exclusão do registro segue mesmo se o arquivo já não existir.
+        }
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private PresenteResponse toResponse(Presente presente) {

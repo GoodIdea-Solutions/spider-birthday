@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Dashboard, Foto, HqPagina, HqPaginaPayload, RsvpRequest, RsvpResponse } from '../models/party.models';
+import { Dashboard, Foto, HqPagina, HqPaginaPayload, Presente, RsvpRequest, RsvpResponse } from '../models/party.models';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -97,6 +97,24 @@ export class AdminService {
   excluirHq(id: number) {
     // 204 No Content — evitar parse JSON do body vazio
     return this.http.delete(`/api/admin/hq/paginas/${id}`, {
+      ...this.headers(),
+      responseType: 'text',
+    });
+  }
+
+  listarPresentes() {
+    return this.http.get<Presente[]>('/api/admin/presentes', this.headers());
+  }
+
+  salvarPresente(data: FormData, id?: number | null) {
+    if (id) {
+      return this.http.put<Presente>(`/api/admin/presentes/${id}`, data, this.headers());
+    }
+    return this.http.post<Presente>('/api/admin/presentes', data, this.headers());
+  }
+
+  excluirPresente(id: number) {
+    return this.http.delete(`/api/admin/presentes/${id}`, {
       ...this.headers(),
       responseType: 'text',
     });

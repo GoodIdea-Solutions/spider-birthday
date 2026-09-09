@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PresenteRepository extends JpaRepository<Presente, Long> {
     List<Presente> findByAtivoTrueOrderByNomeAsc();
+
+    List<Presente> findAllByOrderByNomeAsc();
 }

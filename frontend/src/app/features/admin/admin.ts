@@ -1,6 +1,6 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Dashboard, Foto, HqLayout, HqPagina, HqPainelPayload, RsvpResponse } from '../../core/models/party.models';
+import { Dashboard, Foto, HqLayout, HqPagina, HqPainelPayload, Presente, RsvpResponse } from '../../core/models/party.models';
 import { AdminService } from '../../core/services/admin.service';
 import { PartyConfigService } from '../../core/services/party-config.service';
 import { QrCodeService } from '../../core/services/qr-code.service';
@@ -15,6 +15,7 @@ export class AdminComponent implements OnInit {
   private readonly admin = inject(AdminService);
   private readonly party = inject(PartyConfigService);
   private readonly qr = inject(QrCodeService);
+  private readonly giftFileInput = viewChild<ElementRef<HTMLInputElement>>('giftFileInput');
 
   tokenInput = this.admin.getToken();
   readonly authenticated = signal(false);
@@ -25,11 +26,13 @@ export class AdminComponent implements OnInit {
   readonly rsvps = signal<RsvpResponse[]>([]);
   readonly aprovadas = signal<Foto[]>([]);
   readonly hqPaginas = signal<HqPagina[]>([]);
+  readonly presentes = signal<Presente[]>([]);
   readonly midias = signal<Foto[]>([]);
   readonly qrDataUrl = signal<string | null>(null);
   readonly cameraUrl = signal('');
   readonly editingId = signal<number | null>(null);
   readonly editingHqId = signal<number | null>(null);
+  readonly editingGiftId = signal<number | null>(null);
 
   editNome = '';
   editAdultos = 0;
@@ -46,6 +49,14 @@ export class AdminComponent implements OnInit {
   hqLayout: HqLayout = 'FULL';
   hqTitulo = '';
   hqPaineis: HqPainelPayload[] = [{ fotoId: 0, posicao: 1, legenda: '' }];
+
+  giftNome = '';
+  giftDescricao = '';
+  giftLink = '';
+  giftImagemUrl = '';
+  giftAtivo = true;
+  giftFile: File | null = null;
+  giftPreview: string | null = null;
 
   ngOnInit() {
     if (this.tokenInput) {
@@ -94,6 +105,10 @@ export class AdminComponent implements OnInit {
     this.admin.listarHq().subscribe({
       next: (pages) => this.hqPaginas.set(pages),
       error: () => this.error.set('Falha ao carregar a revista HQ.'),
+    });
+    this.admin.listarPresentes().subscribe({
+      next: (items) => this.presentes.set(items),
+      error: () => this.error.set('Falha ao carregar a lista de presentes.'),
     });
     this.admin.todasMidias().subscribe({
       next: (items) => this.midias.set(items),
@@ -389,6 +404,103 @@ export class AdminComponent implements OnInit {
       error: (err) =>
         this.error.set(this.mensagemErro(err, 'Não foi possível excluir a página da HQ.')),
     });
+  }
+
+  onGiftFile(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    this.revokeGiftPreview();
+    this.giftFile = file;
+    this.giftPreview = file ? URL.createObjectURL(file) : this.giftImagemUrl.trim() || null;
+  }
+
+  onGiftImagemUrlChange() {
+    if (this.giftFile) {
+      return;
+    }
+    this.giftPreview = this.giftImagemUrl.trim() || null;
+  }
+
+  resetGiftForm() {
+    this.editingGiftId.set(null);
+    this.giftNome = '';
+    this.giftDescricao = '';
+    this.giftLink = '';
+    this.giftImagemUrl = '';
+    this.giftAtivo = true;
+    this.giftFile = null;
+    this.revokeGiftPreview();
+    this.giftPreview = null;
+    const input = this.giftFileInput()?.nativeElement;
+    if (input) {
+      input.value = '';
+    }
+  }
+
+  iniciarEdicaoPresente(item: Presente) {
+    this.editingGiftId.set(item.id);
+    this.giftNome = item.nome;
+    this.giftDescricao = item.descricao ?? '';
+    this.giftLink = item.link ?? '';
+    this.giftImagemUrl = item.imagemUrl ?? '';
+    this.giftAtivo = item.ativo;
+    this.giftFile = null;
+    this.revokeGiftPreview();
+    this.giftPreview = item.imagemUrl;
+    this.error.set(null);
+  }
+
+  salvarPresente() {
+    const nome = this.giftNome.trim();
+    if (!nome) {
+      this.error.set('Nome do presente é obrigatório.');
+      return;
+    }
+
+    const data = new FormData();
+    data.append('nome', nome);
+    data.append('descricao', this.giftDescricao.trim());
+    data.append('link', this.giftLink.trim());
+    data.append('ativo', String(this.giftAtivo));
+    if (this.giftImagemUrl.trim()) {
+      data.append('imagemUrl', this.giftImagemUrl.trim());
+    }
+    if (this.giftFile) {
+      data.append('file', this.giftFile);
+    }
+
+    this.admin.salvarPresente(data, this.editingGiftId()).subscribe({
+      next: () => {
+        this.error.set(null);
+        this.resetGiftForm();
+        this.admin.listarPresentes().subscribe({ next: (items) => this.presentes.set(items) });
+      },
+      error: (err) =>
+        this.error.set(this.mensagemErro(err, 'Não foi possível salvar o presente.')),
+    });
+  }
+
+  excluirPresente(item: Presente) {
+    if (!confirm(`Excluir o presente "${item.nome}" da lista?`)) {
+      return;
+    }
+    this.admin.excluirPresente(item.id).subscribe({
+      next: () => {
+        this.error.set(null);
+        this.presentes.update((list) => list.filter((p) => p.id !== item.id));
+        if (this.editingGiftId() === item.id) {
+          this.resetGiftForm();
+        }
+      },
+      error: (err) =>
+        this.error.set(this.mensagemErro(err, 'Não foi possível excluir o presente.')),
+    });
+  }
+
+  private revokeGiftPreview() {
+    if (this.giftPreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(this.giftPreview);
+    }
   }
 
   private mensagemErro(err: unknown, fallback: string): string {

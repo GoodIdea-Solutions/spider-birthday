@@ -1,0 +1,6 @@
+ALTER TABLE presentes
+    ALTER COLUMN link TYPE VARCHAR(2000),
+    ALTER COLUMN imagem_url TYPE VARCHAR(2000);
+
+ALTER TABLE presentes
+    ADD COLUMN imagem_arquivo VARCHAR(255);
