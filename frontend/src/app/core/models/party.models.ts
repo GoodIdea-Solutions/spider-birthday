@@ -16,6 +16,14 @@ export interface PartyConfig {
   whatsappNumber: string;
   emailRecepcao: string;
   instagramHandle: string;
+  caixa18Anos?: Caixa18AnosConfig;
+}
+
+export interface Caixa18AnosConfig {
+  titulo?: string;
+  texto?: string;
+  qrCodeUrl?: string;
+  pixKey?: string;
 }
 
 export interface RsvpPublicResponse {

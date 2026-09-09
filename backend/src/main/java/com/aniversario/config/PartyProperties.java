@@ -25,4 +25,14 @@ public class PartyProperties {
     private String whatsappNumber;
     private String emailRecepcao;
     private String instagramHandle;
+    private Caixa18Anos caixa18Anos = new Caixa18Anos();
+
+    @Getter
+    @Setter
+    public static class Caixa18Anos {
+        private String titulo;
+        private String texto;
+        private String qrCodeUrl;
+        private String pixKey;
+    }
 }

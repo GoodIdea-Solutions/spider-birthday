@@ -34,7 +34,20 @@ public class PartyController {
                 partyProperties.getMensagemMissao(),
                 partyProperties.getWhatsappNumber(),
                 partyProperties.getEmailRecepcao(),
-                partyProperties.getInstagramHandle()
+                partyProperties.getInstagramHandle(),
+                toCaixa18Anos(partyProperties.getCaixa18Anos())
+        );
+    }
+
+    private static PartyConfigResponse.Caixa18AnosConfig toCaixa18Anos(PartyProperties.Caixa18Anos caixa) {
+        if (caixa == null) {
+            return new PartyConfigResponse.Caixa18AnosConfig(null, null, null, null);
+        }
+        return new PartyConfigResponse.Caixa18AnosConfig(
+                caixa.getTitulo(),
+                caixa.getTexto(),
+                caixa.getQrCodeUrl(),
+                caixa.getPixKey()
         );
     }
 }

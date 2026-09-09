@@ -17,6 +17,14 @@ public record PartyConfigResponse(
         String mensagemMissao,
         String whatsappNumber,
         String emailRecepcao,
-        String instagramHandle
+        String instagramHandle,
+        Caixa18AnosConfig caixa18Anos
 ) {
+    public record Caixa18AnosConfig(
+            String titulo,
+            String texto,
+            String qrCodeUrl,
+            String pixKey
+    ) {
+    }
 }

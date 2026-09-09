@@ -1,0 +1,56 @@
+@if (visible()) {
+  <article class="caixinha-card">
+    <div class="caixinha-icon" aria-hidden="true">
+      <span class="web"></span>
+    </div>
+    <div class="caixinha-body">
+      <p class="kicker">Próximo capítulo</p>
+      <h2>{{ titulo() }}</h2>
+      @for (paragrafo of paragrafos(); track $index) {
+        <p>{{ paragrafo }}</p>
+      }
+      <button type="button" class="btn-contribuir" (click)="abrir()">
+        💙 Quero contribuir
+      </button>
+    </div>
+  </article>
+}
+
+@if (open()) {
+  <div class="modal-overlay" (click)="onOverlayClick($event)">
+    <div
+      #dialog
+      class="modal-content"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="caixinha-title"
+      tabindex="-1"
+    >
+      <button type="button" class="modal-close" (click)="fechar()" aria-label="Fechar">&times;</button>
+      <h2 id="caixinha-title">🕸️ Uma pequena teia de carinho</h2>
+      @for (paragrafo of paragrafos(); track $index) {
+        <p class="modal-copy">{{ paragrafo }}</p>
+      }
+      <div class="qr-frame">
+        <img [src]="qrUrl()" width="280" height="280" alt="QR Code da Caixinha dos 18 anos do Samuel" />
+      </div>
+      @if (temPix()) {
+        <p class="pix-key">{{ pixKey() }}</p>
+      }
+      @if (copied()) {
+        <p class="copy-ok" role="status">
+          🕷️ Chave Pix copiada! Agora é só escanear ou colar no seu aplicativo bancário.
+        </p>
+      }
+      @if (copyError()) {
+        <p class="copy-error" role="alert">Não foi possível copiar agora. Você pode escanear o QR Code.</p>
+      }
+      <div class="modal-actions">
+        @if (temPix()) {
+          <button type="button" class="btn-copy" (click)="copiarPix()">Copiar chave Pix</button>
+        }
+        <button type="button" class="btn-close" (click)="fechar()">Fechar</button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,7 +1,15 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, of, tap } from 'rxjs';
-import { PartyConfig } from '../models/party.models';
+import { Caixa18AnosConfig, PartyConfig } from '../models/party.models';
+
+const FALLBACK_CAIXA_18: Caixa18AnosConfig = {
+  titulo: '🕷️ PROJETO: SAMUEL 18 ANOS',
+  texto:
+    'Hoje o nosso pequeno herói está completando 3 anos. Mas toda grande aventura tem um próximo capítulo!\n\nSe você não souber o que presentear, ou simplesmente quiser contribuir para a futura Caixinha dos 18 anos do Samuel, também temos essa opção.\n\nÉ opcional, viu? O mais importante é ter você com a gente nessa missão! ❤️',
+  qrCodeUrl: '/assets/images/qr-code-caixinha-18.png',
+  pixKey: '+55 (61) 99262-8452',
+};
 
 const FALLBACK_CONFIG: PartyConfig = {
   nomeCrianca: 'Samuel',
@@ -22,6 +30,7 @@ const FALLBACK_CONFIG: PartyConfig = {
   whatsappNumber: '+351913154440',
   emailRecepcao: '[EMAIL_RECEPCAO]',
   instagramHandle: '[INSTAGRAM]',
+  caixa18Anos: FALLBACK_CAIXA_18,
 };
 
 @Injectable({ providedIn: 'root' })
@@ -45,5 +54,9 @@ export class PartyConfigService {
   slug() {
     const value = this.configSignal()?.slug?.trim();
     return value || 'samuel-3-anos';
+  }
+
+  caixa18Anos(): Caixa18AnosConfig {
+    return this.configSignal()?.caixa18Anos ?? FALLBACK_CAIXA_18;
   }
 }

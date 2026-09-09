@@ -1,9 +1,11 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Presente } from '../../core/models/party.models';
 import { PresenteService } from '../../core/services/presente.service';
+import { Caixinha18AnosComponent } from './caixinha-18-anos/caixinha-18-anos';
 
 @Component({
   selector: 'app-presentes-section',
+  imports: [Caixinha18AnosComponent],
   templateUrl: './presentes-section.html',
   styleUrl: './presentes-section.scss',
 })

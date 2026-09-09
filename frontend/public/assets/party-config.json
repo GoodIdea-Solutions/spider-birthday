@@ -15,5 +15,11 @@
   "mensagemMissao": "ACEITAR ESSA MISSÃO",
   "whatsappNumber": "+351913154440",
   "emailRecepcao": "raquel90.menezes2@gmail.com",
-  "instagramHandle": "[INSTAGRAM]"
+  "instagramHandle": "[INSTAGRAM]",
+  "caixa18Anos": {
+    "titulo": "🕷️ PROJETO: SAMUEL 18 ANOS",
+    "texto": "Hoje o nosso pequeno herói está completando 3 anos. Mas toda grande aventura tem um próximo capítulo!\n\nSe você não souber o que presentear, ou simplesmente quiser contribuir para a futura Caixinha dos 18 anos do Samuel, também temos essa opção.\n\nÉ opcional, viu? O mais importante é ter você com a gente nessa missão! ❤️",
+    "qrCodeUrl": "/assets/images/qr-code-caixinha-18.png",
+    "pixKey": "+55 (61) 99262-8452"
+  }
 }
