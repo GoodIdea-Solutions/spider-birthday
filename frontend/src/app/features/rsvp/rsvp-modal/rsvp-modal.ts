@@ -1,5 +1,6 @@
 import { Component, DestroyRef, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import {
   FormArray,
   FormBuilder,
@@ -15,7 +16,7 @@ import { PartyConfigService } from '../../../core/services/party-config.service'
 @Component({
   selector: 'app-rsvp-modal',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './rsvp-modal.html',
   styleUrl: './rsvp-modal.scss',
 })

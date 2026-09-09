@@ -18,7 +18,10 @@
             Sua presença foi confirmada.
             Esperamos você na festa do Samuel!
           </p>
-          <button type="button" class="btn-close" (click)="close()">Fechar</button>
+          <div class="success-actions">
+            <a routerLink="/convidados" class="btn-list" (click)="close()">Ver lista de heróis</a>
+            <button type="button" class="btn-close" (click)="close()">Fechar</button>
+          </div>
         </div>
       } @else {
         <h2 id="rsvp-title">Sua missão começa aqui!</h2>

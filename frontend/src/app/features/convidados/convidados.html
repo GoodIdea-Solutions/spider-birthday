@@ -1,6 +1,13 @@
 <section class="convidados">
   <div class="convidados-inner">
     <h1>Lista de Heróis</h1>
+    <p class="print-only print-meta">
+      Recepção — festa do {{ party()?.nomeCrianca || 'Samuel' }}
+      @if (party()?.dataFesta) {
+        · {{ party()?.dataFesta }}
+      }
+    </p>
+    <p class="print-only print-date">Conferido em: _______________</p>
 
     @if (loading()) {
       <p class="status">Carregando heróis...</p>
@@ -16,9 +23,14 @@
           <strong>{{ totalAdultos() }}</strong>
           <span>Adultos</span>
         </div>
+        <div class="total-item destaque">
+          <strong>{{ totalCriancasAte12() }}</strong>
+          <span>Lembrancinhas</span>
+          <em>Crianças até 12</em>
+        </div>
         <div class="total-item">
-          <strong>{{ totalCriancas() }}</strong>
-          <span>Crianças</span>
+          <strong>{{ totalCriancas13Mais() }}</strong>
+          <span>Crianças 13+</span>
         </div>
         <div class="total-item">
           <strong>{{ totalGrupos() }}</strong>
@@ -30,6 +42,7 @@
         <div class="acoes no-print">
           <button type="button" class="btn" (click)="imprimir()">Imprimir lista</button>
         </div>
+        <p class="legenda no-print">Crianças até 12 anos aparecem destacadas e entram na conta de lembrancinhas.</p>
       }
 
       @if (convidados().length === 0) {
@@ -37,19 +50,35 @@
       } @else {
         <ol class="lista-scroll">
           @for (c of convidados(); track $index) {
+            @let criancas = criancasDetalhes(c);
             <li class="lista-item">
-              <p class="item-role">Responsável</p>
-              <p class="item-name">{{ c.nome }}</p>
-              <p class="item-counts">
-                {{ c.quantidadeAdultos }} adulto{{ c.quantidadeAdultos !== 1 ? 's' : '' }},
-                {{ c.quantidadeCriancas }} criança{{ c.quantidadeCriancas !== 1 ? 's' : '' }}
-              </p>
-              <p class="item-detail">
-                <span>Adultos:</span> {{ adultosNomes(c) }}
-              </p>
-              <p class="item-detail">
-                <span>Crianças:</span> {{ criancasNomes(c) }}
-              </p>
+              <div class="chegada">
+                <input type="checkbox" class="chegada-check" [attr.aria-label]="'Chegada de ' + c.nome" />
+                <div class="item-body">
+                  <p class="item-role">Responsável</p>
+                  <p class="item-name">{{ c.nome }}</p>
+                  <p class="item-counts">
+                    {{ c.quantidadeAdultos }} adulto{{ c.quantidadeAdultos !== 1 ? 's' : '' }},
+                    {{ c.quantidadeCriancas }} criança{{ c.quantidadeCriancas !== 1 ? 's' : '' }}
+                  </p>
+                  <p class="item-detail">
+                    <span>Adultos:</span> {{ adultosNomes(c) }}
+                  </p>
+                  <p class="item-detail">
+                    <span>Crianças:</span>
+                    @if (criancas.length === 0) {
+                      —
+                    } @else {
+                      @for (crianca of criancas; track $index; let last = $last) {
+                        <span
+                          class="crianca-nome"
+                          [class.lembrancinha]="crianca.lembrancinha"
+                        >{{ formatarCrianca(crianca) }}{{ last ? '' : ', ' }}</span>
+                      }
+                    }
+                  </p>
+                </div>
+              </div>
             </li>
           }
         </ol>

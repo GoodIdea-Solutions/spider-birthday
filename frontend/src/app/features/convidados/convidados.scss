@@ -18,6 +18,10 @@ h1 {
   margin: 0 0 1.25rem;
 }
 
+.print-only {
+  display: none;
+}
+
 .totais {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -41,17 +45,42 @@ h1 {
   }
 
   span {
+    display: block;
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     opacity: 0.75;
   }
+
+  em {
+    display: block;
+    margin-top: 0.15rem;
+    font-style: normal;
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
+    opacity: 0.7;
+  }
+
+  &.destaque {
+    background: rgba(250, 204, 21, 0.14);
+    border-color: rgba(250, 204, 21, 0.5);
+
+    strong {
+      color: var(--balloon-yellow, #facc15);
+    }
+  }
 }
 
 @media (min-width: 640px) {
   .totais {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .totais {
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 
@@ -73,6 +102,13 @@ h1 {
   letter-spacing: 0.04em;
   cursor: pointer;
   font-size: 0.88rem;
+}
+
+.legenda {
+  margin: 0 0 1rem;
+  text-align: center;
+  font-size: 0.82rem;
+  opacity: 0.7;
 }
 
 .status {
@@ -106,6 +142,25 @@ h1 {
   }
 }
 
+.chegada {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.chegada-check {
+  flex-shrink: 0;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: 0.35rem;
+  accent-color: var(--spider-red, #e5383b);
+}
+
+.item-body {
+  min-width: 0;
+  flex: 1;
+}
+
 .item-role {
   margin: 0 0 0.1rem;
   font-size: 0.7rem;
@@ -133,10 +188,15 @@ h1 {
   font-size: 0.85rem;
   line-height: 1.35;
 
-  span {
+  > span:first-child {
     font-weight: 700;
     opacity: 0.7;
   }
+}
+
+.crianca-nome.lembrancinha {
+  font-weight: 700;
+  color: var(--balloon-yellow, #facc15);
 }
 
 @media print {
@@ -149,11 +209,28 @@ h1 {
 
   h1 {
     color: #b00020;
-    margin-bottom: 1rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .print-only {
+    display: block;
+    text-align: center;
+    color: #333;
+  }
+
+  .print-meta {
+    margin: 0 0 0.25rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .print-date {
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
   }
 
   .totais {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     margin-bottom: 1rem;
   }
 
@@ -165,9 +242,19 @@ h1 {
       color: #b00020;
     }
 
-    span {
+    span,
+    em {
       color: #333;
       opacity: 1;
+    }
+
+    &.destaque {
+      background: #fff8dc;
+      border-color: #c4a000;
+
+      strong {
+        color: #8a6d00;
+      }
     }
   }
 
@@ -183,8 +270,28 @@ h1 {
     break-inside: avoid;
   }
 
+  .chegada {
+    cursor: default;
+  }
+
+  .chegada-check {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.2rem;
+    appearance: none;
+    border: 1.5px solid #333;
+    border-radius: 0.15rem;
+    background: #fff;
+  }
+
   .item-name {
     color: #1d4ed8;
+  }
+
+  .crianca-nome.lembrancinha {
+    color: #8a6d00;
+    text-decoration: underline;
+    text-underline-offset: 0.12em;
   }
 
   .no-print {
