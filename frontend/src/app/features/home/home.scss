@@ -525,6 +525,11 @@
   background: rgba(5, 8, 20, 0.35);
 }
 
+.teaser-actions {
+  display: grid;
+  gap: 0.7rem;
+}
+
 @media (min-width: 720px) {
   .media-teaser-inner {
     grid-template-columns: 1fr 1fr;
@@ -637,6 +642,10 @@
   .adventure-band p {
     animation: none;
     white-space: normal;
+  }
+
+  .media-teaser-inner {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

@@ -26,7 +26,7 @@
     aria-label="Navegação principal"
   >
     <a routerLink="/" fragment="inicio" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="onFragmentClick($event, 'inicio')">Início</a>
-    <a routerLink="/" fragment="presentes" (click)="onFragmentClick($event, 'presentes')">Presentes</a>
+    <a routerLink="/presentes" routerLinkActive="active" (click)="closeMenu()">Presentes</a>
     <a routerLink="/fotos" routerLinkActive="active" (click)="closeMenu()">Mural</a>
     <a routerLink="/hq" routerLinkActive="active" (click)="closeMenu()">Revista</a>
     <button type="button" class="nav-rsvp" (click)="openRsvp()">Confirmar presença</button>

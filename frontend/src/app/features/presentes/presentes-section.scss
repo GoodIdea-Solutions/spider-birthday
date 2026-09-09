@@ -1,8 +1,10 @@
 .presentes {
+  min-height: 80vh;
   background: linear-gradient(180deg, #f3f7ff 0%, #eef2ff 100%);
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
 }
 
-h2 {
+h1 {
   font-family: var(--font-display);
   font-size: clamp(1.7rem, 5vw, 2.4rem);
   margin: 0 0 0.5rem;

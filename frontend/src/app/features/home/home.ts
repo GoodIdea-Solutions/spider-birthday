@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { RouterLink } from '@angular/router';
 import { PartyConfigService } from '../../core/services/party-config.service';
 import { RsvpModalService } from '../../core/services/rsvp-modal.service';
-import { PresentesSectionComponent } from '../presentes/presentes-section';
 import { WebCornerComponent } from '../../layout/web-corner';
 
 const MESES = [
@@ -22,7 +21,7 @@ const MESES = [
 
 @Component({
   selector: 'app-home',
-  imports: [PresentesSectionComponent, RouterLink, WebCornerComponent],
+  imports: [RouterLink, WebCornerComponent],
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })
