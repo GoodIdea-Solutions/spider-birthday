@@ -14,7 +14,7 @@
           <p class="kicker">Missão cumprida</p>
           <h2 id="reserva-title">Presente reservado!</h2>
           <p class="gift-name">{{ reserva.presenteNome }}</p>
-          <p>Obrigado por fazer parte dessa aventura! ❤️</p>
+          <p>Obrigado por fazer parte desse momento especial do Samuel!</p>
           <p class="modal-copy">
             Guarde o link da sua reserva. Só quem tem o link consegue ver os dados.
           </p>
@@ -33,8 +33,13 @@
       } @else {
         <p class="kicker">Nova missão</p>
         <h2 id="reserva-title">Boa escolha, herói!</h2>
-        <p class="modal-lead">Você está escolhendo este presente para o Samuel.</p>
         <p class="gift-name">{{ presente().nome }}</p>
+        @if (presente().preco; as preco) {
+          <p class="gift-price">{{ formatarPreco(preco) }}</p>
+        }
+        <p class="modal-lead">
+          Para evitar que outra pessoa escolha o mesmo presente, vamos reservar essa opção para você.
+        </p>
 
         <form class="reserva-form" (ngSubmit)="confirmar()">
           <label>
@@ -66,7 +71,7 @@
           }
 
           <button type="submit" class="btn-submit" [disabled]="loading()">
-            {{ loading() ? 'Reservando...' : 'Confirmar reserva' }}
+            {{ loading() ? 'Reservando...' : 'Reservar este presente' }}
           </button>
         </form>
       }

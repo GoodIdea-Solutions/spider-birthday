@@ -102,11 +102,19 @@ h2 {
 }
 
 .gift-name {
-  margin: 0 0 1.1rem;
+  margin: 0 0 0.35rem;
   font-family: var(--font-display, 'Bangers', cursive);
   font-size: 1.35rem;
   color: var(--balloon-yellow);
   letter-spacing: 0.03em;
+}
+
+.gift-price {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-display, 'Bangers', cursive);
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  color: #fff;
 }
 
 .reserva-form {
@@ -187,6 +195,10 @@ input:focus {
 
 .success-state {
   text-align: center;
+}
+
+.success-state .gift-name {
+  margin-bottom: 0.75rem;
 }
 
 .success-state p {

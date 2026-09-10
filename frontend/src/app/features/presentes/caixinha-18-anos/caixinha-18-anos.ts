@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { PartyConfigService } from '../../../core/services/party-config.service';
 
 @Component({
@@ -6,14 +6,9 @@ import { PartyConfigService } from '../../../core/services/party-config.service'
   templateUrl: './caixinha-18-anos.html',
   styleUrl: './caixinha-18-anos.scss',
 })
-
-export class Caixinha18AnosComponent implements OnDestroy {
+export class Caixinha18AnosComponent {
   private readonly party = inject(PartyConfigService);
 
-  @ViewChild('dialog') dialogRef?: ElementRef<HTMLElement>;
-  private previouslyFocused: HTMLElement | null = null;
-
-  readonly open = signal(false);
   readonly copied = signal(false);
   readonly copyError = signal(false);
 
@@ -29,51 +24,6 @@ export class Caixinha18AnosComponent implements OnDestroy {
   readonly qrUrl = computed(() => this.caixa().qrCodeUrl?.trim() || '');
   readonly pixKey = computed(() => this.caixa().pixKey?.trim() || '');
   readonly temPix = computed(() => !!this.pixKey());
-
-  abrir() {
-    this.copied.set(false);
-    this.copyError.set(false);
-    this.previouslyFocused = document.activeElement as HTMLElement | null;
-    this.open.set(true);
-    document.body.classList.add('modal-open');
-    queueMicrotask(() => {
-      const dialog = this.dialogRef?.nativeElement;
-      const focusable = dialog?.querySelector<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      (focusable ?? dialog)?.focus();
-    });
-  }
-
-  fechar() {
-    this.open.set(false);
-    this.copied.set(false);
-    this.copyError.set(false);
-    document.body.classList.remove('modal-open');
-    this.previouslyFocused?.focus?.();
-    this.previouslyFocused = null;
-  }
-
-  onOverlayClick(event: MouseEvent) {
-    if ((event.target as HTMLElement).classList.contains('modal-overlay')) {
-      this.fechar();
-    }
-  }
-
-  @HostListener('document:keydown', ['$event'])
-  onDocumentKeydown(event: KeyboardEvent) {
-    if (!this.open()) {
-      return;
-    }
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      this.fechar();
-      return;
-    }
-    if (event.key === 'Tab') {
-      this.trapFocus(event);
-    }
-  }
 
   copiarPix() {
     const chave = this.pixKey();
@@ -95,12 +45,6 @@ export class Caixinha18AnosComponent implements OnDestroy {
     this.copyError.set(true);
   }
 
-  ngOnDestroy() {
-    if (this.open()) {
-      document.body.classList.remove('modal-open');
-    }
-  }
-
   private copiarFallback(texto: string): boolean {
     const area = document.createElement('textarea');
     area.value = texto;
@@ -109,8 +53,7 @@ export class Caixinha18AnosComponent implements OnDestroy {
     area.style.top = '0';
     area.style.left = '0';
     area.style.opacity = '0';
-    const host = this.dialogRef?.nativeElement ?? document.body;
-    host.appendChild(area);
+    document.body.appendChild(area);
     area.focus();
     area.select();
     area.setSelectionRange(0, texto.length);
@@ -120,38 +63,7 @@ export class Caixinha18AnosComponent implements OnDestroy {
     } catch {
       ok = false;
     }
-    host.removeChild(area);
+    document.body.removeChild(area);
     return ok;
   }
-
-  private trapFocus(event: KeyboardEvent) {
-    const dialog = this.dialogRef?.nativeElement;
-    if (!dialog) {
-      return;
-    }
-    const focusable = Array.from(
-      dialog.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      )
-    ).filter((el) => !el.hasAttribute('disabled') && el.tabIndex !== -1);
-
-    if (focusable.length === 0) {
-      event.preventDefault();
-      dialog.focus();
-      return;
-    }
-
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    const active = document.activeElement as HTMLElement | null;
-
-    if (event.shiftKey && (active === first || !dialog.contains(active))) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && active === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
 }
-
