@@ -26,11 +26,14 @@ h1 {
 
 .gifts-pane {
   min-width: 0;
-  max-height: min(32rem, 58vh);
+  max-height: min(36rem, calc(100dvh - 22rem));
   overflow-y: auto;
-  overscroll-behavior: contain;
+  overscroll-behavior: auto;
   scrollbar-gutter: stable;
-  padding: 0.15rem 0.2rem 0.35rem 0;
+  padding: 0.85rem;
+  background: #fff;
+  border: 3px solid #111;
+  box-shadow: 5px 5px 0 var(--spider-blue);
 }
 
 .gifts-pane:focus-visible {
@@ -240,6 +243,12 @@ h3 {
   border: 3px dashed rgba(11, 18, 40, 0.18);
 }
 
+@media (max-width: 639px) {
+  .gifts-pane {
+    max-height: min(28rem, calc(100dvh - 30rem));
+  }
+}
+
 @media (min-width: 640px) {
   .grid {
     grid-template-columns: repeat(2, 1fr);
@@ -247,21 +256,8 @@ h3 {
 }
 
 @media (min-width: 960px) {
-  .presentes-layout.has-contrib {
-    grid-template-columns: minmax(0, 1fr) minmax(17.5rem, 22rem);
-    align-items: start;
-  }
-
   .gifts-pane {
-    max-height: none;
-    overflow: visible;
-    padding: 0;
-    scrollbar-gutter: auto;
-  }
-
-  .contrib-pane {
-    position: sticky;
-    top: calc(4.85rem + env(safe-area-inset-top, 0px));
+    padding: 1rem;
   }
 
   .grid {
