@@ -1,7 +1,11 @@
+:host {
+  display: block;
+}
+
 .caixinha-card {
   display: grid;
   gap: 1rem;
-  margin-top: 1.6rem;
+  margin-top: 0;
   padding: 1.25rem 1.15rem 1.35rem;
   background: #fff;
   border: 3px solid #111;

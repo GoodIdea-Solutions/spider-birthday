@@ -12,17 +12,45 @@ h1 {
 }
 
 .section-lead {
-  margin: 0 0 1.6rem;
+  margin: 0 0 1.15rem;
   max-width: 36rem;
   color: var(--muted);
   font-size: 1.05rem;
   line-height: 1.5;
 }
 
+.presentes-layout {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.gifts-pane {
+  min-width: 0;
+  max-height: min(32rem, 58vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding: 0.15rem 0.2rem 0.35rem 0;
+}
+
+.gifts-pane:focus-visible {
+  outline: 3px solid var(--balloon-yellow);
+  outline-offset: 3px;
+}
+
+.contrib-pane {
+  display: none;
+  min-width: 0;
+}
+
+.has-contrib .contrib-pane {
+  display: block;
+}
+
 .grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.15rem;
+  gap: 0.9rem;
 }
 
 .card {
@@ -43,8 +71,9 @@ h1 {
   position: relative;
   display: grid;
   place-items: center;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 3;
   width: 100%;
+  max-height: 9.5rem;
   background: #fff;
   overflow: hidden;
 }
@@ -59,8 +88,8 @@ h1 {
 }
 
 .thumb-fallback {
-  width: 3.2rem;
-  height: 3.2rem;
+  width: 2.6rem;
+  height: 2.6rem;
   border-radius: 0.45rem;
   background: linear-gradient(135deg, var(--spider-red), #9b1320);
   box-shadow: inset 0 -0.35rem 0 rgba(0, 0, 0, 0.15);
@@ -78,29 +107,38 @@ h1 {
 
 .card-body {
   display: grid;
-  gap: 0.55rem;
-  padding: 1.1rem 1.05rem 1.2rem;
+  gap: 0.35rem;
+  padding: 0.7rem 0.8rem 0.85rem;
 }
 
 h3 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.45rem;
+  font-size: 1.18rem;
   letter-spacing: 0.03em;
   color: var(--ink);
+  line-height: 1.15;
 }
 
 .card-body p {
   margin: 0;
   color: var(--muted);
-  font-size: 0.98rem;
-  line-height: 1.45;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.card-body > p:not(.price):not(.reserved-title):not(.reserved-copy) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
 .card-body .price {
   margin: 0.05rem 0 0;
   font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-size: 1.08rem;
   letter-spacing: 0.04em;
   color: var(--spider-red);
 }
@@ -110,16 +148,16 @@ h3 {
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 2.85rem;
-  margin-top: 0.35rem;
-  padding: 0.75rem 1rem;
+  min-height: 2.5rem;
+  margin-top: 0.2rem;
+  padding: 0.55rem 0.85rem;
   border: 3px solid #111;
   background: var(--ink);
   color: #fff;
   text-decoration: none;
   font: inherit;
   font-weight: 800;
-  font-size: 0.92rem;
+  font-size: 0.82rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   cursor: pointer;
@@ -176,16 +214,16 @@ h3 {
 }
 
 .reserved-title {
-  margin: 0.15rem 0 0;
+  margin: 0.1rem 0 0;
   font-weight: 800;
   color: var(--spider-blue);
-  font-size: 0.98rem;
-  line-height: 1.35;
+  font-size: 0.88rem;
+  line-height: 1.3;
 }
 
 .reserved-copy {
   color: var(--muted);
-  font-size: 0.92rem;
+  font-size: 0.85rem;
 }
 
 .status {
@@ -209,6 +247,23 @@ h3 {
 }
 
 @media (min-width: 960px) {
+  .presentes-layout.has-contrib {
+    grid-template-columns: minmax(0, 1fr) minmax(17.5rem, 22rem);
+    align-items: start;
+  }
+
+  .gifts-pane {
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    scrollbar-gutter: auto;
+  }
+
+  .contrib-pane {
+    position: sticky;
+    top: calc(4.85rem + env(safe-area-inset-top, 0px));
+  }
+
   .grid {
     grid-template-columns: repeat(3, 1fr);
   }

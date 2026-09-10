@@ -1,6 +1,7 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Presente, ReservaResponse } from '../../core/models/party.models';
+import { PartyConfigService } from '../../core/services/party-config.service';
 import { PresenteService } from '../../core/services/presente.service';
 import { Caixinha18AnosComponent } from './caixinha-18-anos/caixinha-18-anos';
 import { ReservaPresenteModalComponent } from './reserva-modal/reserva-presente-modal';
@@ -13,7 +14,9 @@ import { ReservaPresenteModalComponent } from './reserva-modal/reserva-presente-
 })
 export class PresentesSectionComponent implements OnInit {
   private readonly presenteService = inject(PresenteService);
+  private readonly party = inject(PartyConfigService);
 
+  readonly temCaixinha = computed(() => !!this.party.caixa18Anos().qrCodeUrl?.trim());
   readonly presentes = signal<Presente[]>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);

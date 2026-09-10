@@ -6,55 +6,61 @@
       O importante é celebrar com a gente!
     </p>
 
-    @if (loading()) {
-      <p class="status">Carregando presentes...</p>
-    } @else if (error()) {
-      <p class="status error" role="alert">{{ error() }}</p>
-    } @else if (presentes().length === 0) {
-      <p class="status empty">A lista ainda está sendo montada pela HQ.</p>
-    } @else {
-      <div class="grid">
-        @for (item of presentes(); track item.id) {
-          <article class="card" [class.reserved]="item.reservado">
-            <div class="thumb">
-              @if (item.imagemUrl) {
-                <img [src]="item.imagemUrl" [alt]="item.nome" loading="lazy" />
-              } @else {
-                <span class="thumb-fallback" aria-hidden="true"></span>
-              }
-            </div>
-            <div class="card-body">
-              <h3>{{ item.nome }}</h3>
-              <p>{{ item.descricao || 'Uma ótima escolha para a festa!' }}</p>
-              @if (item.preco != null) {
-                <p class="price">{{ formatarPreco(item.preco) }}</p>
-              }
+    <div class="presentes-layout" [class.has-contrib]="temCaixinha()">
+      <div class="gifts-pane" tabindex="0" aria-label="Lista de presentes">
+        @if (loading()) {
+          <p class="status">Carregando presentes...</p>
+        } @else if (error()) {
+          <p class="status error" role="alert">{{ error() }}</p>
+        } @else if (presentes().length === 0) {
+          <p class="status empty">A lista ainda está sendo montada pela HQ.</p>
+        } @else {
+          <div class="grid">
+            @for (item of presentes(); track item.id) {
+              <article class="card" [class.reserved]="item.reservado">
+                <div class="thumb">
+                  @if (item.imagemUrl) {
+                    <img [src]="item.imagemUrl" [alt]="item.nome" loading="lazy" />
+                  } @else {
+                    <span class="thumb-fallback" aria-hidden="true"></span>
+                  }
+                </div>
+                <div class="card-body">
+                  <h3>{{ item.nome }}</h3>
+                  <p>{{ item.descricao || 'Uma ótima escolha para a festa!' }}</p>
+                  @if (item.preco != null) {
+                    <p class="price">{{ formatarPreco(item.preco) }}</p>
+                  }
 
-              @if (item.reservado) {
-                @if (ehMinhaReserva(item)) {
-                  <p class="reserved-title">Você já escolheu este presente!</p>
-                  <p class="reserved-copy">Obrigado por fazer parte dessa aventura.</p>
-                  <a class="btn btn-mine" [routerLink]="['/reserva', minhasReservas()[item.id]]">Ver minha reserva</a>
-                } @else {
-                  <p class="reserved-title">Este presente já foi escolhido por outro herói!</p>
-                  <p class="reserved-copy">Mas ainda temos muitas outras aventuras esperando por você.</p>
-                  <button type="button" class="btn btn-reserved" disabled>Já escolhido</button>
-                }
-              } @else {
-                <button type="button" class="btn btn-reserve" (click)="abrirReserva(item)">
-                  Quero dar este presente
-                </button>
-                @if (item.link) {
-                  <a class="btn btn-store" [href]="item.link" target="_blank" rel="noopener noreferrer">Ver presente</a>
-                }
-              }
-            </div>
-          </article>
+                  @if (item.reservado) {
+                    @if (ehMinhaReserva(item)) {
+                      <p class="reserved-title">Você já escolheu este presente!</p>
+                      <p class="reserved-copy">Obrigado por fazer parte dessa aventura.</p>
+                      <a class="btn btn-mine" [routerLink]="['/reserva', minhasReservas()[item.id]]">Ver minha reserva</a>
+                    } @else {
+                      <p class="reserved-title">Este presente já foi escolhido por outro herói!</p>
+                      <p class="reserved-copy">Mas ainda temos muitas outras aventuras esperando por você.</p>
+                      <button type="button" class="btn btn-reserved" disabled>Já escolhido</button>
+                    }
+                  } @else {
+                    <button type="button" class="btn btn-reserve" (click)="abrirReserva(item)">
+                      Quero dar este presente
+                    </button>
+                    @if (item.link) {
+                      <a class="btn btn-store" [href]="item.link" target="_blank" rel="noopener noreferrer">Ver presente</a>
+                    }
+                  }
+                </div>
+              </article>
+            }
+          </div>
         }
       </div>
-    }
 
-    <app-caixinha-18-anos />
+      <aside class="contrib-pane">
+        <app-caixinha-18-anos />
+      </aside>
+    </div>
   </div>
 </section>
 
