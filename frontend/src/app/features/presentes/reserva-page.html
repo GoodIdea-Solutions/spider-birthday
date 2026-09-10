@@ -7,7 +7,7 @@
         <p class="kicker">Teia vazia</p>
         <h1>Reserva não encontrada</h1>
         <p class="status error" role="alert">{{ error() }}</p>
-        <a class="btn" routerLink="/presentes">Ver lista de presentes</a>
+        <a class="btn" routerLink="/presentes/lista">Ver lista de presentes</a>
       </article>
     } @else if (reserva(); as item) {
       <article class="card">
@@ -48,7 +48,7 @@
           @if (item.presenteLink) {
             <a class="btn btn-store" [href]="item.presenteLink" target="_blank" rel="noopener noreferrer">Ver na loja</a>
           }
-          <a class="btn" routerLink="/presentes">Voltar para a lista</a>
+          <a class="btn" routerLink="/presentes/lista">Voltar para a lista</a>
         </div>
       </article>
     }

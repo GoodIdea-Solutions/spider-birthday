@@ -14,102 +14,23 @@
       <article class="way-card way-list">
         <h2>Escolher um presente</h2>
         <p>Veja a lista de presentes para o Samuel.</p>
-        <button
-          type="button"
-          class="btn btn-way"
-          (click)="irParaLista()"
-          aria-label="Ver lista de presentes"
-        >
+        <a class="btn btn-way" routerLink="/presentes/lista" aria-label="Ver lista de presentes">
           VER LISTA
-        </button>
+        </a>
       </article>
       @if (temCaixinha()) {
         <article class="way-card way-caixinha">
           <h2>Contribuir para a Caixinha</h2>
           <p>Contribua para a futura Caixinha dos 18 anos do Samuel.</p>
-          <button
-            type="button"
+          <a
             class="btn btn-way"
-            (click)="irParaCaixinha()"
+            routerLink="/presentes/caixinha"
             aria-label="Ir para a Caixinha dos 18 anos"
           >
             CONTRIBUIR
-          </button>
+          </a>
         </article>
       }
     </div>
-
-    <section id="lista-presentes" class="lista" aria-labelledby="lista-heading">
-      <h2 id="lista-heading">Lista de presentes</h2>
-      @if (resumoLista()) {
-        <p class="lista-resumo" [class.lista-completa]="todosReservados()">{{ resumoLista() }}</p>
-      }
-      @if (mostrarHintScroll()) {
-        <p class="lista-hint" aria-hidden="true">Role para ver todos os presentes</p>
-      }
-
-      @if (loading()) {
-        <p class="status">Carregando presentes...</p>
-      } @else if (error()) {
-        <p class="status error" role="alert">{{ error() }}</p>
-      } @else if (presentes().length === 0) {
-        <p class="status empty">A lista ainda está sendo montada pela HQ.</p>
-      } @else {
-        <div class="grid">
-          @for (item of presentes(); track item.id) {
-            <article class="card" [class.reserved]="item.reservado">
-              <div class="thumb">
-                @if (item.imagemUrl) {
-                  <img [src]="item.imagemUrl" [alt]="item.nome" loading="lazy" />
-                } @else {
-                  <span class="thumb-fallback" aria-hidden="true"></span>
-                }
-              </div>
-              <div class="card-body">
-                <h3>{{ item.nome }}</h3>
-                <p>{{ item.descricao || 'Uma ótima escolha para a festa!' }}</p>
-                @if (item.preco != null) {
-                  <p class="price">{{ formatarPreco(item.preco) }}</p>
-                }
-
-                @if (item.reservado) {
-                  @if (ehMinhaReserva(item)) {
-                    <p class="reserved-title">Você já escolheu este presente!</p>
-                    <p class="reserved-copy">Obrigado por fazer parte dessa aventura.</p>
-                    <a class="btn btn-mine" [routerLink]="['/reserva', minhasReservas()[item.id]]">Ver minha reserva</a>
-                  } @else {
-                    <span class="badge badge-reserved">Presente já reservado</span>
-                    <button type="button" class="btn btn-reserved" disabled>Presente já reservado</button>
-                  }
-                } @else {
-                  <span class="badge badge-available">Disponível</span>
-                  <button type="button" class="btn btn-reserve" (click)="abrirReserva(item)">
-                    Escolher este presente
-                  </button>
-                  @if (item.link) {
-                    <a class="btn btn-store" [href]="item.link" target="_blank" rel="noopener noreferrer">Ver presente</a>
-                  }
-                }
-              </div>
-            </article>
-          }
-        </div>
-      }
-    </section>
-
-    @if (temCaixinha()) {
-      <div id="caixinha-18-anos" class="caixinha-anchor">
-        <app-caixinha-18-anos />
-      </div>
-    }
   </div>
 </section>
-
-@if (selecionado(); as item) {
-  <app-reserva-presente-modal
-    [presente]="item"
-    (closed)="fecharReserva()"
-    (reserved)="onReservado($event)"
-    (taken)="onJaReservado($event)"
-  />
-}
