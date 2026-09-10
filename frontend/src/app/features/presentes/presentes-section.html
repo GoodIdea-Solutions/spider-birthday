@@ -4,6 +4,8 @@
       <h1>Presentes para o Samuel</h1>
       <p class="section-lead">
         O melhor presente é ter você com a gente! ❤️
+      </p>
+      <p class="section-lead follow">
         Mas, se quiser presentear o nosso pequeno herói, escolha uma das opções abaixo.
       </p>
     </header>
@@ -12,13 +14,27 @@
       <article class="way-card way-list">
         <h2>Escolher um presente</h2>
         <p>Veja a lista de presentes para o Samuel.</p>
-        <button type="button" class="btn btn-way" (click)="irParaLista()">VER LISTA</button>
+        <button
+          type="button"
+          class="btn btn-way"
+          (click)="irParaLista()"
+          aria-label="Ver lista de presentes"
+        >
+          VER LISTA
+        </button>
       </article>
       @if (temCaixinha()) {
         <article class="way-card way-caixinha">
           <h2>Contribuir para a Caixinha</h2>
           <p>Contribua para a futura Caixinha dos 18 anos do Samuel.</p>
-          <button type="button" class="btn btn-way" (click)="irParaCaixinha()">CONTRIBUIR</button>
+          <button
+            type="button"
+            class="btn btn-way"
+            (click)="irParaCaixinha()"
+            aria-label="Ir para a Caixinha dos 18 anos"
+          >
+            CONTRIBUIR
+          </button>
         </article>
       }
     </div>
@@ -29,7 +45,7 @@
         <p class="lista-resumo" [class.lista-completa]="todosReservados()">{{ resumoLista() }}</p>
       }
       @if (mostrarHintScroll()) {
-        <p class="lista-hint">Role para ver todos os presentes</p>
+        <p class="lista-hint" aria-hidden="true">Role para ver todos os presentes</p>
       }
 
       @if (loading()) {
