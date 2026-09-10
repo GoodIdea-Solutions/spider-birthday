@@ -77,6 +77,7 @@ export interface Presente {
   descricao: string | null;
   imagemUrl: string | null;
   link: string | null;
+  preco: number | null;
   ativo: boolean;
   reservado: boolean;
   reserva?: ReservaAdmin | null;
@@ -102,6 +103,7 @@ export interface ReservaConsulta {
   presenteDescricao: string | null;
   presenteImagemUrl: string | null;
   presenteLink: string | null;
+  presentePreco: number | null;
   nomeConvidado: string;
   telefone: string | null;
   createdAt: string;

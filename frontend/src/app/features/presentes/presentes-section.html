@@ -26,6 +26,9 @@
             <div class="card-body">
               <h3>{{ item.nome }}</h3>
               <p>{{ item.descricao || 'Uma ótima escolha para a festa!' }}</p>
+              @if (item.preco != null) {
+                <p class="price">{{ formatarPreco(item.preco) }}</p>
+              }
 
               @if (item.reservado) {
                 @if (ehMinhaReserva(item)) {

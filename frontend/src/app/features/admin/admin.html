@@ -304,6 +304,18 @@
               />
             </label>
             <label class="span-2">
+              Preço (opcional)
+              <input
+                [(ngModel)]="giftPreco"
+                name="giftPreco"
+                type="text"
+                inputmode="decimal"
+                maxlength="15"
+                autocomplete="off"
+                placeholder="Ex.: 89,90"
+              />
+            </label>
+            <label class="span-2">
               Foto do presente
               <input
                 #giftFileInput
@@ -366,6 +378,9 @@
                       }
                       @if (item.link) {
                         · tem link da loja
+                      }
+                      @if (item.preco != null) {
+                        · {{ formatarPreco(item.preco) }}
                       }
                     </span>
                     @if (item.reserva; as reserva) {

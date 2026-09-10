@@ -53,6 +53,7 @@ export class AdminComponent implements OnInit {
   giftNome = '';
   giftDescricao = '';
   giftLink = '';
+  giftPreco = '';
   giftImagemUrl = '';
   giftAtivo = true;
   giftFile: File | null = null;
@@ -465,6 +466,7 @@ export class AdminComponent implements OnInit {
     this.giftNome = '';
     this.giftDescricao = '';
     this.giftLink = '';
+    this.giftPreco = '';
     this.giftImagemUrl = '';
     this.giftAtivo = true;
     this.giftFile = null;
@@ -481,6 +483,7 @@ export class AdminComponent implements OnInit {
     this.giftNome = item.nome;
     this.giftDescricao = item.descricao ?? '';
     this.giftLink = item.link ?? '';
+    this.giftPreco = this.formatarPrecoInput(item.preco);
     this.giftImagemUrl = item.imagemUrl ?? '';
     this.giftAtivo = item.ativo;
     this.giftFile = null;
@@ -500,6 +503,7 @@ export class AdminComponent implements OnInit {
     data.append('nome', nome);
     data.append('descricao', this.giftDescricao.trim());
     data.append('link', this.giftLink.trim());
+    data.append('preco', this.giftPreco.trim());
     data.append('ativo', String(this.giftAtivo));
     if (this.giftImagemUrl.trim()) {
       data.append('imagemUrl', this.giftImagemUrl.trim());
@@ -556,6 +560,20 @@ export class AdminComponent implements OnInit {
 
   formatReserva(iso: string): string {
     return new Date(iso).toLocaleString('pt-BR');
+  }
+
+  formatarPreco(preco: number): string {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(preco);
+  }
+
+  private formatarPrecoInput(preco: number | null | undefined): string {
+    if (preco == null || Number.isNaN(Number(preco))) {
+      return '';
+    }
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(preco));
   }
 
   private revokeGiftPreview() {

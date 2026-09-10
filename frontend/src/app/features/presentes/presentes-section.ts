@@ -58,6 +58,10 @@ export class PresentesSectionComponent implements OnInit {
     return !!(item.reservado && this.minhasReservas()[item.id]);
   }
 
+  formatarPreco(preco: number): string {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(preco);
+  }
+
   private marcarReservado(presenteId: number) {
     this.presentes.update((lista) =>
       lista.map((item) => (item.id === presenteId ? { ...item, reservado: true } : item))

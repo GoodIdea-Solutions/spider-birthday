@@ -23,6 +23,9 @@
         @if (item.presenteDescricao) {
           <p>{{ item.presenteDescricao }}</p>
         }
+        @if (item.presentePreco != null) {
+          <p class="price">{{ formatarPreco(item.presentePreco) }}</p>
+        }
 
         <dl>
           <div>

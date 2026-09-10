@@ -93,6 +93,14 @@ h3 {
   line-height: 1.45;
 }
 
+.card-body .price {
+  margin: 0.05rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+  color: var(--spider-red);
+}
+
 .btn {
   display: inline-flex;
   align-items: center;

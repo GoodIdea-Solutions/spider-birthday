@@ -1,5 +1,7 @@
 package com.aniversario.presente.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -24,6 +26,7 @@ public class PresenteService {
 
     private static final Set<String> IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
     private static final long MAX_IMAGE_BYTES = 10L * 1024 * 1024;
+    private static final BigDecimal PRECO_MAXIMO = new BigDecimal("99999999.99");
 
     private final PresenteRepository presenteRepository;
     private final ReservaPresenteRepository reservaPresenteRepository;
@@ -59,12 +62,13 @@ public class PresenteService {
             String nome,
             String descricao,
             String link,
+            String preco,
             Boolean ativo,
             String imagemUrl,
             MultipartFile file
     ) {
         Presente presente = new Presente();
-        aplicarCampos(presente, nome, descricao, link, ativo);
+        aplicarCampos(presente, nome, descricao, link, preco, ativo);
         aplicarImagem(presente, imagemUrl, file, false);
         return toAdminResponse(presenteRepository.save(presente));
     }
@@ -75,13 +79,14 @@ public class PresenteService {
             String nome,
             String descricao,
             String link,
+            String preco,
             Boolean ativo,
             String imagemUrl,
             MultipartFile file
     ) {
         Presente presente = presenteRepository.findById(id)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Presente não encontrado."));
-        aplicarCampos(presente, nome, descricao, link, ativo);
+        aplicarCampos(presente, nome, descricao, link, preco, ativo);
         aplicarImagem(presente, imagemUrl, file, true);
         return toAdminResponse(presenteRepository.save(presente));
     }
@@ -94,7 +99,7 @@ public class PresenteService {
         presenteRepository.delete(presente);
     }
 
-    private void aplicarCampos(Presente presente, String nome, String descricao, String link, Boolean ativo) {
+    private void aplicarCampos(Presente presente, String nome, String descricao, String link, String preco, Boolean ativo) {
         String nomeLimpo = trimToNull(nome);
         if (nomeLimpo == null) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Nome é obrigatório.");
@@ -105,7 +110,52 @@ public class PresenteService {
         presente.setNome(nomeLimpo);
         presente.setDescricao(limitar(trimToNull(descricao), 500, "Descrição"));
         presente.setLink(validarUrl(trimToNull(link), "Link da loja"));
+        presente.setPreco(parsePreco(preco));
         presente.setAtivo(ativo == null || ativo);
+    }
+
+    private BigDecimal parsePreco(String raw) {
+        String value = trimToNull(raw);
+        if (value == null) {
+            return null;
+        }
+        String cleaned = value.replace("R$", "").replace('\u00A0', ' ').replace(" ", "").trim();
+        if (cleaned.isEmpty()) {
+            return null;
+        }
+
+        int lastComma = cleaned.lastIndexOf(',');
+        int lastDot = cleaned.lastIndexOf('.');
+        String normalized;
+        if (lastComma >= 0 && lastDot >= 0) {
+            if (lastComma > lastDot) {
+                normalized = cleaned.replace(".", "").replace(',', '.');
+            } else {
+                normalized = cleaned.replace(",", "");
+            }
+        } else if (lastComma >= 0) {
+            normalized = cleaned.replace(',', '.');
+        } else {
+            normalized = cleaned;
+        }
+
+        BigDecimal preco;
+        try {
+            preco = new BigDecimal(normalized);
+        } catch (NumberFormatException ex) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Preço inválido. Use um valor como 89,90.");
+        }
+
+        if (preco.signum() < 0) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Preço não pode ser negativo.");
+        }
+        if (preco.stripTrailingZeros().scale() > 2) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Preço deve ter no máximo duas casas decimais.");
+        }
+        if (preco.compareTo(PRECO_MAXIMO) > 0) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Preço deve ser no máximo R$ 99.999.999,99.");
+        }
+        return preco.setScale(2, RoundingMode.HALF_UP);
     }
 
     private void aplicarImagem(Presente presente, String imagemUrl, MultipartFile file, boolean atualizar) {
@@ -191,6 +241,7 @@ public class PresenteService {
                 presente.getDescricao(),
                 presente.getImagemUrl(),
                 presente.getLink(),
+                presente.getPreco(),
                 presente.getAtivo(),
                 reservado
         );
@@ -213,6 +264,7 @@ public class PresenteService {
                 presente.getDescricao(),
                 presente.getImagemUrl(),
                 presente.getLink(),
+                presente.getPreco(),
                 presente.getAtivo(),
                 reservaDto != null,
                 reservaDto

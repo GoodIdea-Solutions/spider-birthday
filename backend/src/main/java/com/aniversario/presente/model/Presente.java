@@ -1,5 +1,7 @@
 package com.aniversario.presente.model;
 
+import java.math.BigDecimal;
+
 import com.aniversario.common.AuditableEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -37,6 +39,9 @@ public class Presente extends AuditableEntity {
 
     @Column(length = 2000)
     private String link;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal preco;
 
     @Column(nullable = false)
     private Boolean ativo = true;

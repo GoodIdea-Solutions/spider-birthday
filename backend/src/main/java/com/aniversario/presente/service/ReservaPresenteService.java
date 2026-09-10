@@ -75,6 +75,7 @@ public class ReservaPresenteService {
                 presente.getDescricao(),
                 presente.getImagemUrl(),
                 presente.getLink(),
+                presente.getPreco(),
                 reserva.getNomeConvidado(),
                 reserva.getTelefone(),
                 reserva.getCreatedAt()

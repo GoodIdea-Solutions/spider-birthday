@@ -1,5 +1,6 @@
 package com.aniversario.presente;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
@@ -153,6 +154,8 @@ class ReservaPresenteTest {
     @Test
     void consultaReservaPorToken() {
         Presente presente = criarPresente("Consulta por token", true);
+        presente.setPreco(new BigDecimal("89.90"));
+        presenteRepository.saveAndFlush(presente);
         ReservaResponse created = rest.postForEntity(
                 "/api/presentes/" + presente.getId() + "/reservar",
                 payload("Mary Jane", "11911112222"),
@@ -169,6 +172,8 @@ class ReservaPresenteTest {
         assertThat(consulta.getBody().nomeConvidado()).isEqualTo("Mary Jane");
         assertThat(consulta.getBody().telefone()).isEqualTo("11911112222");
         assertThat(consulta.getBody().presenteNome()).isEqualTo("Consulta por token");
+        assertThat(consulta.getBody().presentePreco()).isEqualByComparingTo("89.90");
+        assertThat(encontrarNaLista(presente.getId()).preco()).isEqualByComparingTo("89.90");
 
         ResponseEntity<ErrorResponse> invalido = rest.getForEntity("/api/reservas/nao-e-uuid", ErrorResponse.class);
         assertThat(invalido.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
