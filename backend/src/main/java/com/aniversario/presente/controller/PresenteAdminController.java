@@ -2,7 +2,7 @@ package com.aniversario.presente.controller;
 
 import java.util.List;
 
-import com.aniversario.presente.dto.PresenteResponse;
+import com.aniversario.presente.dto.PresenteAdminResponse;
 import com.aniversario.presente.service.PresenteService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.HttpStatus;
@@ -31,13 +31,13 @@ public class PresenteAdminController {
     }
 
     @GetMapping
-    public List<PresenteResponse> listar() {
+    public List<PresenteAdminResponse> listar() {
         return presenteService.listarAdmin();
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public PresenteResponse criar(
+    public PresenteAdminResponse criar(
             @RequestParam("nome") String nome,
             @RequestParam(value = "descricao", required = false) String descricao,
             @RequestParam(value = "link", required = false) String link,
@@ -49,7 +49,7 @@ public class PresenteAdminController {
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public PresenteResponse atualizar(
+    public PresenteAdminResponse atualizar(
             @PathVariable Long id,
             @RequestParam("nome") String nome,
             @RequestParam(value = "descricao", required = false) String descricao,

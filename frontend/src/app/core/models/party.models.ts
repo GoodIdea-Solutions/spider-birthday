@@ -64,6 +64,13 @@ export interface RsvpResponse {
   createdAt: string;
 }
 
+export interface ReservaAdmin {
+  id: number;
+  nomeConvidado: string;
+  telefone: string | null;
+  createdAt: string;
+}
+
 export interface Presente {
   id: number;
   nome: string;
@@ -71,6 +78,33 @@ export interface Presente {
   imagemUrl: string | null;
   link: string | null;
   ativo: boolean;
+  reservado: boolean;
+  reserva?: ReservaAdmin | null;
+}
+
+export interface ReservaRequest {
+  nomeConvidado: string;
+  telefone?: string | null;
+}
+
+export interface ReservaResponse {
+  token: string;
+  presenteId: number;
+  presenteNome: string;
+  nomeConvidado: string;
+  createdAt: string;
+}
+
+export interface ReservaConsulta {
+  token: string;
+  presenteId: number;
+  presenteNome: string;
+  presenteDescricao: string | null;
+  presenteImagemUrl: string | null;
+  presenteLink: string | null;
+  nomeConvidado: string;
+  telefone: string | null;
+  createdAt: string;
 }
 
 export type FotoDestinos = 'MURAL' | 'STORY' | 'AMBOS';

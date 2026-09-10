@@ -536,6 +536,28 @@ export class AdminComponent implements OnInit {
     });
   }
 
+  cancelarReserva(item: Presente, reservaId: number) {
+    if (!confirm(`Liberar o presente "${item.nome}"? Outro convidado poderá escolhê-lo de novo.`)) {
+      return;
+    }
+    this.admin.cancelarReserva(reservaId).subscribe({
+      next: () => {
+        this.error.set(null);
+        this.presentes.update((list) =>
+          list.map((presente) =>
+            presente.id === item.id ? { ...presente, reservado: false, reserva: null } : presente
+          )
+        );
+      },
+      error: (err) =>
+        this.error.set(this.mensagemErro(err, 'Não foi possível cancelar a reserva.')),
+    });
+  }
+
+  formatReserva(iso: string): string {
+    return new Date(iso).toLocaleString('pt-BR');
+  }
+
   private revokeGiftPreview() {
     if (this.giftPreview?.startsWith('blob:')) {
       URL.revokeObjectURL(this.giftPreview);

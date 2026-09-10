@@ -1,0 +1,244 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  padding:
+    calc(1rem + env(safe-area-inset-top, 0px))
+    calc(1rem + env(safe-area-inset-right, 0px))
+    calc(1rem + env(safe-area-inset-bottom, 0px))
+    calc(1rem + env(safe-area-inset-left, 0px));
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 28rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: linear-gradient(165deg, #0a0a1a 0%, #1a0a0f 100%);
+  border: 3px solid var(--spider-red);
+  padding: 2rem 1.5rem 1.4rem;
+  color: var(--cream, #faf5ef);
+  animation: slideUp 0.3s ease-out;
+}
+
+.modal-close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  background: none;
+  border: none;
+  color: var(--cream, #faf5ef);
+  font-size: 1.8rem;
+  cursor: pointer;
+  opacity: 0.75;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  opacity: 1;
+}
+
+.modal-close:focus-visible,
+.btn-submit:focus-visible,
+.btn-list:focus-visible,
+.btn-copy:focus-visible,
+.btn-close:focus-visible {
+  outline: 3px solid var(--balloon-yellow);
+  outline-offset: 3px;
+}
+
+.kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--balloon-yellow);
+}
+
+h2 {
+  font-family: var(--font-display, 'Bangers', cursive);
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  color: #fff;
+  margin: 0 0 0.5rem;
+  letter-spacing: 0.04em;
+  padding-right: 2rem;
+}
+
+.modal-lead,
+.modal-copy {
+  margin: 0 0 1rem;
+  opacity: 0.86;
+  line-height: 1.5;
+}
+
+.gift-name {
+  margin: 0 0 1.1rem;
+  font-family: var(--font-display, 'Bangers', cursive);
+  font-size: 1.35rem;
+  color: var(--balloon-yellow);
+  letter-spacing: 0.03em;
+}
+
+.reserva-form {
+  display: grid;
+  gap: 1rem;
+}
+
+label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.optional {
+  font-weight: 600;
+  opacity: 0.65;
+}
+
+input {
+  width: 100%;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  font: inherit;
+}
+
+input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+input:focus {
+  outline: 2px solid var(--spider-red);
+  outline-offset: 1px;
+}
+
+.error {
+  color: #fecaca;
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.btn-submit,
+.btn-list,
+.btn-copy,
+.btn-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0.75rem 1.1rem;
+  border: 3px solid #111;
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-submit {
+  width: 100%;
+  background: var(--spider-red);
+  color: #fff;
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: #9b1320;
+}
+
+.btn-submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.success-state {
+  text-align: center;
+}
+
+.success-state p {
+  margin: 0 0 0.75rem;
+}
+
+.success-actions {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1.1rem;
+}
+
+.btn-list {
+  background: var(--spider-red);
+  color: #fff;
+}
+
+.btn-copy {
+  background: var(--spider-blue);
+  color: #fff;
+}
+
+.btn-close {
+  background: #fff;
+  color: var(--ink);
+}
+
+.copy-ok {
+  margin: 0.85rem 0 0;
+  color: #bbf7d0;
+  font-size: 0.95rem;
+}
+
+.copy-error {
+  margin: 0.85rem 0 0;
+  color: #fecaca;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    padding: 1.65rem 1.1rem 1.15rem;
+  }
+
+  h2 {
+    font-size: 1.45rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay,
+  .modal-content {
+    animation: none;
+  }
+}

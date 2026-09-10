@@ -1,0 +1,53 @@
+<section class="section reserva-page">
+  <div class="section-inner">
+    @if (loading()) {
+      <p class="status">Buscando sua reserva...</p>
+    } @else if (error()) {
+      <article class="card miss">
+        <p class="kicker">Teia vazia</p>
+        <h1>Reserva não encontrada</h1>
+        <p class="status error" role="alert">{{ error() }}</p>
+        <a class="btn" routerLink="/presentes">Ver lista de presentes</a>
+      </article>
+    } @else if (reserva(); as item) {
+      <article class="card">
+        <p class="kicker">Sua missão</p>
+        <h1>Presente reservado!</h1>
+        <p class="lead">Obrigado por fazer parte dessa aventura!</p>
+
+        @if (item.presenteImagemUrl) {
+          <img class="thumb" [src]="item.presenteImagemUrl" [alt]="item.presenteNome" />
+        }
+
+        <h2>{{ item.presenteNome }}</h2>
+        @if (item.presenteDescricao) {
+          <p>{{ item.presenteDescricao }}</p>
+        }
+
+        <dl>
+          <div>
+            <dt>Herói</dt>
+            <dd>{{ item.nomeConvidado }}</dd>
+          </div>
+          @if (item.telefone) {
+            <div>
+              <dt>Telefone</dt>
+              <dd>{{ item.telefone }}</dd>
+            </div>
+          }
+          <div>
+            <dt>Reservado em</dt>
+            <dd>{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          </div>
+        </dl>
+
+        <div class="actions">
+          @if (item.presenteLink) {
+            <a class="btn btn-store" [href]="item.presenteLink" target="_blank" rel="noopener noreferrer">Ver na loja</a>
+          }
+          <a class="btn" routerLink="/presentes">Voltar para a lista</a>
+        </div>
+      </article>
+    }
+  </div>
+</section>

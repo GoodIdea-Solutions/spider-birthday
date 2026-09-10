@@ -7,9 +7,13 @@ import java.util.Set;
 import com.aniversario.exception.ApiException;
 import com.aniversario.foto.storage.FileStorageService;
 import com.aniversario.foto.storage.StoredFile;
+import com.aniversario.presente.dto.PresenteAdminResponse;
 import com.aniversario.presente.dto.PresenteResponse;
+import com.aniversario.presente.dto.ReservaAdminResponse;
 import com.aniversario.presente.model.Presente;
+import com.aniversario.presente.model.ReservaPresente;
 import com.aniversario.presente.repository.PresenteRepository;
+import com.aniversario.presente.repository.ReservaPresenteRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,29 +26,36 @@ public class PresenteService {
     private static final long MAX_IMAGE_BYTES = 10L * 1024 * 1024;
 
     private final PresenteRepository presenteRepository;
+    private final ReservaPresenteRepository reservaPresenteRepository;
     private final FileStorageService fileStorageService;
 
-    public PresenteService(PresenteRepository presenteRepository, FileStorageService fileStorageService) {
+    public PresenteService(
+            PresenteRepository presenteRepository,
+            ReservaPresenteRepository reservaPresenteRepository,
+            FileStorageService fileStorageService
+    ) {
         this.presenteRepository = presenteRepository;
+        this.reservaPresenteRepository = reservaPresenteRepository;
         this.fileStorageService = fileStorageService;
     }
 
     @Transactional(readOnly = true)
     public List<PresenteResponse> listarAtivos() {
+        Set<Long> reservados = reservaPresenteRepository.findAllPresenteIds();
         return presenteRepository.findByAtivoTrueOrderByNomeAsc().stream()
-                .map(this::toResponse)
+                .map(presente -> toResponse(presente, reservados.contains(presente.getId())))
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<PresenteResponse> listarAdmin() {
-        return presenteRepository.findAllByOrderByNomeAsc().stream()
-                .map(this::toResponse)
+    public List<PresenteAdminResponse> listarAdmin() {
+        return presenteRepository.findAllWithReservaOrderByNomeAsc().stream()
+                .map(this::toAdminResponse)
                 .toList();
     }
 
     @Transactional
-    public PresenteResponse criar(
+    public PresenteAdminResponse criar(
             String nome,
             String descricao,
             String link,
@@ -55,11 +66,11 @@ public class PresenteService {
         Presente presente = new Presente();
         aplicarCampos(presente, nome, descricao, link, ativo);
         aplicarImagem(presente, imagemUrl, file, false);
-        return toResponse(presenteRepository.save(presente));
+        return toAdminResponse(presenteRepository.save(presente));
     }
 
     @Transactional
-    public PresenteResponse atualizar(
+    public PresenteAdminResponse atualizar(
             Long id,
             String nome,
             String descricao,
@@ -72,7 +83,7 @@ public class PresenteService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Presente não encontrado."));
         aplicarCampos(presente, nome, descricao, link, ativo);
         aplicarImagem(presente, imagemUrl, file, true);
-        return toResponse(presenteRepository.save(presente));
+        return toAdminResponse(presenteRepository.save(presente));
     }
 
     @Transactional
@@ -173,14 +184,38 @@ public class PresenteService {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    private PresenteResponse toResponse(Presente presente) {
+    private PresenteResponse toResponse(Presente presente, boolean reservado) {
         return new PresenteResponse(
                 presente.getId(),
                 presente.getNome(),
                 presente.getDescricao(),
                 presente.getImagemUrl(),
                 presente.getLink(),
-                presente.getAtivo()
+                presente.getAtivo(),
+                reservado
+        );
+    }
+
+    private PresenteAdminResponse toAdminResponse(Presente presente) {
+        ReservaPresente reserva = presente.getReserva();
+        if (reserva == null) {
+            reserva = reservaPresenteRepository.findByPresenteId(presente.getId()).orElse(null);
+        }
+        ReservaAdminResponse reservaDto = reserva == null ? null : new ReservaAdminResponse(
+                reserva.getId(),
+                reserva.getNomeConvidado(),
+                reserva.getTelefone(),
+                reserva.getCreatedAt()
+        );
+        return new PresenteAdminResponse(
+                presente.getId(),
+                presente.getNome(),
+                presente.getDescricao(),
+                presente.getImagemUrl(),
+                presente.getLink(),
+                presente.getAtivo(),
+                reservaDto != null,
+                reservaDto
         );
     }
 }

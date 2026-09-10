@@ -15,7 +15,7 @@
     } @else {
       <div class="grid">
         @for (item of presentes(); track item.id) {
-          <article class="card">
+          <article class="card" [class.reserved]="item.reservado">
             <div class="thumb">
               @if (item.imagemUrl) {
                 <img [src]="item.imagemUrl" [alt]="item.nome" loading="lazy" />
@@ -26,8 +26,24 @@
             <div class="card-body">
               <h3>{{ item.nome }}</h3>
               <p>{{ item.descricao || 'Uma ótima escolha para a festa!' }}</p>
-              @if (item.link) {
-                <a class="btn" [href]="item.link" target="_blank" rel="noopener noreferrer">Ver presente</a>
+
+              @if (item.reservado) {
+                @if (ehMinhaReserva(item)) {
+                  <p class="reserved-title">Você já escolheu este presente!</p>
+                  <p class="reserved-copy">Obrigado por fazer parte dessa aventura.</p>
+                  <a class="btn btn-mine" [routerLink]="['/reserva', minhasReservas()[item.id]]">Ver minha reserva</a>
+                } @else {
+                  <p class="reserved-title">Este presente já foi escolhido por outro herói!</p>
+                  <p class="reserved-copy">Mas ainda temos muitas outras aventuras esperando por você.</p>
+                  <button type="button" class="btn btn-reserved" disabled>Já escolhido</button>
+                }
+              } @else {
+                <button type="button" class="btn btn-reserve" (click)="abrirReserva(item)">
+                  Quero dar este presente
+                </button>
+                @if (item.link) {
+                  <a class="btn btn-store" [href]="item.link" target="_blank" rel="noopener noreferrer">Ver presente</a>
+                }
               }
             </div>
           </article>
@@ -38,3 +54,12 @@
     <app-caixinha-18-anos />
   </div>
 </section>
+
+@if (selecionado(); as item) {
+  <app-reserva-presente-modal
+    [presente]="item"
+    (closed)="fecharReserva()"
+    (reserved)="onReservado($event)"
+    (taken)="onJaReservado($event)"
+  />
+}

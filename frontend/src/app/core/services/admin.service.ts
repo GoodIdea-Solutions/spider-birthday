@@ -127,5 +127,12 @@ export class AdminService {
       responseType: 'text',
     });
   }
+
+  cancelarReserva(id: number) {
+    return this.http.delete(`/api/admin/reservas/${id}`, {
+      ...this.headers(),
+      responseType: 'text',
+    });
+  }
 }
 

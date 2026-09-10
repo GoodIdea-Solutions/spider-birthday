@@ -1,0 +1,75 @@
+<div class="modal-overlay" (click)="onOverlayClick($event)">
+    <div
+      #dialog
+      class="modal-content"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reserva-title"
+      tabindex="-1"
+    >
+      <button type="button" class="modal-close" (click)="fechar()" aria-label="Fechar">&times;</button>
+
+      @if (success(); as reserva) {
+        <div class="success-state">
+          <p class="kicker">Missão cumprida</p>
+          <h2 id="reserva-title">Presente reservado!</h2>
+          <p class="gift-name">{{ reserva.presenteNome }}</p>
+          <p>Obrigado por fazer parte dessa aventura! ❤️</p>
+          <p class="modal-copy">
+            Guarde o link da sua reserva. Só quem tem o link consegue ver os dados.
+          </p>
+          <div class="success-actions">
+            <a class="btn-list" [routerLink]="['/reserva', reserva.token]" (click)="fechar()">Ver minha reserva</a>
+            <button type="button" class="btn-copy" (click)="copiarLink()">Copiar link</button>
+            <button type="button" class="btn-close" (click)="fechar()">Continuar na lista</button>
+          </div>
+          @if (copied()) {
+            <p class="copy-ok" role="status">Link copiado! Pode guardar com carinho.</p>
+          }
+          @if (copyError()) {
+            <p class="copy-error" role="alert">Não deu para copiar agora. Use o botão Ver minha reserva.</p>
+          }
+        </div>
+      } @else {
+        <p class="kicker">Nova missão</p>
+        <h2 id="reserva-title">Boa escolha, herói!</h2>
+        <p class="modal-lead">Você está escolhendo este presente para o Samuel.</p>
+        <p class="gift-name">{{ presente().nome }}</p>
+
+        <form class="reserva-form" (ngSubmit)="confirmar()">
+          <label>
+            Nome
+            <input
+              [(ngModel)]="nome"
+              name="nomeConvidado"
+              type="text"
+              maxlength="120"
+              autocomplete="name"
+              required
+              placeholder="Como a HQ pode te chamar?"
+            />
+          </label>
+          <label>
+            Telefone <span class="optional">(opcional)</span>
+            <input
+              [(ngModel)]="telefone"
+              name="telefone"
+              type="tel"
+              maxlength="30"
+              autocomplete="tel"
+              placeholder="Se quiser, deixa um contato"
+            />
+          </label>
+
+          @if (error()) {
+            <p class="error" role="alert">{{ error() }}</p>
+          }
+
+          <button type="submit" class="btn-submit" [disabled]="loading()">
+            {{ loading() ? 'Reservando...' : 'Confirmar reserva' }}
+          </button>
+        </form>
+      }
+    </div>
+  </div>
+

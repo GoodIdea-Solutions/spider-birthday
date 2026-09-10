@@ -359,13 +359,32 @@
                     <strong>{{ item.nome }}</strong>
                     <span>
                       {{ item.ativo ? 'Visível' : 'Oculto' }}
+                      @if (item.reservado) {
+                        · Reservado
+                      } @else {
+                        · Disponível
+                      }
                       @if (item.link) {
                         · tem link da loja
                       }
                     </span>
+                    @if (item.reserva; as reserva) {
+                      <span class="reserva-meta">
+                        {{ reserva.nomeConvidado }}
+                        @if (reserva.telefone) {
+                          · {{ reserva.telefone }}
+                        }
+                        · {{ formatReserva(reserva.createdAt) }}
+                      </span>
+                    }
                   </div>
                 </div>
                 <div class="row-actions">
+                  @if (item.reserva; as reserva) {
+                    <button type="button" class="ghost" (click)="cancelarReserva(item, reserva.id)">
+                      Cancelar reserva
+                    </button>
+                  }
                   <button type="button" class="edit" (click)="iniciarEdicaoPresente(item)">Editar</button>
                   <button type="button" class="danger" (click)="excluirPresente(item)">Excluir</button>
                 </div>

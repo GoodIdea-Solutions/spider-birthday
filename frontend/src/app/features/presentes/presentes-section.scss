@@ -105,10 +105,12 @@ h3 {
   background: var(--ink);
   color: #fff;
   text-decoration: none;
+  font: inherit;
   font-weight: 800;
   font-size: 0.92rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  cursor: pointer;
 }
 
 .btn:hover {
@@ -118,6 +120,60 @@ h3 {
 .btn:focus-visible {
   outline: 3px solid var(--balloon-yellow);
   outline-offset: 3px;
+}
+
+.btn-reserve {
+  background: var(--spider-red);
+}
+
+.btn-reserve:hover {
+  background: #9b1320;
+}
+
+.btn-store {
+  background: #fff;
+  color: var(--ink);
+}
+
+.btn-store:hover {
+  background: var(--balloon-yellow);
+  color: var(--ink);
+}
+
+.btn-mine {
+  background: var(--spider-blue);
+}
+
+.btn-mine:hover {
+  background: var(--spider-red);
+}
+
+.btn-reserved,
+.btn-reserved:hover {
+  background: #d6d3d1;
+  color: #444;
+  cursor: not-allowed;
+}
+
+.card.reserved {
+  box-shadow: 5px 5px 0 #94a3b8;
+}
+
+.card.reserved .thumb {
+  filter: grayscale(0.35);
+}
+
+.reserved-title {
+  margin: 0.15rem 0 0;
+  font-weight: 800;
+  color: var(--spider-blue);
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+
+.reserved-copy {
+  color: var(--muted);
+  font-size: 0.92rem;
 }
 
 .status {

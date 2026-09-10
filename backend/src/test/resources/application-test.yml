@@ -1,0 +1,5 @@
+app:
+  admin-token: test-admin-token
+  storage:
+    upload-dir: ${java.io.tmpdir}/spider-test-uploads
+    public-base-url: http://localhost/uploads

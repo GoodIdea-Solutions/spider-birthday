@@ -1,12 +1,13 @@
 package com.aniversario.presente.dto;
 
-public record PresenteResponse(
+public record PresenteAdminResponse(
         Long id,
         String nome,
         String descricao,
         String imagemUrl,
         String link,
         Boolean ativo,
-        Boolean reservado
+        Boolean reservado,
+        ReservaAdminResponse reserva
 ) {
 }
