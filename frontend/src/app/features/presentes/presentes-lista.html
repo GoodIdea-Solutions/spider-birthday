@@ -4,6 +4,22 @@
 
     <header class="lista-header">
       <h1 id="lista-heading">Lista de presentes</h1>
+      <aside class="lista-aviso" role="note" aria-labelledby="lista-aviso-titulo">
+        <p class="lista-aviso-titulo" id="lista-aviso-titulo">
+          <span aria-hidden="true">🕷️ </span>Missão: escolher um presente para o Samuel!<span aria-hidden="true"> 🎁</span>
+        </p>
+        <p>
+          Aqui você encontra algumas sugestões para facilitar a sua missão, mas elas são
+          <strong>apenas ideias</strong>, viu?<span aria-hidden="true"> 😉</span>
+        </p>
+        <p>
+          Se quiser escolher outro presente, fique super à vontade! O Samuel vai adorar receber um
+          carinho escolhido especialmente por você.<span aria-hidden="true"> ❤️</span>
+        </p>
+        <p class="lista-aviso-fecho">
+          O mais importante é ter você com a gente nessa aventura!<span aria-hidden="true"> 🕸️🎉</span>
+        </p>
+      </aside>
       @if (resumoLista()) {
         <p class="lista-resumo" [class.lista-completa]="todosReservados()">{{ resumoLista() }}</p>
       }

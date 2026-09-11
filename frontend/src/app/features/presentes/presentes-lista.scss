@@ -35,6 +35,43 @@ h1 {
   color: var(--ink);
 }
 
+.lista-aviso {
+  display: grid;
+  gap: 0.45rem;
+  max-width: 38rem;
+  margin: 0.55rem 0 0.85rem;
+  padding: 1rem 1.05rem 1.1rem;
+  background: #fff;
+  border: 3px solid #111;
+  box-shadow: 5px 5px 0 var(--spider-blue);
+}
+
+.lista-aviso-titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 3.6vw, 1.45rem);
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  color: var(--spider-red);
+}
+
+.lista-aviso p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.lista-aviso strong {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.lista-aviso .lista-aviso-fecho {
+  color: var(--ink);
+  font-weight: 800;
+}
+
 .lista-resumo {
   margin: 0 0 0.35rem;
   font-weight: 800;
