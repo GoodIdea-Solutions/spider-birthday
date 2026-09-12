@@ -1,0 +1,49 @@
+<section class="playlist">
+  <div class="playlist-inner">
+    <p class="kicker">Rádio da festa</p>
+    <h1>Playlist do Samuel</h1>
+    <p class="lead">As músicas da aventura — toque aqui ou abra no YouTube Music.</p>
+
+    @if (loading()) {
+      <p class="status">Ligando a rádio da HQ...</p>
+    } @else if (error()) {
+      <p class="status error" role="alert">{{ error() }}</p>
+    } @else if (tracks().length === 0) {
+      <p class="status empty">A playlist ainda está sendo montada pela HQ.</p>
+    } @else {
+      <ul class="tracks">
+        @for (track of tracks(); track track.id) {
+          <li>
+            <article class="card" [class.current]="player.isCurrent(track)">
+              <button type="button" class="play-card" (click)="tocar(track)">
+                <span class="thumb">
+                  <img [src]="thumbnail(track)" [alt]="'Capa de ' + track.titulo" />
+                  <span class="play-badge" aria-hidden="true">▶</span>
+                </span>
+                <span class="info">
+                  <span class="name">{{ track.titulo }}</span>
+                  @if (track.artista) {
+                    <span class="artist">{{ track.artista }}</span>
+                  }
+                  @if (player.isCurrent(track)) {
+                    <span class="now">
+                      {{ player.playing() ? 'Tocando agora' : 'Selecionada' }}
+                    </span>
+                  }
+                </span>
+              </button>
+              <a
+                class="ytm"
+                [href]="track.youtubeMusicUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                YouTube Music
+              </a>
+            </article>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

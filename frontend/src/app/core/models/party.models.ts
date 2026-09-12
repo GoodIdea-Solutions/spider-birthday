@@ -182,3 +182,22 @@ export interface RsvpConfig {
   prazoConfirmacao: string | null;
   confirmacaoAberta: boolean;
 }
+
+export interface MusicaPlaylist {
+  id: number;
+  titulo: string;
+  artista: string | null;
+  youtubeMusicUrl: string;
+  youtubeVideoId: string;
+  ordem: number;
+  youtubeUrl?: string;
+  ativo?: boolean;
+}
+
+export interface MusicaPlaylistPayload {
+  titulo: string;
+  artista: string | null;
+  youtubeUrl: string;
+  ordem: number;
+  ativo: boolean;
+}

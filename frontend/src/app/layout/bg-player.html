@@ -1,0 +1,38 @@
+@if (shown()) {
+  <aside
+    class="bg-player no-print"
+    [class.playing]="playing()"
+    [class.needs-tap]="autoplayBlocked()"
+    [class.invite]="inviteMode()"
+    aria-label="Trilha da festa"
+  >
+    <div class="yt-frame">
+      <div #ytHost class="yt-host"></div>
+    </div>
+    <div class="row">
+      <div class="meta">
+        @if (autoplayBlocked() && !playing()) {
+          <p class="prompt">Tocar trilha da festa</p>
+        } @else {
+          <p class="kicker">Trilha da festa</p>
+        }
+        <p class="title">{{ current()?.titulo }}</p>
+        @if (current()?.artista) {
+          <p class="artist">{{ current()?.artista }}</p>
+        }
+      </div>
+      <button
+        type="button"
+        class="toggle"
+        (click)="toggle()"
+        [attr.aria-label]="playing() ? 'Parar a música' : 'Tocar a música'"
+      >
+        @if (playing()) {
+          Parar
+        } @else {
+          Tocar
+        }
+      </button>
+    </div>
+  </aside>
+}

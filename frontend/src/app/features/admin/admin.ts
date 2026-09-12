@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Dashboard, Foto, HqLayout, HqPagina, HqPainelPayload, Presente, RsvpConfig, RsvpResponse } from '../../core/models/party.models';
+import { Dashboard, Foto, HqLayout, HqPagina, HqPainelPayload, MusicaPlaylist, Presente, RsvpConfig, RsvpResponse } from '../../core/models/party.models';
 import { AdminService } from '../../core/services/admin.service';
 import { PartyConfigService } from '../../core/services/party-config.service';
 import { QrCodeService } from '../../core/services/qr-code.service';
@@ -27,12 +27,14 @@ export class AdminComponent implements OnInit {
   readonly aprovadas = signal<Foto[]>([]);
   readonly hqPaginas = signal<HqPagina[]>([]);
   readonly presentes = signal<Presente[]>([]);
+  readonly playlist = signal<MusicaPlaylist[]>([]);
   readonly midias = signal<Foto[]>([]);
   readonly qrDataUrl = signal<string | null>(null);
   readonly cameraUrl = signal('');
   readonly editingId = signal<number | null>(null);
   readonly editingHqId = signal<number | null>(null);
   readonly editingGiftId = signal<number | null>(null);
+  readonly editingPlaylistId = signal<number | null>(null);
 
   editNome = '';
   editAdultos = 0;
@@ -58,6 +60,12 @@ export class AdminComponent implements OnInit {
   giftAtivo = true;
   giftFile: File | null = null;
   giftPreview: string | null = null;
+
+  playlistTitulo = '';
+  playlistArtista = '';
+  playlistYoutubeUrl = '';
+  playlistOrdem = 0;
+  playlistAtivo = true;
 
   rsvpPrazo = '';
   rsvpLiberada = true;
@@ -120,6 +128,15 @@ export class AdminComponent implements OnInit {
     this.admin.listarPresentes().subscribe({
       next: (items) => this.presentes.set(items),
       error: () => this.error.set('Falha ao carregar a lista de presentes.'),
+    });
+    this.admin.listarPlaylist().subscribe({
+      next: (items) => {
+        this.playlist.set(items);
+        if (this.editingPlaylistId() == null) {
+          this.playlistOrdem = items.length;
+        }
+      },
+      error: () => this.error.set('Falha ao carregar a playlist.'),
     });
     this.admin.todasMidias().subscribe({
       next: (items) => this.midias.set(items),
@@ -537,6 +554,80 @@ export class AdminComponent implements OnInit {
       },
       error: (err) =>
         this.error.set(this.mensagemErro(err, 'Não foi possível excluir o presente.')),
+    });
+  }
+
+  resetPlaylistForm() {
+    this.editingPlaylistId.set(null);
+    this.playlistTitulo = '';
+    this.playlistArtista = '';
+    this.playlistYoutubeUrl = '';
+    this.playlistOrdem = this.playlist().length;
+    this.playlistAtivo = true;
+  }
+
+  iniciarEdicaoPlaylist(item: MusicaPlaylist) {
+    this.editingPlaylistId.set(item.id);
+    this.playlistTitulo = item.titulo;
+    this.playlistArtista = item.artista ?? '';
+    this.playlistYoutubeUrl = item.youtubeUrl || item.youtubeMusicUrl;
+    this.playlistOrdem = item.ordem;
+    this.playlistAtivo = item.ativo !== false;
+    this.error.set(null);
+  }
+
+  salvarPlaylist() {
+    const titulo = this.playlistTitulo.trim();
+    const youtubeUrl = this.playlistYoutubeUrl.trim();
+    if (!titulo) {
+      this.error.set('Título da música é obrigatório.');
+      return;
+    }
+    if (!youtubeUrl) {
+      this.error.set('Informe o link do YouTube Music ou do YouTube.');
+      return;
+    }
+    const payload = {
+      titulo,
+      artista: this.playlistArtista.trim() || null,
+      youtubeUrl,
+      ordem: Number(this.playlistOrdem) || 0,
+      ativo: this.playlistAtivo,
+    };
+    const id = this.editingPlaylistId();
+    const req = id
+      ? this.admin.atualizarPlaylist(id, payload)
+      : this.admin.criarPlaylist(payload);
+    req.subscribe({
+      next: () => {
+        this.error.set(null);
+        this.resetPlaylistForm();
+        this.admin.listarPlaylist().subscribe({
+          next: (items) => {
+            this.playlist.set(items);
+            this.playlistOrdem = items.length;
+          },
+        });
+      },
+      error: (err) =>
+        this.error.set(this.mensagemErro(err, 'Não foi possível salvar a música.')),
+    });
+  }
+
+  excluirPlaylist(item: MusicaPlaylist) {
+    if (!confirm(`Excluir "${item.titulo}" da playlist?`)) {
+      return;
+    }
+    this.admin.excluirPlaylist(item.id).subscribe({
+      next: () => {
+        this.error.set(null);
+        this.playlist.update((list) => list.filter((p) => p.id !== item.id));
+        if (this.editingPlaylistId() === item.id) {
+          this.resetPlaylistForm();
+        }
+      },
+      error: (err) =>
+        this.error.set(this.mensagemErro(err, 'Não foi possível excluir a música.')),
     });
   }
 

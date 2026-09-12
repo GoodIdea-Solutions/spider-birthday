@@ -11,6 +11,7 @@ import { PresentesCaixinhaPageComponent } from './features/presentes/presentes-c
 import { ReservaPageComponent } from './features/presentes/reserva-page';
 import { CameraPageComponent } from './features/fotos/camera-page';
 import { ConvitePageComponent } from './features/convite/convite-page';
+import { PlaylistPageComponent } from './features/playlist/playlist-page';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -22,6 +23,7 @@ export const routes: Routes = [
   { path: 'fotos', component: FotosPageComponent },
   { path: 'festa/:slug/camera', component: CameraPageComponent, data: { capture: true } },
   { path: 'hq', component: HqPageComponent },
+  { path: 'playlist', component: PlaylistPageComponent },
   { path: 'convidados', component: ConvidadosComponent },
   { path: 'admin', component: AdminComponent },
   { path: '**', redirectTo: '' },

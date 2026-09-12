@@ -3,6 +3,7 @@ import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './layout/header';
 import { FooterComponent } from './layout/footer';
 import { FabRsvpComponent } from './layout/fab-rsvp';
+import { BgPlayerComponent } from './layout/bg-player';
 import { SpiderCrawlComponent } from './layout/spider-crawl';
 import { RsvpModalComponent } from './features/rsvp/rsvp-modal/rsvp-modal';
 import { PartyConfigService } from './core/services/party-config.service';
@@ -11,7 +12,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, FabRsvpComponent, SpiderCrawlComponent, RsvpModalComponent],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, FabRsvpComponent, BgPlayerComponent, SpiderCrawlComponent, RsvpModalComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

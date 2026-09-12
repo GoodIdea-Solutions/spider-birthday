@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Dashboard, Foto, HqPagina, HqPaginaPayload, Presente, RsvpConfig, RsvpRequest, RsvpResponse } from '../models/party.models';
+import { Dashboard, Foto, HqPagina, HqPaginaPayload, MusicaPlaylist, MusicaPlaylistPayload, Presente, RsvpConfig, RsvpRequest, RsvpResponse } from '../models/party.models';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -123,6 +123,25 @@ export class AdminService {
 
   excluirPresente(id: number) {
     return this.http.delete(`/api/admin/presentes/${id}`, {
+      ...this.headers(),
+      responseType: 'text',
+    });
+  }
+
+  listarPlaylist() {
+    return this.http.get<MusicaPlaylist[]>('/api/admin/playlist', this.headers());
+  }
+
+  criarPlaylist(payload: MusicaPlaylistPayload) {
+    return this.http.post<MusicaPlaylist>('/api/admin/playlist', payload, this.headers());
+  }
+
+  atualizarPlaylist(id: number, payload: MusicaPlaylistPayload) {
+    return this.http.put<MusicaPlaylist>(`/api/admin/playlist/${id}`, payload, this.headers());
+  }
+
+  excluirPlaylist(id: number) {
+    return this.http.delete(`/api/admin/playlist/${id}`, {
       ...this.headers(),
       responseType: 'text',
     });

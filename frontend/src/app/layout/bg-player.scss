@@ -1,0 +1,117 @@
+.bg-player {
+  position: fixed;
+  left: calc(0.75rem + env(safe-area-inset-left, 0px));
+  bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  z-index: 48;
+  display: grid;
+  gap: 0.5rem;
+  width: 13.5rem;
+  padding: 0.45rem;
+  border: 3px solid #fff;
+  background: color-mix(in srgb, #050814 92%, transparent);
+  color: var(--cream);
+  box-shadow: 4px 4px 0 var(--spider-red);
+  backdrop-filter: blur(10px);
+}
+
+.yt-frame {
+  width: 200px;
+  height: 113px;
+  overflow: hidden;
+  background: #000;
+  border: 2px solid color-mix(in srgb, var(--spider-red) 70%, #fff);
+}
+
+.yt-host,
+.yt-host iframe {
+  width: 200px;
+  height: 113px;
+  border: 0;
+  display: block;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.meta {
+  min-width: 0;
+}
+
+.kicker,
+.prompt {
+  margin: 0 0 0.1rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--balloon-yellow);
+}
+
+.prompt {
+  color: #fff;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 0.03em;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.artist {
+  margin: 0.05rem 0 0;
+  font-size: 0.72rem;
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toggle {
+  flex-shrink: 0;
+  min-width: 4.2rem;
+  padding: 0.5rem 0.65rem;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: var(--spider-red);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.needs-tap .toggle {
+  animation: tapPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes tapPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 197, 24, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(245, 197, 24, 0);
+  }
+}
+
+.bg-player.invite {
+  top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  bottom: auto;
+}
+
+@media (max-width: 720px) {
+  .bg-player:not(.invite) {
+    top: calc(4.75rem + env(safe-area-inset-top, 0px));
+    bottom: auto;
+  }
+}

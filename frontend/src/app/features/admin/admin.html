@@ -408,6 +408,86 @@
           </ul>
         </section>
 
+        <section class="playlist-admin">
+          <h2>Playlist da festa</h2>
+          <p class="empty">
+            Cole o link do YouTube Music (ou do YouTube). A primeira música visível toca ao abrir o
+            site. Visitantes veem a lista em /playlist.
+          </p>
+
+          <form class="hq-form" (ngSubmit)="salvarPlaylist()">
+            <label class="span-2">
+              Título
+              <input
+                [(ngModel)]="playlistTitulo"
+                name="playlistTitulo"
+                type="text"
+                maxlength="150"
+                required
+                placeholder="Ex.: Theme from Spider-Man"
+              />
+            </label>
+            <label>
+              Artista (opcional)
+              <input
+                [(ngModel)]="playlistArtista"
+                name="playlistArtista"
+                type="text"
+                maxlength="120"
+                placeholder="Ex.: Danny Elfman"
+              />
+            </label>
+            <label>
+              Ordem
+              <input [(ngModel)]="playlistOrdem" name="playlistOrdem" type="number" min="0" />
+            </label>
+            <label class="span-2">
+              Link do YouTube Music
+              <input
+                [(ngModel)]="playlistYoutubeUrl"
+                name="playlistYoutubeUrl"
+                type="url"
+                maxlength="2000"
+                required
+                placeholder="https://music.youtube.com/watch?v=..."
+              />
+            </label>
+            <label class="check span-2">
+              <input [(ngModel)]="playlistAtivo" name="playlistAtivo" type="checkbox" />
+              Visível na playlist pública
+            </label>
+            <div class="row-actions span-2">
+              <button type="submit" class="ok">
+                {{ editingPlaylistId() ? 'Salvar música' : 'Adicionar música' }}
+              </button>
+              @if (editingPlaylistId()) {
+                <button type="button" class="ghost" (click)="resetPlaylistForm()">Cancelar</button>
+              }
+            </div>
+          </form>
+
+          @if (playlist().length === 0) {
+            <p class="empty">Nenhuma música cadastrada ainda.</p>
+          }
+          <ul class="hq-list">
+            @for (item of playlist(); track item.id) {
+              <li>
+                <div>
+                  <strong>{{ item.titulo }}</strong>
+                  <span>
+                    {{ item.artista || 'Sem artista' }} · ordem {{ item.ordem }} ·
+                    {{ item.ativo !== false ? 'Visível' : 'Oculta' }}
+                  </span>
+                </div>
+                <div class="row-actions">
+                  <button type="button" class="edit" (click)="iniciarEdicaoPlaylist(item)">Editar</button>
+                  <button type="button" class="danger" (click)="excluirPlaylist(item)">Excluir</button>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+
         <section class="hq-admin">
           <h2>Revista HQ</h2>
           <p class="empty">Monte páginas com fotos aprovadas (imagens, sem vídeo), layout e legendas. Visitantes leem em /hq.</p>
