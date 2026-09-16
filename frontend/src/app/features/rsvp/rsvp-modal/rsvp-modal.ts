@@ -447,7 +447,7 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
     }
     linhas.push(
       '',
-      `🎁 O ${nomeCrianca} também preparou uma lista de sugestões de presentes:`,
+      `🎁 Se quiser presentear o ${nomeCrianca}, veja as sugestões ou contribua para a Caixinha dos 18 anos:`,
       this.listaPresentesUrl(),
       '',
       '━━━━━━━━━━━━━━━━',
@@ -457,7 +457,7 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
   }
 
   private listaPresentesUrl(): string {
-    return `${window.location.origin}/presentes/lista`;
+    return `${window.location.origin}/presentes`;
   }
 
   private formatarIdadeFesta(idade: string | undefined): string {
