@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { Dashboard, Foto, HqLayout, HqPagina, HqPainelPayload, MusicaPlaylist, Presente, ProdutoLinkPreview, RsvpConfig, RsvpResponse } from '../../core/models/party.models';
+import { Dashboard, Foto, HqLayout, HqPagina, HqPainelPayload, MusicaPlaylist, Presente, PresenteTipo, ProdutoLinkPreview, RsvpConfig, RsvpResponse } from '../../core/models/party.models';
 import { AdminService } from '../../core/services/admin.service';
 import { PartyConfigService } from '../../core/services/party-config.service';
 import { QrCodeService } from '../../core/services/qr-code.service';
@@ -56,6 +56,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   giftNome = '';
   giftDescricao = '';
   giftLink = '';
+  giftTipo: PresenteTipo | '' = '';
   giftPreco = '';
   giftImagemUrl = '';
   giftAtivo = true;
@@ -587,6 +588,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.giftNome = '';
     this.giftDescricao = '';
     this.giftLink = '';
+    this.giftTipo = '';
     this.giftPreco = '';
     this.giftImagemUrl = '';
     this.giftAtivo = true;
@@ -608,6 +610,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.giftNome = item.nome;
     this.giftDescricao = item.descricao ?? '';
     this.giftLink = item.link ?? '';
+    this.giftTipo = item.tipo ?? '';
     this.giftPreco = this.formatarPrecoInput(item.preco);
     this.giftImagemUrl = item.imagemUrl ?? '';
     this.giftAtivo = item.ativo;
@@ -625,11 +628,16 @@ export class AdminComponent implements OnInit, OnDestroy {
       this.error.set('Nome do presente é obrigatório.');
       return;
     }
+    if (!this.giftTipo) {
+      this.error.set('Tipo do presente é obrigatório.');
+      return;
+    }
 
     const data = new FormData();
     data.append('nome', nome);
     data.append('descricao', this.giftDescricao.trim());
     data.append('link', this.giftLink.trim());
+    data.append('tipo', this.giftTipo);
     data.append('preco', this.giftPreco.trim());
     data.append('ativo', String(this.giftAtivo));
     if (this.giftImagemUrl.trim()) {
@@ -765,6 +773,19 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   formatarPreco(preco: number): string {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(preco);
+  }
+
+  rotuloTipo(tipo: PresenteTipo | null | undefined): string {
+    if (tipo === 'BRINQUEDO') {
+      return 'Brinquedo';
+    }
+    if (tipo === 'ROUPA') {
+      return 'Roupa';
+    }
+    if (tipo === 'SAPATOS') {
+      return 'Sapatos';
+    }
+    return 'Sem tipo';
   }
 
   private formatarPrecoInput(preco: number | null | undefined): string {

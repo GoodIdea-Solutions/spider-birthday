@@ -320,6 +320,15 @@
               <p class="gift-preview-msg span-2">{{ giftPreviewMsg() }}</p>
             }
             <label class="span-2">
+              Tipo
+              <select [(ngModel)]="giftTipo" name="giftTipo" required>
+                <option value="" disabled>Selecione o tipo</option>
+                <option value="BRINQUEDO">Brinquedo</option>
+                <option value="ROUPA">Roupa</option>
+                <option value="SAPATOS">Sapatos</option>
+              </select>
+            </label>
+            <label class="span-2">
               Preço (opcional)
               <input
                 [(ngModel)]="giftPreco"
@@ -387,6 +396,7 @@
                     <strong>{{ item.nome }}</strong>
                     <span>
                       {{ item.ativo ? 'Visível' : 'Oculto' }}
+                      · {{ rotuloTipo(item.tipo) }}
                       @if (item.reservado) {
                         · Reservado
                       } @else {

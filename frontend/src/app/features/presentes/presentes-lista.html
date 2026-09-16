@@ -35,8 +35,87 @@
     } @else if (presentes().length === 0) {
       <p class="status empty">A lista ainda está sendo montada pela HQ.</p>
     } @else {
-      <div class="grid">
-        @for (item of presentes(); track item.id) {
+      <div class="filtros" role="search" aria-label="Filtrar presentes">
+        <div class="filtro-grupo">
+          <p class="filtro-label" id="filtro-tipo-label">Tipo</p>
+          <div class="chips" role="radiogroup" aria-labelledby="filtro-tipo-label">
+            @for (chip of tiposFiltro; track chip.id) {
+              <button
+                type="button"
+                role="radio"
+                [attr.aria-checked]="tipoFiltro() === chip.id"
+                [class.on]="tipoFiltro() === chip.id"
+                (click)="escolherTipo(chip.id)"
+              >
+                {{ chip.label }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="filtro-grupo">
+          <p class="filtro-label" id="filtro-situacao-label">Situação</p>
+          <div class="chips" role="radiogroup" aria-labelledby="filtro-situacao-label">
+            @for (chip of disponibilidadesFiltro; track chip.id) {
+              <button
+                type="button"
+                role="radio"
+                [attr.aria-checked]="disponibilidadeFiltro() === chip.id"
+                [class.on]="disponibilidadeFiltro() === chip.id"
+                (click)="escolherDisponibilidade(chip.id)"
+              >
+                {{ chip.label }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="filtro-grupo filtro-preco">
+          <p class="filtro-label" id="filtro-preco-label">Preço</p>
+          <div class="preco-range" role="group" aria-labelledby="filtro-preco-label">
+            <label>
+              De
+              <input
+                type="text"
+                inputmode="decimal"
+                autocomplete="off"
+                maxlength="12"
+                placeholder="0"
+                [value]="precoMin()"
+                (input)="atualizarPrecoMin($any($event.target).value)"
+              />
+            </label>
+            <span class="preco-ate">até</span>
+            <label>
+              Até
+              <input
+                type="text"
+                inputmode="decimal"
+                autocomplete="off"
+                maxlength="12"
+                placeholder="999"
+                [value]="precoMax()"
+                (input)="atualizarPrecoMax($any($event.target).value)"
+              />
+            </label>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn-limpar"
+          [disabled]="!filtrosAtivos()"
+          (click)="limparFiltros()"
+        >
+          Limpar filtros
+        </button>
+      </div>
+
+      @if (presentesFiltrados().length === 0) {
+        <p class="status empty">Nenhum presente combina com esses filtros.</p>
+      } @else {
+        <div class="grid">
+          @for (item of presentesFiltrados(); track item.id) {
           <article class="card" [class.reserved]="item.reservado">
             <div class="thumb">
               @if (item.imagemUrl) {
@@ -72,8 +151,9 @@
               }
             </div>
           </article>
-        }
-      </div>
+          }
+        </div>
+      }
     }
   </div>
 </section>

@@ -56,12 +56,13 @@ public class PresenteAdminController {
             @RequestParam("nome") String nome,
             @RequestParam(value = "descricao", required = false) String descricao,
             @RequestParam(value = "link", required = false) String link,
+            @RequestParam(value = "tipo", required = false) String tipo,
             @RequestParam(value = "preco", required = false) String preco,
             @RequestParam(value = "ativo", required = false) Boolean ativo,
             @RequestParam(value = "imagemUrl", required = false) String imagemUrl,
             @RequestPart(value = "file", required = false) MultipartFile file
     ) {
-        return presenteService.criar(nome, descricao, link, preco, ativo, imagemUrl, file);
+        return presenteService.criar(nome, descricao, link, tipo, preco, ativo, imagemUrl, file);
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -70,12 +71,13 @@ public class PresenteAdminController {
             @RequestParam("nome") String nome,
             @RequestParam(value = "descricao", required = false) String descricao,
             @RequestParam(value = "link", required = false) String link,
+            @RequestParam(value = "tipo", required = false) String tipo,
             @RequestParam(value = "preco", required = false) String preco,
             @RequestParam(value = "ativo", required = false) Boolean ativo,
             @RequestParam(value = "imagemUrl", required = false) String imagemUrl,
             @RequestPart(value = "file", required = false) MultipartFile file
     ) {
-        return presenteService.atualizar(id, nome, descricao, link, preco, ativo, imagemUrl, file);
+        return presenteService.atualizar(id, nome, descricao, link, tipo, preco, ativo, imagemUrl, file);
     }
 
     @DeleteMapping("/{id}")

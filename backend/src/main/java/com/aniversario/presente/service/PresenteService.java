@@ -13,6 +13,7 @@ import com.aniversario.presente.dto.PresenteAdminResponse;
 import com.aniversario.presente.dto.PresenteResponse;
 import com.aniversario.presente.dto.ReservaAdminResponse;
 import com.aniversario.presente.model.Presente;
+import com.aniversario.presente.model.PresenteTipo;
 import com.aniversario.presente.model.ReservaPresente;
 import com.aniversario.presente.repository.PresenteRepository;
 import com.aniversario.presente.repository.ReservaPresenteRepository;
@@ -62,13 +63,14 @@ public class PresenteService {
             String nome,
             String descricao,
             String link,
+            String tipo,
             String preco,
             Boolean ativo,
             String imagemUrl,
             MultipartFile file
     ) {
         Presente presente = new Presente();
-        aplicarCampos(presente, nome, descricao, link, preco, ativo);
+        aplicarCampos(presente, nome, descricao, link, tipo, preco, ativo);
         aplicarImagem(presente, imagemUrl, file, false);
         return toAdminResponse(presenteRepository.save(presente));
     }
@@ -79,6 +81,7 @@ public class PresenteService {
             String nome,
             String descricao,
             String link,
+            String tipo,
             String preco,
             Boolean ativo,
             String imagemUrl,
@@ -86,7 +89,7 @@ public class PresenteService {
     ) {
         Presente presente = presenteRepository.findById(id)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Presente não encontrado."));
-        aplicarCampos(presente, nome, descricao, link, preco, ativo);
+        aplicarCampos(presente, nome, descricao, link, tipo, preco, ativo);
         aplicarImagem(presente, imagemUrl, file, true);
         return toAdminResponse(presenteRepository.save(presente));
     }
@@ -99,7 +102,15 @@ public class PresenteService {
         presenteRepository.delete(presente);
     }
 
-    private void aplicarCampos(Presente presente, String nome, String descricao, String link, String preco, Boolean ativo) {
+    private void aplicarCampos(
+            Presente presente,
+            String nome,
+            String descricao,
+            String link,
+            String tipo,
+            String preco,
+            Boolean ativo
+    ) {
         String nomeLimpo = trimToNull(nome);
         if (nomeLimpo == null) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Nome é obrigatório.");
@@ -110,8 +121,21 @@ public class PresenteService {
         presente.setNome(nomeLimpo);
         presente.setDescricao(limitar(trimToNull(descricao), 500, "Descrição"));
         presente.setLink(validarUrl(trimToNull(link), "Link da loja"));
+        presente.setTipo(parseTipo(tipo));
         presente.setPreco(parsePreco(preco));
         presente.setAtivo(ativo == null || ativo);
+    }
+
+    private PresenteTipo parseTipo(String raw) {
+        String value = trimToNull(raw);
+        if (value == null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Tipo é obrigatório.");
+        }
+        try {
+            return PresenteTipo.valueOf(value.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Tipo inválido. Use BRINQUEDO, ROUPA ou SAPATOS.");
+        }
     }
 
     private BigDecimal parsePreco(String raw) {
@@ -241,6 +265,7 @@ public class PresenteService {
                 presente.getDescricao(),
                 presente.getImagemUrl(),
                 presente.getLink(),
+                presente.getTipo(),
                 presente.getPreco(),
                 presente.getAtivo(),
                 reservado
@@ -264,6 +289,7 @@ public class PresenteService {
                 presente.getDescricao(),
                 presente.getImagemUrl(),
                 presente.getLink(),
+                presente.getTipo(),
                 presente.getPreco(),
                 presente.getAtivo(),
                 reservaDto != null,

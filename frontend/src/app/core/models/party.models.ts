@@ -71,12 +71,15 @@ export interface ReservaAdmin {
   createdAt: string;
 }
 
+export type PresenteTipo = 'BRINQUEDO' | 'ROUPA' | 'SAPATOS';
+
 export interface Presente {
   id: number;
   nome: string;
   descricao: string | null;
   imagemUrl: string | null;
   link: string | null;
+  tipo: PresenteTipo | null;
   preco: number | null;
   ativo: boolean;
   reservado: boolean;
