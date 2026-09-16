@@ -295,45 +295,6 @@ td {
   accent-color: var(--spider-red);
 }
 
-.gift-preview img {
-  display: block;
-  width: min(100%, 12rem);
-  aspect-ratio: 1 / 1;
-  height: auto;
-  object-fit: contain;
-  background: #fff;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(17, 24, 39, 0.12);
-}
-
-.gift-link-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: stretch;
-}
-
-.gift-link-row input {
-  flex: 1 1 16rem;
-  width: auto;
-  min-width: 0;
-}
-
-.gift-link-row button {
-  white-space: nowrap;
-}
-
-.gift-link-row button:disabled {
-  opacity: 0.7;
-  cursor: wait;
-}
-
-.gift-preview-msg {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
 .gift-row {
   display: flex;
   align-items: center;

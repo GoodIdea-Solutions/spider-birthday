@@ -272,113 +272,7 @@
             O que estiver visível aparece em /presentes para os convidados.
           </p>
 
-          <form class="hq-form" (ngSubmit)="salvarPresente()">
-            <label class="span-2">
-              Nome
-              <input
-                [(ngModel)]="giftNome"
-                name="giftNome"
-                type="text"
-                maxlength="150"
-                required
-                placeholder="Ex.: Kit de aventura"
-              />
-            </label>
-            <label class="span-2">
-              Descrição (opcional)
-              <input
-                [(ngModel)]="giftDescricao"
-                name="giftDescricao"
-                type="text"
-                maxlength="500"
-                placeholder="Uma frase curta sobre o presente"
-              />
-            </label>
-            <label class="span-2">
-              Link da loja (opcional)
-              <div class="gift-link-row">
-                <input
-                  [(ngModel)]="giftLink"
-                  name="giftLink"
-                  type="url"
-                  maxlength="2000"
-                  placeholder="https://www.amazon.com.br/..."
-                  (ngModelChange)="onGiftLinkChange()"
-                  (blur)="carregarDadosDaLoja(false)"
-                />
-                <button
-                  type="button"
-                  class="ghost"
-                  [disabled]="giftPreviewLoading()"
-                  (click)="carregarDadosDaLoja(true)"
-                >
-                  {{ giftPreviewLoading() ? 'Carregando...' : 'Carregar dados da loja' }}
-                </button>
-              </div>
-            </label>
-            @if (giftPreviewMsg()) {
-              <p class="gift-preview-msg span-2">{{ giftPreviewMsg() }}</p>
-            }
-            <label class="span-2">
-              Tipo
-              <select [(ngModel)]="giftTipo" name="giftTipo" required>
-                <option value="" disabled>Selecione o tipo</option>
-                <option value="BRINQUEDO">Brinquedo</option>
-                <option value="ROUPA">Roupa</option>
-                <option value="SAPATOS">Sapatos</option>
-              </select>
-            </label>
-            <label class="span-2">
-              Preço (opcional)
-              <input
-                [(ngModel)]="giftPreco"
-                name="giftPreco"
-                type="text"
-                inputmode="decimal"
-                maxlength="15"
-                autocomplete="off"
-                placeholder="Ex.: 89,90"
-              />
-            </label>
-            <label class="span-2">
-              Foto do presente
-              <input
-                #giftFileInput
-                name="giftFile"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                (change)="onGiftFile($event)"
-              />
-            </label>
-            <label class="span-2">
-              Ou cole a URL da imagem
-              <input
-                [(ngModel)]="giftImagemUrl"
-                name="giftImagemUrl"
-                type="url"
-                maxlength="2000"
-                placeholder="https://..."
-                (ngModelChange)="onGiftImagemUrlChange()"
-              />
-            </label>
-            @if (giftPreview) {
-              <div class="gift-preview span-2">
-                <img [src]="giftPreview" [alt]="giftNome || 'Prévia do presente'" />
-              </div>
-            }
-            <label class="check span-2">
-              <input [(ngModel)]="giftAtivo" name="giftAtivo" type="checkbox" />
-              Visível na lista pública
-            </label>
-            <div class="row-actions span-2">
-              <button type="submit" class="ok">
-                {{ editingGiftId() ? 'Salvar presente' : 'Adicionar presente' }}
-              </button>
-              @if (editingGiftId()) {
-                <button type="button" class="ghost" (click)="resetGiftForm()">Cancelar</button>
-              }
-            </div>
-          </form>
+          <app-admin-presente-form (saved)="onPresenteSalvo()" />
 
           @if (presentes().length === 0) {
             <p class="empty">Nenhum presente cadastrado ainda.</p>
@@ -595,4 +489,12 @@
       <p class="error">{{ error() }}</p>
     }
   </div>
+
+  @if (editingPresente(); as item) {
+    <app-admin-presente-modal
+      [presente]="item"
+      (closed)="fecharEdicaoPresente()"
+      (saved)="onPresenteEditado()"
+    />
+  }
 </section>

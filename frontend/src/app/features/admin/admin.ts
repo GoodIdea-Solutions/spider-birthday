@@ -1,22 +1,22 @@
-import { Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import { Dashboard, Foto, HqLayout, HqPagina, HqPainelPayload, MusicaPlaylist, Presente, PresenteTipo, ProdutoLinkPreview, RsvpConfig, RsvpResponse } from '../../core/models/party.models';
+import { Dashboard, Foto, HqLayout, HqPagina, HqPainelPayload, MusicaPlaylist, Presente, PresenteTipo, RsvpConfig, RsvpResponse } from '../../core/models/party.models';
 import { AdminService } from '../../core/services/admin.service';
 import { PartyConfigService } from '../../core/services/party-config.service';
 import { QrCodeService } from '../../core/services/qr-code.service';
+import { AdminPresenteFormComponent } from './presente-form/admin-presente-form';
+import { AdminPresenteModalComponent } from './presente-modal/admin-presente-modal';
 
 @Component({
   selector: 'app-admin',
-  imports: [FormsModule],
+  imports: [FormsModule, AdminPresenteFormComponent, AdminPresenteModalComponent],
   templateUrl: './admin.html',
   styleUrl: './admin.scss',
 })
-export class AdminComponent implements OnInit, OnDestroy {
+export class AdminComponent implements OnInit {
   private readonly admin = inject(AdminService);
   private readonly party = inject(PartyConfigService);
   private readonly qr = inject(QrCodeService);
-  private readonly giftFileInput = viewChild<ElementRef<HTMLInputElement>>('giftFileInput');
 
   tokenInput = this.admin.getToken();
   readonly authenticated = signal(false);
@@ -34,7 +34,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   readonly cameraUrl = signal('');
   readonly editingId = signal<number | null>(null);
   readonly editingHqId = signal<number | null>(null);
-  readonly editingGiftId = signal<number | null>(null);
+  readonly editingPresente = signal<Presente | null>(null);
   readonly editingPlaylistId = signal<number | null>(null);
 
   editNome = '';
@@ -53,21 +53,6 @@ export class AdminComponent implements OnInit, OnDestroy {
   hqTitulo = '';
   hqPaineis: HqPainelPayload[] = [{ fotoId: 0, posicao: 1, legenda: '' }];
 
-  giftNome = '';
-  giftDescricao = '';
-  giftLink = '';
-  giftTipo: PresenteTipo | '' = '';
-  giftPreco = '';
-  giftImagemUrl = '';
-  giftAtivo = true;
-  giftFile: File | null = null;
-  giftPreview: string | null = null;
-  readonly giftPreviewLoading = signal(false);
-  readonly giftPreviewMsg = signal<string | null>(null);
-  private giftPreviewTimer: ReturnType<typeof setTimeout> | null = null;
-  private giftPreviewSub: Subscription | null = null;
-  private lastPreviewedLink = '';
-
   playlistTitulo = '';
   playlistArtista = '';
   playlistYoutubeUrl = '';
@@ -84,11 +69,6 @@ export class AdminComponent implements OnInit, OnDestroy {
     if (this.tokenInput) {
       this.entrar();
     }
-  }
-
-  ngOnDestroy() {
-    this.cancelarPreviewAgendado();
-    this.giftPreviewSub?.unsubscribe();
   }
 
   entrar() {
@@ -475,187 +455,23 @@ export class AdminComponent implements OnInit, OnDestroy {
     });
   }
 
-  onGiftFile(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    this.revokeGiftPreview();
-    this.giftFile = file;
-    this.giftPreview = file ? URL.createObjectURL(file) : this.giftImagemUrl.trim() || null;
-  }
-
-  onGiftImagemUrlChange() {
-    if (this.giftFile) {
-      return;
-    }
-    this.giftPreview = this.giftImagemUrl.trim() || null;
-  }
-
-  onGiftLinkChange() {
-    this.agendarPreviewDaLoja();
-  }
-
-  carregarDadosDaLoja(forcar = false) {
-    this.cancelarPreviewAgendado();
-    const url = this.giftLink.trim();
-    if (!/^https?:\/\//i.test(url)) {
-      if (forcar) {
-        this.giftPreviewMsg.set('Informe um link http(s) da loja.');
-      }
-      return;
-    }
-    if (!forcar && (url === this.lastPreviewedLink || this.giftPreviewLoading())) {
-      return;
-    }
-
-    this.giftPreviewSub?.unsubscribe();
-    this.lastPreviewedLink = url;
-    this.giftPreviewLoading.set(true);
-    this.giftPreviewMsg.set('Buscando dados da loja...');
-    this.giftPreviewSub = this.admin.previewPresente(url).subscribe({
-      next: (preview) => {
-        this.giftPreviewLoading.set(false);
-        this.aplicarPreviewDaLoja(preview, forcar);
-      },
-      error: (err) => {
-        this.giftPreviewLoading.set(false);
-        this.giftPreviewMsg.set(
-          this.mensagemErro(err, 'Não foi possível ler os dados desta loja. Preencha na mão.')
-        );
-      },
-    });
-  }
-
-  private agendarPreviewDaLoja() {
-    this.cancelarPreviewAgendado();
-    this.giftPreviewTimer = setTimeout(() => this.carregarDadosDaLoja(false), 600);
-  }
-
-  private cancelarPreviewAgendado() {
-    if (this.giftPreviewTimer) {
-      clearTimeout(this.giftPreviewTimer);
-      this.giftPreviewTimer = null;
-    }
-  }
-
-  private aplicarPreviewDaLoja(preview: ProdutoLinkPreview, sobrescrever: boolean) {
-    if (!preview.encontrados?.length) {
-      this.giftPreviewMsg.set('Não foi possível ler os dados desta loja. Preencha na mão.');
-      return;
-    }
-
-    if (preview.titulo && (sobrescrever || !this.giftNome.trim())) {
-      this.giftNome = preview.titulo;
-    }
-    if (preview.descricao && (sobrescrever || !this.giftDescricao.trim())) {
-      this.giftDescricao = preview.descricao;
-    }
-    if (preview.preco && (sobrescrever || !this.giftPreco.trim())) {
-      const precoNumero = Number(preview.preco);
-      if (!Number.isNaN(precoNumero)) {
-        this.giftPreco = this.formatarPrecoInput(precoNumero);
-      }
-    }
-    if (preview.imagemUrl && !this.giftFile && (sobrescrever || !this.giftImagemUrl.trim())) {
-      this.giftImagemUrl = preview.imagemUrl;
-      this.giftPreview = preview.imagemUrl;
-    }
-
-    this.giftPreviewMsg.set(this.mensagemPreview(preview.encontrados));
-  }
-
-  private mensagemPreview(encontrados: string[]): string {
-    const labels: Record<string, string> = {
-      titulo: 'título',
-      descricao: 'descrição',
-      preco: 'preço',
-      imagem: 'foto',
-    };
-    const nomes = encontrados.map((item) => labels[item] ?? item);
-    if (nomes.length === 1) {
-      return `Encontramos ${nomes[0]}. Os demais campos podem ser preenchidos na mão.`;
-    }
-    const ultimo = nomes[nomes.length - 1];
-    const resto = nomes.slice(0, -1).join(', ');
-    const prefixo = `Encontramos ${resto} e ${ultimo}.`;
-    if (!encontrados.includes('preco')) {
-      return `${prefixo} Preencha o preço se a loja não disponibilizou.`;
-    }
-    return prefixo;
-  }
-
-  resetGiftForm() {
-    this.editingGiftId.set(null);
-    this.giftNome = '';
-    this.giftDescricao = '';
-    this.giftLink = '';
-    this.giftTipo = '';
-    this.giftPreco = '';
-    this.giftImagemUrl = '';
-    this.giftAtivo = true;
-    this.giftFile = null;
-    this.revokeGiftPreview();
-    this.giftPreview = null;
-    this.giftPreviewMsg.set(null);
-    this.lastPreviewedLink = '';
-    this.giftPreviewSub?.unsubscribe();
-    this.giftPreviewLoading.set(false);
-    const input = this.giftFileInput()?.nativeElement;
-    if (input) {
-      input.value = '';
-    }
-  }
-
   iniciarEdicaoPresente(item: Presente) {
-    this.editingGiftId.set(item.id);
-    this.giftNome = item.nome;
-    this.giftDescricao = item.descricao ?? '';
-    this.giftLink = item.link ?? '';
-    this.giftTipo = item.tipo ?? '';
-    this.giftPreco = this.formatarPrecoInput(item.preco);
-    this.giftImagemUrl = item.imagemUrl ?? '';
-    this.giftAtivo = item.ativo;
-    this.giftFile = null;
-    this.revokeGiftPreview();
-    this.giftPreview = item.imagemUrl;
-    this.giftPreviewMsg.set(null);
-    this.lastPreviewedLink = item.link ?? '';
+    this.editingPresente.set(item);
     this.error.set(null);
   }
 
-  salvarPresente() {
-    const nome = this.giftNome.trim();
-    if (!nome) {
-      this.error.set('Nome do presente é obrigatório.');
-      return;
-    }
-    if (!this.giftTipo) {
-      this.error.set('Tipo do presente é obrigatório.');
-      return;
-    }
+  fecharEdicaoPresente() {
+    this.editingPresente.set(null);
+  }
 
-    const data = new FormData();
-    data.append('nome', nome);
-    data.append('descricao', this.giftDescricao.trim());
-    data.append('link', this.giftLink.trim());
-    data.append('tipo', this.giftTipo);
-    data.append('preco', this.giftPreco.trim());
-    data.append('ativo', String(this.giftAtivo));
-    if (this.giftImagemUrl.trim()) {
-      data.append('imagemUrl', this.giftImagemUrl.trim());
-    }
-    if (this.giftFile) {
-      data.append('file', this.giftFile);
-    }
+  onPresenteSalvo() {
+    this.error.set(null);
+    this.admin.listarPresentes().subscribe({ next: (items) => this.presentes.set(items) });
+  }
 
-    this.admin.salvarPresente(data, this.editingGiftId()).subscribe({
-      next: () => {
-        this.error.set(null);
-        this.resetGiftForm();
-        this.admin.listarPresentes().subscribe({ next: (items) => this.presentes.set(items) });
-      },
-      error: (err) =>
-        this.error.set(this.mensagemErro(err, 'Não foi possível salvar o presente.')),
-    });
+  onPresenteEditado() {
+    this.fecharEdicaoPresente();
+    this.onPresenteSalvo();
   }
 
   excluirPresente(item: Presente) {
@@ -666,8 +482,8 @@ export class AdminComponent implements OnInit, OnDestroy {
       next: () => {
         this.error.set(null);
         this.presentes.update((list) => list.filter((p) => p.id !== item.id));
-        if (this.editingGiftId() === item.id) {
-          this.resetGiftForm();
+        if (this.editingPresente()?.id === item.id) {
+          this.fecharEdicaoPresente();
         }
       },
       error: (err) =>
@@ -786,22 +602,6 @@ export class AdminComponent implements OnInit, OnDestroy {
       return 'Sapatos';
     }
     return 'Sem tipo';
-  }
-
-  private formatarPrecoInput(preco: number | null | undefined): string {
-    if (preco == null || Number.isNaN(Number(preco))) {
-      return '';
-    }
-    return new Intl.NumberFormat('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(Number(preco));
-  }
-
-  private revokeGiftPreview() {
-    if (this.giftPreview?.startsWith('blob:')) {
-      URL.revokeObjectURL(this.giftPreview);
-    }
   }
 
   private mensagemErro(err: unknown, fallback: string): string {

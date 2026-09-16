@@ -1,0 +1,24 @@
+<div class="modal-overlay" (click)="onOverlayClick($event)">
+  <div
+    #dialog
+    class="modal-content"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="edit-presente-title"
+    tabindex="-1"
+  >
+    <button type="button" class="modal-close" (click)="fechar()" aria-label="Fechar">&times;</button>
+
+    <p class="kicker">Lista de presentes</p>
+    <h2 id="edit-presente-title">Editar presente</h2>
+    <p class="modal-lead">Atualize os dados deste item. O cadastro de novos presentes continua no formulário da página.</p>
+
+    <app-admin-presente-form
+      class="is-modal"
+      [presente]="presente()"
+      [showCancel]="true"
+      (saved)="onSaved()"
+      (cancelled)="fechar()"
+    />
+  </div>
+</div>
