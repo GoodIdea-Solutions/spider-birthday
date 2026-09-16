@@ -1,6 +1,7 @@
-import { Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Dashboard, Foto, HqLayout, HqPagina, HqPainelPayload, MusicaPlaylist, Presente, RsvpConfig, RsvpResponse } from '../../core/models/party.models';
+import { Subscription } from 'rxjs';
+import { Dashboard, Foto, HqLayout, HqPagina, HqPainelPayload, MusicaPlaylist, Presente, ProdutoLinkPreview, RsvpConfig, RsvpResponse } from '../../core/models/party.models';
 import { AdminService } from '../../core/services/admin.service';
 import { PartyConfigService } from '../../core/services/party-config.service';
 import { QrCodeService } from '../../core/services/qr-code.service';
@@ -11,7 +12,7 @@ import { QrCodeService } from '../../core/services/qr-code.service';
   templateUrl: './admin.html',
   styleUrl: './admin.scss',
 })
-export class AdminComponent implements OnInit {
+export class AdminComponent implements OnInit, OnDestroy {
   private readonly admin = inject(AdminService);
   private readonly party = inject(PartyConfigService);
   private readonly qr = inject(QrCodeService);
@@ -60,6 +61,11 @@ export class AdminComponent implements OnInit {
   giftAtivo = true;
   giftFile: File | null = null;
   giftPreview: string | null = null;
+  readonly giftPreviewLoading = signal(false);
+  readonly giftPreviewMsg = signal<string | null>(null);
+  private giftPreviewTimer: ReturnType<typeof setTimeout> | null = null;
+  private giftPreviewSub: Subscription | null = null;
+  private lastPreviewedLink = '';
 
   playlistTitulo = '';
   playlistArtista = '';
@@ -77,6 +83,11 @@ export class AdminComponent implements OnInit {
     if (this.tokenInput) {
       this.entrar();
     }
+  }
+
+  ngOnDestroy() {
+    this.cancelarPreviewAgendado();
+    this.giftPreviewSub?.unsubscribe();
   }
 
   entrar() {
@@ -478,6 +489,99 @@ export class AdminComponent implements OnInit {
     this.giftPreview = this.giftImagemUrl.trim() || null;
   }
 
+  onGiftLinkChange() {
+    this.agendarPreviewDaLoja();
+  }
+
+  carregarDadosDaLoja(forcar = false) {
+    this.cancelarPreviewAgendado();
+    const url = this.giftLink.trim();
+    if (!/^https?:\/\//i.test(url)) {
+      if (forcar) {
+        this.giftPreviewMsg.set('Informe um link http(s) da loja.');
+      }
+      return;
+    }
+    if (!forcar && (url === this.lastPreviewedLink || this.giftPreviewLoading())) {
+      return;
+    }
+
+    this.giftPreviewSub?.unsubscribe();
+    this.lastPreviewedLink = url;
+    this.giftPreviewLoading.set(true);
+    this.giftPreviewMsg.set('Buscando dados da loja...');
+    this.giftPreviewSub = this.admin.previewPresente(url).subscribe({
+      next: (preview) => {
+        this.giftPreviewLoading.set(false);
+        this.aplicarPreviewDaLoja(preview, forcar);
+      },
+      error: (err) => {
+        this.giftPreviewLoading.set(false);
+        this.giftPreviewMsg.set(
+          this.mensagemErro(err, 'Não foi possível ler os dados desta loja. Preencha na mão.')
+        );
+      },
+    });
+  }
+
+  private agendarPreviewDaLoja() {
+    this.cancelarPreviewAgendado();
+    this.giftPreviewTimer = setTimeout(() => this.carregarDadosDaLoja(false), 600);
+  }
+
+  private cancelarPreviewAgendado() {
+    if (this.giftPreviewTimer) {
+      clearTimeout(this.giftPreviewTimer);
+      this.giftPreviewTimer = null;
+    }
+  }
+
+  private aplicarPreviewDaLoja(preview: ProdutoLinkPreview, sobrescrever: boolean) {
+    if (!preview.encontrados?.length) {
+      this.giftPreviewMsg.set('Não foi possível ler os dados desta loja. Preencha na mão.');
+      return;
+    }
+
+    if (preview.titulo && (sobrescrever || !this.giftNome.trim())) {
+      this.giftNome = preview.titulo;
+    }
+    if (preview.descricao && (sobrescrever || !this.giftDescricao.trim())) {
+      this.giftDescricao = preview.descricao;
+    }
+    if (preview.preco && (sobrescrever || !this.giftPreco.trim())) {
+      const precoNumero = Number(preview.preco);
+      if (!Number.isNaN(precoNumero)) {
+        this.giftPreco = this.formatarPrecoInput(precoNumero);
+      }
+    }
+    if (preview.imagemUrl && !this.giftFile && (sobrescrever || !this.giftImagemUrl.trim())) {
+      this.giftImagemUrl = preview.imagemUrl;
+      this.giftPreview = preview.imagemUrl;
+    }
+
+    this.giftPreviewMsg.set(this.mensagemPreview(preview.encontrados));
+  }
+
+  private mensagemPreview(encontrados: string[]): string {
+    const labels: Record<string, string> = {
+      titulo: 'título',
+      descricao: 'descrição',
+      preco: 'preço',
+      imagem: 'foto',
+    };
+    const nomes = encontrados.map((item) => labels[item] ?? item);
+    if (nomes.length === 1) {
+      return `Encontramos ${nomes[0]}. Os demais campos podem ser preenchidos na mão.`;
+    }
+    const ultimo = nomes[nomes.length - 1];
+    const resto = nomes.slice(0, -1).join(', ');
+    const prefixo = `Encontramos ${resto} e ${ultimo}.`;
+    if (!encontrados.includes('preco')) {
+      return `${prefixo} Preencha o preço se a loja não disponibilizou.`;
+    }
+    return prefixo;
+  }
+
   resetGiftForm() {
     this.editingGiftId.set(null);
     this.giftNome = '';
@@ -489,6 +593,10 @@ export class AdminComponent implements OnInit {
     this.giftFile = null;
     this.revokeGiftPreview();
     this.giftPreview = null;
+    this.giftPreviewMsg.set(null);
+    this.lastPreviewedLink = '';
+    this.giftPreviewSub?.unsubscribe();
+    this.giftPreviewLoading.set(false);
     const input = this.giftFileInput()?.nativeElement;
     if (input) {
       input.value = '';
@@ -506,6 +614,8 @@ export class AdminComponent implements OnInit {
     this.giftFile = null;
     this.revokeGiftPreview();
     this.giftPreview = item.imagemUrl;
+    this.giftPreviewMsg.set(null);
+    this.lastPreviewedLink = item.link ?? '';
     this.error.set(null);
   }
 

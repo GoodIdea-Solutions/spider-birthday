@@ -268,7 +268,8 @@
         <section class="presentes-admin">
           <h2>Lista de presentes</h2>
           <p class="empty">
-            Cadastre nome, foto e o link da loja. O que estiver visível aparece em /presentes para os convidados.
+            Cadastre o link da loja para preencher nome, foto e preço automaticamente quando a loja disponibilizar.
+            O que estiver visível aparece em /presentes para os convidados.
           </p>
 
           <form class="hq-form" (ngSubmit)="salvarPresente()">
@@ -295,14 +296,29 @@
             </label>
             <label class="span-2">
               Link da loja (opcional)
-              <input
-                [(ngModel)]="giftLink"
-                name="giftLink"
-                type="url"
-                maxlength="2000"
-                placeholder="https://www.amazon.com.br/..."
-              />
+              <div class="gift-link-row">
+                <input
+                  [(ngModel)]="giftLink"
+                  name="giftLink"
+                  type="url"
+                  maxlength="2000"
+                  placeholder="https://www.amazon.com.br/..."
+                  (ngModelChange)="onGiftLinkChange()"
+                  (blur)="carregarDadosDaLoja(false)"
+                />
+                <button
+                  type="button"
+                  class="ghost"
+                  [disabled]="giftPreviewLoading()"
+                  (click)="carregarDadosDaLoja(true)"
+                >
+                  {{ giftPreviewLoading() ? 'Carregando...' : 'Carregar dados da loja' }}
+                </button>
+              </div>
             </label>
+            @if (giftPreviewMsg()) {
+              <p class="gift-preview-msg span-2">{{ giftPreviewMsg() }}</p>
+            }
             <label class="span-2">
               Preço (opcional)
               <input

@@ -83,6 +83,14 @@ export interface Presente {
   reserva?: ReservaAdmin | null;
 }
 
+export interface ProdutoLinkPreview {
+  titulo: string | null;
+  descricao: string | null;
+  preco: string | null;
+  imagemUrl: string | null;
+  encontrados: string[];
+}
+
 export interface ReservaRequest {
   nomeConvidado: string;
   telefone?: string | null;

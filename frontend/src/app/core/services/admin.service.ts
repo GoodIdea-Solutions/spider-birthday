@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Dashboard, Foto, HqPagina, HqPaginaPayload, MusicaPlaylist, MusicaPlaylistPayload, Presente, RsvpConfig, RsvpRequest, RsvpResponse } from '../models/party.models';
+import { Dashboard, Foto, HqPagina, HqPaginaPayload, MusicaPlaylist, MusicaPlaylistPayload, Presente, ProdutoLinkPreview, RsvpConfig, RsvpRequest, RsvpResponse } from '../models/party.models';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -112,6 +112,10 @@ export class AdminService {
 
   listarPresentes() {
     return this.http.get<Presente[]>('/api/admin/presentes', this.headers());
+  }
+
+  previewPresente(url: string) {
+    return this.http.post<ProdutoLinkPreview>('/api/admin/presentes/preview', { url }, this.headers());
   }
 
   salvarPresente(data: FormData, id?: number | null) {

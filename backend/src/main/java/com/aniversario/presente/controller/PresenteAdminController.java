@@ -3,8 +3,12 @@ package com.aniversario.presente.controller;
 import java.util.List;
 
 import com.aniversario.presente.dto.PresenteAdminResponse;
+import com.aniversario.presente.dto.ProdutoLinkPreviewRequest;
+import com.aniversario.presente.dto.ProdutoLinkPreviewResponse;
 import com.aniversario.presente.service.PresenteService;
+import com.aniversario.presente.service.ProdutoLinkPreviewService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -25,14 +30,24 @@ import org.springframework.web.multipart.MultipartFile;
 public class PresenteAdminController {
 
     private final PresenteService presenteService;
+    private final ProdutoLinkPreviewService produtoLinkPreviewService;
 
-    public PresenteAdminController(PresenteService presenteService) {
+    public PresenteAdminController(
+            PresenteService presenteService,
+            ProdutoLinkPreviewService produtoLinkPreviewService
+    ) {
         this.presenteService = presenteService;
+        this.produtoLinkPreviewService = produtoLinkPreviewService;
     }
 
     @GetMapping
     public List<PresenteAdminResponse> listar() {
         return presenteService.listarAdmin();
+    }
+
+    @PostMapping("/preview")
+    public ProdutoLinkPreviewResponse preview(@Valid @RequestBody ProdutoLinkPreviewRequest request) {
+        return produtoLinkPreviewService.preview(request.url());
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
