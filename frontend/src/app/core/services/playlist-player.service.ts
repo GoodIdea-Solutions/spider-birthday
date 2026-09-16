@@ -173,13 +173,7 @@ export class PlaylistPlayerService {
   }
 
   shouldAutoplay(): boolean {
-    if (this.userPaused) {
-      return false;
-    }
-    if (this.prefersReduced()) {
-      return false;
-    }
-    return this.readPreference() !== 'paused';
+    return !this.userPaused && this.readPreference() !== 'paused';
   }
 
   attachUnlockOnce(): void {
@@ -243,16 +237,6 @@ export class PlaylistPlayerService {
         this.attachUnlockOnce();
       }
     }, 1600);
-  }
-
-  private prefersReduced(): boolean {
-    if (typeof window === 'undefined' || !window.matchMedia) {
-      return false;
-    }
-    return (
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
-      window.matchMedia('(prefers-reduced-data: reduce)').matches
-    );
   }
 
   private clampVolume(value: number): number {
