@@ -1,0 +1,21 @@
+:host {
+  display: contents;
+}
+
+.yt-audio-host {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  width: 200px;
+  height: 113px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.yt-mount,
+.yt-mount iframe {
+  width: 200px;
+  height: 113px;
+  border: 0;
+  display: block;
+}

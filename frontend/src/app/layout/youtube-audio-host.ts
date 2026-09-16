@@ -15,11 +15,11 @@ import { PlaylistPlayerService } from '../core/services/playlist-player.service'
 import '../core/youtube-iframe';
 
 @Component({
-  selector: 'app-bg-player',
-  templateUrl: './bg-player.html',
-  styleUrl: './bg-player.scss',
+  selector: 'app-youtube-audio-host',
+  templateUrl: './youtube-audio-host.html',
+  styleUrl: './youtube-audio-host.scss',
 })
-export class BgPlayerComponent implements OnDestroy {
+export class YoutubeAudioHostComponent implements OnDestroy {
   private readonly player = inject(PlaylistPlayerService);
   private readonly router = inject(Router);
   private readonly host = viewChild<ElementRef<HTMLElement>>('ytHost');
@@ -27,6 +27,7 @@ export class BgPlayerComponent implements OnDestroy {
   private ytPlayer: YT.Player | null = null;
   private apiPromise: Promise<void> | null = null;
   private lastVideoId: string | null = null;
+  private creating = false;
 
   private readonly url = toSignal(
     this.router.events.pipe(
@@ -38,8 +39,6 @@ export class BgPlayerComponent implements OnDestroy {
   );
 
   readonly current = this.player.current;
-  readonly playing = this.player.playing;
-  readonly autoplayBlocked = this.player.autoplayBlocked;
 
   readonly allowedOnRoute = computed(() => {
     const path = (this.url() ?? '').split('?')[0].split('#')[0];
@@ -49,13 +48,6 @@ export class BgPlayerComponent implements OnDestroy {
   readonly shown = computed(
     () => this.allowedOnRoute() && this.player.tracks().length > 0 && !!this.current()
   );
-
-  readonly inviteMode = computed(() => {
-    const path = (this.url() ?? '').split('?')[0].split('#')[0];
-    return /(?:^|\/)convite(?:\/|$)/.test(path);
-  });
-
-  private creating = false;
 
   constructor() {
     effect(() => {
@@ -87,15 +79,14 @@ export class BgPlayerComponent implements OnDestroy {
     this.destroyPlayer();
   }
 
-  toggle(): void {
-    this.player.toggle();
-  }
-
   private async ensurePlayer(host: HTMLElement, videoId: string): Promise<void> {
     if (this.ytPlayer) {
       if (this.lastVideoId !== videoId) {
         this.lastVideoId = videoId;
         this.ytPlayer.loadVideoById(videoId);
+        if (this.player.shouldResumeAfterLoad()) {
+          this.player.play(false);
+        }
       }
       return;
     }
@@ -118,7 +109,7 @@ export class BgPlayerComponent implements OnDestroy {
         height: 113,
         playerVars: {
           autoplay: 0,
-          controls: 1,
+          controls: 0,
           rel: 0,
           playsinline: 1,
           modestbranding: 1,

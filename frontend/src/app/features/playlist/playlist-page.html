@@ -2,7 +2,7 @@
   <div class="playlist-inner">
     <p class="kicker">Rádio da festa</p>
     <h1>Playlist do Samuel</h1>
-    <p class="lead">As músicas da aventura — toque aqui ou abra no YouTube Music.</p>
+    <p class="lead">Uma seleção especial para deixar a festa ainda mais divertida!</p>
 
     @if (loading()) {
       <p class="status">Ligando a rádio da HQ...</p>
@@ -11,39 +11,88 @@
     } @else if (tracks().length === 0) {
       <p class="status empty">A playlist ainda está sendo montada pela HQ.</p>
     } @else {
-      <ul class="tracks">
-        @for (track of tracks(); track track.id) {
+      @if (current(); as now) {
+        <article class="now-playing" [class.active]="playing()">
+          <p class="now-kicker">
+            @if (playing()) {
+              <span class="eq" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+              Tocando agora
+            } @else {
+              Selecionada
+            }
+          </p>
+          <div class="now-body">
+            <img [src]="thumbnail(now)" [alt]="'Capa de ' + now.titulo" />
+            <div class="now-info">
+              <h2>{{ now.titulo }}</h2>
+              @if (now.artista) {
+                <p>{{ now.artista }}</p>
+              }
+            </div>
+            <button
+              type="button"
+              class="now-toggle"
+              [attr.aria-label]="playing() ? 'Pausar música' : 'Tocar música'"
+              (click)="toggleCurrent()"
+            >
+              {{ playing() ? 'Pausar' : 'Tocar' }}
+            </button>
+          </div>
+        </article>
+      }
+
+      <ol class="tracks">
+        @for (track of tracks(); track track.id; let i = $index) {
           <li>
-            <article class="card" [class.current]="player.isCurrent(track)">
-              <button type="button" class="play-card" (click)="tocar(track)">
-                <span class="thumb">
-                  <img [src]="thumbnail(track)" [alt]="'Capa de ' + track.titulo" />
-                  <span class="play-badge" aria-hidden="true">▶</span>
-                </span>
-                <span class="info">
-                  <span class="name">{{ track.titulo }}</span>
-                  @if (track.artista) {
-                    <span class="artist">{{ track.artista }}</span>
-                  }
-                  @if (player.isCurrent(track)) {
-                    <span class="now">
-                      {{ player.playing() ? 'Tocando agora' : 'Selecionada' }}
-                    </span>
-                  }
-                </span>
-              </button>
-              <a
-                class="ytm"
-                [href]="track.youtubeMusicUrl"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                YouTube Music
-              </a>
+            <article class="card" [class.current]="player.isCurrent(track)" [class.playing]="player.isCurrent(track) && playing()">
+              <span class="index" aria-hidden="true">{{ i + 1 }}</span>
+              <span class="thumb">
+                <img [src]="thumbnail(track)" [alt]="'Capa de ' + track.titulo" />
+                @if (player.isCurrent(track) && playing()) {
+                  <span class="eq-badge" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </span>
+                }
+              </span>
+              <div class="info">
+                <p class="name">{{ track.titulo }}</p>
+                @if (track.artista) {
+                  <p class="artist">{{ track.artista }}</p>
+                }
+                @if (player.isCurrent(track)) {
+                  <p class="now">
+                    {{ playing() ? 'Tocando agora' : 'Selecionada' }}
+                  </p>
+                }
+              </div>
+              <div class="actions">
+                <button
+                  type="button"
+                  class="play-btn"
+                  [attr.aria-label]="trackActionLabel(track) + ' ' + track.titulo"
+                  (click)="onTrackAction(track)"
+                >
+                  {{ trackActionLabel(track) }}
+                </button>
+                <a
+                  class="ytm"
+                  [href]="track.youtubeMusicUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  YouTube Music
+                </a>
+              </div>
             </article>
           </li>
         }
-      </ul>
+      </ol>
     }
   </div>
 </section>

@@ -3,10 +3,11 @@ import { Component, HostListener, OnDestroy, effect, inject, signal } from '@ang
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { PartyConfigService } from '../core/services/party-config.service';
 import { RsvpModalService } from '../core/services/rsvp-modal.service';
+import { HeaderMusicComponent } from './header-music';
 
 @Component({
   selector: 'app-header',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, HeaderMusicComponent],
   templateUrl: './header.html',
   styleUrl: './header.scss',
 })

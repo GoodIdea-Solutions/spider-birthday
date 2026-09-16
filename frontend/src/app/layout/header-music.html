@@ -1,0 +1,63 @@
+@if (shown()) {
+  <div class="header-music" role="group" aria-label="Controle da música da festa">
+    <a
+      routerLink="/playlist"
+      class="music-btn playlist-link"
+      aria-label="Abrir playlist"
+      data-tooltip="Abrir playlist"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path
+          fill="currentColor"
+          d="M12 3a1 1 0 0 1 1 1v10.06A3.5 3.5 0 1 1 11 17.5V8h6V6h-6V4a1 1 0 0 1 1-1Z"
+        />
+      </svg>
+    </a>
+
+    <button
+      type="button"
+      class="music-btn play"
+      [class.needs-tap]="needsTap()"
+      [attr.aria-label]="playLabel()"
+      [attr.data-tooltip]="playLabel()"
+      [attr.aria-pressed]="playing()"
+      (click)="toggle()"
+    >
+      @if (playing()) {
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M7 5h3v14H7V5Zm7 0h3v14h-3V5Z" />
+        </svg>
+      } @else {
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M8 5.5v13l11-6.5L8 5.5Z" />
+        </svg>
+      }
+    </button>
+
+    <button
+      type="button"
+      class="music-btn"
+      aria-label="Diminuir volume"
+      data-tooltip="Diminuir volume"
+      [disabled]="volumeAtMin()"
+      (click)="volumeDown()"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3Zm12 4h7v2h-7v-2Z" />
+      </svg>
+    </button>
+
+    <button
+      type="button"
+      class="music-btn tip-end"
+      aria-label="Aumentar volume"
+      data-tooltip="Aumentar volume"
+      [disabled]="volumeAtMax()"
+      (click)="volumeUp()"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3Zm13 1h2V8h2v2h2v2h-2v2h-2v-2h-2v-2Z" />
+      </svg>
+    </button>
+  </div>
+}
