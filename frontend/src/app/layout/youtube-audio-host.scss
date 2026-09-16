@@ -3,13 +3,15 @@
 }
 
 .yt-audio-host {
-  position: absolute;
-  left: -10000px;
-  top: 0;
+  position: fixed;
+  left: 0;
+  bottom: 0;
   width: 200px;
   height: 113px;
   overflow: hidden;
+  opacity: 0;
   pointer-events: none;
+  z-index: 0;
 }
 
 .yt-mount,

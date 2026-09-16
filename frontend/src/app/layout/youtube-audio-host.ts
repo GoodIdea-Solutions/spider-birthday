@@ -108,7 +108,8 @@ export class YoutubeAudioHostComponent implements OnDestroy {
         width: 200,
         height: 113,
         playerVars: {
-          autoplay: 0,
+          autoplay: 1,
+          mute: 1,
           controls: 0,
           rel: 0,
           playsinline: 1,

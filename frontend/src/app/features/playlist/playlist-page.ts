@@ -27,13 +27,17 @@ export class PlaylistPageComponent implements OnInit {
   }
 
   trackActionLabel(track: MusicaPlaylist): string {
-    if (this.player.isCurrent(track) && this.playing()) {
+    if (this.player.isCurrent(track) && this.playing() && !this.player.autoplayBlocked()) {
       return 'Pausar';
     }
     return 'Tocar';
   }
 
   onTrackAction(track: MusicaPlaylist): void {
+    if (this.player.autoplayBlocked()) {
+      this.player.playTrack(track);
+      return;
+    }
     if (this.player.isCurrent(track) && this.playing()) {
       this.player.pause(true);
       return;

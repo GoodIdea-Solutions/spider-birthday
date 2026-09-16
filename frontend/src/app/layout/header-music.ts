@@ -12,13 +12,13 @@ export class HeaderMusicComponent {
   readonly player = inject(PlaylistPlayerService);
 
   readonly shown = this.player.available;
-  readonly playing = this.player.playing;
   readonly autoplayBlocked = this.player.autoplayBlocked;
   readonly volumeAtMin = this.player.volumeAtMin;
   readonly volumeAtMax = this.player.volumeAtMax;
-  readonly needsTap = computed(() => this.autoplayBlocked() && !this.playing());
+  readonly needsTap = computed(() => this.autoplayBlocked());
+  readonly showPause = computed(() => this.player.playing() && !this.autoplayBlocked());
 
-  readonly playLabel = computed(() => (this.playing() ? 'Pausar música' : 'Tocar música'));
+  readonly playLabel = computed(() => (this.showPause() ? 'Pausar música' : 'Tocar música'));
 
   toggle(): void {
     this.player.toggle();

@@ -20,10 +20,10 @@
       [class.needs-tap]="needsTap()"
       [attr.aria-label]="playLabel()"
       [attr.data-tooltip]="playLabel()"
-      [attr.aria-pressed]="playing()"
+      [attr.aria-pressed]="showPause()"
       (click)="toggle()"
     >
-      @if (playing()) {
+      @if (showPause()) {
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path fill="currentColor" d="M7 5h3v14H7V5Zm7 0h3v14h-3V5Z" />
         </svg>

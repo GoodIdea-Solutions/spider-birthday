@@ -29,10 +29,17 @@ export class PlaylistPlayerService {
   private player: YT.Player | null = null;
   private userPaused = this.readPaused();
   private playRequested = false;
+  private soundUnlocked = false;
   private backgroundLoop = true;
   private unlockAttached = false;
+  private unlockAbort: AbortController | null = null;
   private autoplayTimer: ReturnType<typeof setTimeout> | null = null;
+  private unmuteTimer: ReturnType<typeof setTimeout> | null = null;
   private loadingList = false;
+
+  constructor() {
+    this.clearLegacyPause();
+  }
 
   load(): void {
     if (this.loadingList) {
@@ -69,15 +76,17 @@ export class PlaylistPlayerService {
 
   registerPlayer(player: YT.Player): void {
     this.player = player;
-    this.applyVolume();
+    this.applyVolumeLevel();
     if (this.shouldAutoplay() || this.playRequested) {
-      this.play(false);
-      this.watchAutoplay();
+      this.attachUnlockOnce();
+      this.startMutedAutoplay();
     }
   }
 
   unregisterPlayer(): void {
     this.clearAutoplayTimer();
+    this.clearUnmuteTimer();
+    this.detachUnlock();
     this.player = null;
     this.playing.set(false);
   }
@@ -85,8 +94,10 @@ export class PlaylistPlayerService {
   onStateChange(state: number): void {
     if (state === YT_PLAYING) {
       this.playing.set(true);
-      this.autoplayBlocked.set(false);
       this.clearAutoplayTimer();
+      if (this.isAudible()) {
+        this.autoplayBlocked.set(false);
+      }
       return;
     }
     if (state === YT_PAUSED) {
@@ -113,6 +124,10 @@ export class PlaylistPlayerService {
   }
 
   toggle(): void {
+    if (this.autoplayBlocked()) {
+      this.play(true);
+      return;
+    }
     if (this.playing()) {
       this.pause(true);
     } else {
@@ -124,9 +139,15 @@ export class PlaylistPlayerService {
     if (fromUser) {
       this.userPaused = false;
       this.playRequested = true;
+      this.soundUnlocked = true;
       this.writePreference('playing');
+      this.detachUnlock();
     }
-    this.applyVolume();
+    if (this.soundUnlocked || fromUser) {
+      this.applyVolume();
+    } else {
+      this.player?.mute();
+    }
     this.player?.playVideo();
   }
 
@@ -144,6 +165,7 @@ export class PlaylistPlayerService {
   playTrack(track: MusicaPlaylist): void {
     this.userPaused = false;
     this.playRequested = true;
+    this.soundUnlocked = true;
     this.writePreference('playing');
     this.backgroundLoop = false;
     if (this.current()?.id === track.id) {
@@ -165,7 +187,11 @@ export class PlaylistPlayerService {
     const next = this.clampVolume(value);
     this.volume.set(next);
     this.writeVolume(next);
-    this.applyVolume();
+    if (this.soundUnlocked && !this.autoplayBlocked()) {
+      this.applyVolume();
+    } else {
+      this.applyVolumeLevel();
+    }
   }
 
   isCurrent(track: MusicaPlaylist): boolean {
@@ -176,19 +202,86 @@ export class PlaylistPlayerService {
     return !this.userPaused && this.readPreference() !== 'paused';
   }
 
-  attachUnlockOnce(): void {
+  private startMutedAutoplay(): void {
+    try {
+      this.player?.mute();
+      this.player?.playVideo();
+    } catch {
+      // Embed pode ainda não aceitar play.
+    }
+    this.tryUnmuteAfterStart();
+    this.watchAutoplay();
+  }
+
+  private tryUnmuteAfterStart(): void {
+    this.clearUnmuteTimer();
+    this.unmuteTimer = setTimeout(() => {
+      if (this.userPaused || !this.player) {
+        return;
+      }
+      if (this.volume() <= 0) {
+        this.autoplayBlocked.set(false);
+        return;
+      }
+      try {
+        this.player.unMute();
+        this.player.setVolume(this.volume());
+      } catch {
+        // Alguns embeds atrasam a API de volume.
+      }
+      if (this.isAudible()) {
+        this.soundUnlocked = true;
+        this.autoplayBlocked.set(false);
+        return;
+      }
+      this.player.mute();
+      this.autoplayBlocked.set(true);
+    }, 400);
+  }
+
+  private attachUnlockOnce(): void {
     if (this.unlockAttached || typeof window === 'undefined') {
       return;
     }
     this.unlockAttached = true;
-    const unlock = () => {
-      if (this.userPaused || this.playing()) {
+    this.unlockAbort = new AbortController();
+    const options: AddEventListenerOptions = {
+      capture: true,
+      signal: this.unlockAbort.signal,
+    };
+    const unlock = (event: Event) => {
+      if (this.userPaused) {
         return;
       }
-      this.play(false);
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest('.music-btn.play, .now-toggle, .play-btn')
+      ) {
+        return;
+      }
+      this.play(true);
     };
-    window.addEventListener('pointerdown', unlock, { once: true, capture: true });
-    window.addEventListener('keydown', unlock, { once: true, capture: true });
+    window.addEventListener('pointerdown', unlock, options);
+    window.addEventListener('touchstart', unlock, options);
+    window.addEventListener('keydown', unlock, options);
+  }
+
+  private detachUnlock(): void {
+    this.unlockAbort?.abort();
+    this.unlockAbort = null;
+    this.unlockAttached = false;
+  }
+
+  private isAudible(): boolean {
+    if (this.volume() <= 0 || !this.player) {
+      return false;
+    }
+    try {
+      return !this.player.isMuted();
+    } catch {
+      return false;
+    }
   }
 
   private applyVolume(): void {
@@ -200,6 +293,14 @@ export class PlaylistPlayerService {
       } else {
         this.player?.unMute();
       }
+    } catch {
+      // Player pode ainda não expor volume em alguns embeds.
+    }
+  }
+
+  private applyVolumeLevel(): void {
+    try {
+      this.player?.setVolume(this.volume());
     } catch {
       // Player pode ainda não expor volume em alguns embeds.
     }
@@ -229,12 +330,11 @@ export class PlaylistPlayerService {
     this.clearAutoplayTimer();
     this.autoplayTimer = setTimeout(() => {
       const state = this.player?.getPlayerState();
-      if (this.playing() || this.userPaused) {
+      if (this.userPaused) {
         return;
       }
-      if (state !== YT_PLAYING) {
+      if (state !== YT_PLAYING && !this.playing()) {
         this.autoplayBlocked.set(true);
-        this.attachUnlockOnce();
       }
     }, 1600);
   }
@@ -273,7 +373,7 @@ export class PlaylistPlayerService {
 
   private readPreference(): string | null {
     try {
-      return localStorage.getItem(STORAGE_KEY);
+      return sessionStorage.getItem(STORAGE_KEY);
     } catch {
       return null;
     }
@@ -281,7 +381,15 @@ export class PlaylistPlayerService {
 
   private writePreference(value: 'paused' | 'playing'): void {
     try {
-      localStorage.setItem(STORAGE_KEY, value);
+      sessionStorage.setItem(STORAGE_KEY, value);
+    } catch {
+      // Ignora modo privado / storage bloqueado.
+    }
+  }
+
+  private clearLegacyPause(): void {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
     } catch {
       // Ignora modo privado / storage bloqueado.
     }
@@ -291,6 +399,13 @@ export class PlaylistPlayerService {
     if (this.autoplayTimer) {
       clearTimeout(this.autoplayTimer);
       this.autoplayTimer = null;
+    }
+  }
+
+  private clearUnmuteTimer(): void {
+    if (this.unmuteTimer) {
+      clearTimeout(this.unmuteTimer);
+      this.unmuteTimer = null;
     }
   }
 }
