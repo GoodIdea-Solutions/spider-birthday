@@ -33,6 +33,25 @@
               }
             </div>
           }
+
+          <aside class="gift-nudge" aria-labelledby="gift-nudge-title">
+            <p class="gift-nudge-title" id="gift-nudge-title">🎁 E tem mais uma missão...</p>
+            <p>
+              Se você estiver pensando em presentear o Samuel, preparamos uma lista de sugestões para
+              ajudar na escolha. ❤️
+            </p>
+            <p>
+              Mas fique à vontade para escolher qualquer outro presente! A lista é apenas uma inspiração
+              e você não precisa se prender a ela.
+            </p>
+            <a
+              class="btn-gifts"
+              routerLink="/presentes/lista"
+              (click)="close()"
+            >
+              🎁 VER SUGESTÕES DE PRESENTES
+            </a>
+          </aside>
         </div>
       } @else if (!confirmacaoAberta()) {
         <div class="closed-state">

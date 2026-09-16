@@ -3,28 +3,26 @@
     <a class="back-link" routerLink="/presentes">Voltar aos presentes</a>
 
     <header class="lista-header">
-      <h1 id="lista-heading">Lista de presentes</h1>
+      <h1 id="lista-heading">Sugestões de presentes</h1>
       <aside class="lista-aviso" role="note" aria-labelledby="lista-aviso-titulo">
-        <p class="lista-aviso-titulo" id="lista-aviso-titulo">
-          <span aria-hidden="true">🕷️ </span>Missão: escolher um presente para o Samuel!<span aria-hidden="true"> 🎁</span>
+        <p class="lista-aviso-titulo" id="lista-aviso-titulo">🎁 SUGESTÕES DE PRESENTES</p>
+        <p>
+          Preparamos essa lista apenas para ajudar quem quiser presentear o Samuel e estiver sem ideias.
+          ❤️
         </p>
         <p>
-          Aqui você encontra algumas sugestões para facilitar a sua missão, mas elas são
-          <strong>apenas ideias</strong>, viu?<span aria-hidden="true"> 😉</span>
-        </p>
-        <p>
-          Se quiser escolher outro presente, fique super à vontade! O Samuel vai adorar receber um
-          carinho escolhido especialmente por você.<span aria-hidden="true"> ❤️</span>
+          Os itens abaixo são <strong>apenas sugestões</strong> e você não precisa se prender à lista. Se
+          preferir escolher outro presente para o Samuel, fique à vontade!
         </p>
         <p class="lista-aviso-fecho">
-          O mais importante é ter você com a gente nessa aventura!<span aria-hidden="true"> 🕸️🎉</span>
+          O mais importante é o carinho e a presença de vocês nesse dia tão especial. 🕷️💙
         </p>
       </aside>
       @if (resumoLista()) {
         <p class="lista-resumo" [class.lista-completa]="todosReservados()">{{ resumoLista() }}</p>
       }
       @if (mostrarHintScroll()) {
-        <p class="lista-hint" aria-hidden="true">Role para ver todos os presentes</p>
+        <p class="lista-hint" aria-hidden="true">Role para ver todas as sugestões</p>
       }
     </header>
 
@@ -33,9 +31,14 @@
     } @else if (error()) {
       <p class="status error" role="alert">{{ error() }}</p>
     } @else if (presentes().length === 0) {
-      <p class="status empty">A lista ainda está sendo montada pela HQ.</p>
+      <p class="status empty">As sugestões ainda estão sendo montadas pela HQ.</p>
     } @else {
-      <div class="filtros" role="search" aria-label="Filtrar presentes">
+      <aside class="lista-lembrete" role="note" aria-labelledby="lista-lembrete-titulo">
+        <p class="lista-lembrete-titulo" id="lista-lembrete-titulo">💡 LEMBRETE</p>
+        <p>São apenas sugestões!</p>
+        <p>Fique à vontade para escolher outro presente. 😊</p>
+      </aside>
+      <div class="filtros" role="search" aria-label="Filtrar sugestões de presentes">
         <div class="filtro-grupo">
           <p class="filtro-label" id="filtro-tipo-label">Tipo</p>
           <div class="chips" role="radiogroup" aria-labelledby="filtro-tipo-label">

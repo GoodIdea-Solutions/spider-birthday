@@ -72,6 +72,34 @@ h1 {
   font-weight: 800;
 }
 
+.lista-lembrete {
+  display: grid;
+  gap: 0.3rem;
+  max-width: 38rem;
+  margin: 0 0 0.85rem;
+  padding: 0.9rem 1.05rem 1rem;
+  background: #fffbeb;
+  border: 3px solid #111;
+  box-shadow: 5px 5px 0 var(--balloon-yellow);
+}
+
+.lista-lembrete-titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 3.2vw, 1.3rem);
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  color: var(--spider-red);
+}
+
+.lista-lembrete p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
 .lista-resumo {
   margin: 0 0 0.35rem;
   font-weight: 800;

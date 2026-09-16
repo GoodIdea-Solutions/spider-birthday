@@ -107,7 +107,7 @@ export class PresentesListaComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Não foi possível carregar a lista de presentes agora.');
+        this.error.set('Não foi possível carregar as sugestões de presentes agora.');
         this.loading.set(false);
       },
     });

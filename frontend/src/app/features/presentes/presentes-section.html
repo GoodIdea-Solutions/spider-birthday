@@ -1,21 +1,25 @@
 <section id="presentes" class="section presentes">
   <div class="section-inner">
     <header class="presentes-intro">
-      <h1>Presentes para o Samuel</h1>
+      <h1>🎁 SUGESTÕES DE PRESENTES</h1>
       <p class="section-lead">
-        O melhor presente é ter você com a gente! ❤️
+        Preparamos essa lista apenas para ajudar quem quiser presentear o Samuel e estiver sem ideias. ❤️
       </p>
       <p class="section-lead follow">
-        Se quiser presentear, temos algumas sugestões — mas fique à vontade para levar o que o coração mandar.
+        Os itens abaixo são apenas sugestões e você não precisa se prender à lista. Se preferir escolher
+        outro presente para o Samuel, fique à vontade!
+      </p>
+      <p class="section-lead follow close">
+        O mais importante é o carinho e a presença de vocês nesse dia tão especial. 🕷️💙
       </p>
     </header>
 
     <div class="ways" [class.single]="!temCaixinha()">
       <article class="way-card way-list">
-        <h2>Escolher um presente</h2>
-        <p>Veja algumas ideias de presentes para o Samuel. São só sugestões!</p>
-        <a class="btn btn-way" routerLink="/presentes/lista" aria-label="Ver lista de presentes">
-          VER LISTA
+        <h2>Ver sugestões</h2>
+        <p>Ideias de presentes para o Samuel, só para quem quiser uma inspiração.</p>
+        <a class="btn btn-way" routerLink="/presentes/lista" aria-label="Ver sugestões de presentes">
+          VER SUGESTÕES DE PRESENTES
         </a>
       </article>
       @if (temCaixinha()) {

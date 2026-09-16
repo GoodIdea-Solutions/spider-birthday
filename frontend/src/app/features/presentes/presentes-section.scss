@@ -31,6 +31,11 @@ h1 {
   font-weight: 600;
 }
 
+.section-lead.close {
+  color: var(--ink);
+  font-weight: 800;
+}
+
 .ways {
   display: grid;
   gap: 0.9rem;

@@ -256,6 +256,7 @@ input {
 .btn-add,
 .btn-submit,
 .btn-whatsapp,
+.btn-gifts,
 .btn-close,
 .btn-inline-ghost {
   min-height: 3rem;
@@ -445,6 +446,57 @@ input {
   opacity: 1 !important;
 }
 
+.gift-nudge {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1.15rem;
+  padding: 0.95rem 1rem 1.05rem;
+  border: 2px solid var(--balloon-yellow, #f5c518);
+  border-radius: 1rem;
+  background: rgba(245, 197, 24, 0.08);
+}
+
+.gift-nudge-title {
+  margin: 0 !important;
+  font-family: var(--font-display, 'Bangers', cursive);
+  font-size: clamp(1.15rem, 4.2vw, 1.4rem);
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  color: var(--balloon-yellow, #f5c518);
+  opacity: 1 !important;
+}
+
+.gift-nudge p {
+  margin: 0 !important;
+  font-size: 0.92rem !important;
+  line-height: 1.45;
+  opacity: 0.92 !important;
+}
+
+.btn-gifts {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3.25rem;
+  margin-top: 0.35rem;
+  padding: 0.85rem 1.1rem;
+  border: 2px solid var(--balloon-yellow, #f5c518);
+  background: var(--balloon-yellow, #f5c518);
+  color: #111;
+  text-decoration: none;
+  text-align: center;
+  text-wrap: balance;
+  font-size: 0.92rem;
+  text-transform: uppercase;
+
+  &:hover { filter: brightness(1.06); }
+  &:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 3px;
+  }
+}
+
 .btn-close {
   min-height: 3rem;
   border: 2px solid var(--spider-red, #e5383b);
@@ -481,7 +533,8 @@ input {
     padding: 1.65rem 1rem 1.25rem;
   }
 
-  .btn-whatsapp {
+  .btn-whatsapp,
+  .btn-gifts {
     min-height: 3.5rem;
     padding: 1rem 1.15rem;
   }
