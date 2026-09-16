@@ -45,7 +45,7 @@ export class PartyConfigService {
 
   readonly textoPrazo = computed(() => {
     const formatado = formatIsoToBr(this.configSignal()?.prazoConfirmacao);
-    return formatado ? `Confirmar presença até ${formatado}` : null;
+    return formatado ? `Confirme sua presença até ${formatado}` : null;
   });
 
   readonly mensagemEncerrada = computed(() => {

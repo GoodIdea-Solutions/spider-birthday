@@ -10,17 +10,27 @@
     >
       <button type="button" class="modal-close" (click)="close()" aria-label="Fechar confirmação">&times;</button>
 
+      <p class="sr-only" aria-live="polite">{{ listStatus() }}</p>
+
       @if (success()) {
         <div class="success-state">
-          <h2 id="rsvp-title">Missão aceita!</h2>
-          <p class="hero-name">{{ heroName() }}</p>
-          <p>
-            Sua presença foi confirmada.
-            Esperamos você na festa do Samuel!
-          </p>
+          <h2 id="rsvp-title">🕷️ MISSÃO ACEITA!</h2>
+          <p class="success-kicker">Presença confirmada!</p>
+          <p>Agora vamos avisar a família do Samuel pelo WhatsApp.</p>
           <div class="success-actions">
-            <a routerLink="/convidados" class="btn-list" (click)="close()">Ver lista de heróis</a>
-            <button type="button" class="btn-close" (click)="close()">Fechar</button>
+            @if (whatsappDisponivel()) {
+              <button type="button" class="btn-whatsapp" (click)="openWhatsApp()">
+                💬 ENVIAR CONFIRMAÇÃO PELO WHATSAPP
+              </button>
+            }
+            <div class="gifts-cta">
+              <p class="gifts-title">🎁 E tem mais uma missão...</p>
+              <p>
+                O Samuel também preparou uma lista de sugestões de presentes para quem quiser
+                presentear o nosso pequeno Homem-Aranha. ❤️
+              </p>
+              <a routerLink="/presentes" class="btn-gifts" (click)="close()">🎁 VER LISTA DE PRESENTES</a>
+            </div>
           </div>
         </div>
       } @else if (!confirmacaoAberta()) {
@@ -30,64 +40,256 @@
           <button type="button" class="btn-close" (click)="close()">Fechar</button>
         </div>
       } @else {
-        <h2 id="rsvp-title">Sua missão começa aqui!</h2>
+        <h2 id="rsvp-title">SUA MISSÃO COMEÇA AQUI!</h2>
         <p class="modal-lead">Você vai nessa aventura?</p>
+        <p class="modal-help">Confirme sua presença e diga quem vai comemorar com o Samuel.</p>
         @if (textoPrazo()) {
           <p class="rsvp-deadline">{{ textoPrazo() }}</p>
         }
 
         <form class="rsvp-form" [formGroup]="form" (ngSubmit)="submit()">
-          <label>
-            Nome do responsável
-            <input formControlName="nome" type="text" autocomplete="name" placeholder="Ex.: Nome" />
-          </label>
-
-          <div class="row">
-            <label>Adultos<input formControlName="quantidadeAdultos" type="number" min="0" inputmode="numeric" /></label>
-            <label>Crianças<input formControlName="quantidadeCriancas" type="number" min="0" inputmode="numeric" /></label>
+          <div class="field">
+            <label for="seu-nome">Seu nome</label>
+            <input
+              id="seu-nome"
+              formControlName="nome"
+              type="text"
+              autocomplete="name"
+              maxlength="120"
+              placeholder="Digite seu nome"
+            />
+            <p class="field-hint">Ex.: Amanda Sousa Carvalho e Silva</p>
+            @if (form.controls.nome.touched && form.controls.nome.invalid) {
+              <p class="field-error" role="alert">Escreva seu nome para continuar.</p>
+            }
           </div>
 
-          @if (nomesAdultos.length > 0) {
-            <fieldset class="names-group" formArrayName="nomesAdultos">
-              <legend>Adultos adicionais</legend>
-              @for (ctrl of nomesAdultos.controls; track $index) {
-                <label>
-                  Nome do adulto {{ $index + 2 }}
-                  <input [formControlName]="$index" type="text" [placeholder]="'Ex.: Adulto ' + ($index + 2)" />
-                </label>
-              }
-            </fieldset>
-          }
+          @if (hasNome()) {
+            <section class="people-section" aria-labelledby="adultos-title">
+              <h3 id="adultos-title">👨 Quem vai com você?</h3>
+              <p class="section-help">Adicione todos os adultos que estarão na festa.</p>
 
-          @if (criancas.length > 0) {
-            <fieldset class="names-group" formArrayName="criancas">
-              <legend>Crianças</legend>
-              @for (ctrl of criancas.controls; track $index) {
-                <div class="row child-row" [formGroupName]="$index">
-                  <label>
-                    Nome da criança {{ $index + 1 }}
-                    <input formControlName="nome" type="text" [placeholder]="'Ex.: Criança ' + ($index + 1)" />
-                  </label>
-                  <label>
-                    Idade (anos)
-                    <input formControlName="idade" type="number" min="0" max="17" step="1" inputmode="numeric" placeholder="Ex.: 3" />
-                  </label>
+              <ul class="people-list" aria-label="Adultos confirmados">
+                <li class="person-item">
+                  <span class="person-check" aria-hidden="true">✓</span>
+                  <span class="person-name">{{ nomeAtual() }}</span>
+                </li>
+
+                @for (adulto of extras(); track $index) {
+                  <li class="person-item">
+                    @if (editingAdultIndex() === $index) {
+                      <div class="inline-form">
+                        <label [attr.for]="'adulto-nome-' + $index">Nome do adulto</label>
+                        <input
+                          [id]="'adulto-nome-' + $index"
+                          type="text"
+                          maxlength="120"
+                          autocomplete="off"
+                          placeholder="Digite o nome"
+                          [value]="adultDraft()"
+                          (input)="onAdultDraftInput($event)"
+                          (keydown.enter)="onAdultEnter($event)"
+                        />
+                        @if (adultFormError()) {
+                          <p class="field-error" role="alert">{{ adultFormError() }}</p>
+                        }
+                        <div class="inline-actions">
+                          <button type="button" class="btn-inline" (click)="confirmarAdulto()">Salvar</button>
+                          <button type="button" class="btn-inline-ghost" (click)="cancelarAdulto()">Cancelar</button>
+                        </div>
+                      </div>
+                    } @else {
+                      <span class="person-check" aria-hidden="true">✓</span>
+                      <span class="person-name">{{ adulto.nome }}</span>
+                      <div class="person-actions">
+                        <button
+                          type="button"
+                          class="btn-text"
+                          (click)="iniciarEditarAdulto($index)"
+                          [attr.aria-label]="'Editar ' + adulto.nome"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-text btn-text-danger"
+                          (click)="removerAdulto($index)"
+                          [attr.aria-label]="'Remover ' + adulto.nome"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    }
+                  </li>
+                }
+              </ul>
+
+              @if (addingAdult()) {
+                <div class="inline-form">
+                  <label for="adulto-nome-novo">Nome do adulto</label>
+                  <input
+                    id="adulto-nome-novo"
+                    type="text"
+                    maxlength="120"
+                    autocomplete="off"
+                    placeholder="Digite o nome"
+                    [value]="adultDraft()"
+                    (input)="onAdultDraftInput($event)"
+                    (keydown.enter)="onAdultEnter($event)"
+                  />
+                  @if (adultFormError()) {
+                    <p class="field-error" role="alert">{{ adultFormError() }}</p>
+                  }
+                  <div class="inline-actions">
+                    <button type="button" class="btn-inline" (click)="confirmarAdulto()">Adicionar</button>
+                    <button type="button" class="btn-inline-ghost" (click)="cancelarAdulto()">Cancelar</button>
+                  </div>
                 </div>
+              } @else if (editingAdultIndex() === null) {
+                <button type="button" class="btn-add" (click)="iniciarAdicionarAdulto()">
+                  {{ extras().length > 0 ? '+ ADICIONAR OUTRO ADULTO' : '+ ADICIONAR ADULTO' }}
+                </button>
               }
-            </fieldset>
-          }
+            </section>
 
-          <label>
-            Telefone (opcional)
-            <input formControlName="telefone" type="tel" autocomplete="tel" placeholder="(00) 00000-0000" />
-          </label>
+            <section class="people-section" aria-labelledby="criancas-title">
+              <h3 id="criancas-title">🧒 Crianças que vão com você</h3>
+              <p class="section-help">Tem alguma criança no grupo? Adicione o nome e a idade.</p>
+
+              @if (criancas().length > 0) {
+                <ul class="people-list" aria-label="Crianças confirmadas">
+                  @for (crianca of criancas(); track $index) {
+                    <li class="person-item">
+                      @if (editingChildIndex() === $index) {
+                        <div class="inline-form">
+                          <label [attr.for]="'crianca-nome-' + $index">Nome da criança</label>
+                          <input
+                            [id]="'crianca-nome-' + $index"
+                            type="text"
+                            maxlength="120"
+                            autocomplete="off"
+                            placeholder="Digite o nome"
+                            [value]="childNameDraft()"
+                            (input)="onChildNameInput($event)"
+                            (keydown.enter)="onChildEnter($event)"
+                          />
+                          <label [attr.for]="'crianca-idade-' + $index">Idade</label>
+                          <input
+                            [id]="'crianca-idade-' + $index"
+                            type="text"
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                            maxlength="2"
+                            autocomplete="off"
+                            placeholder="Ex.: 3"
+                            [value]="childAgeDraft()"
+                            (input)="onChildAgeInput($event)"
+                            (keydown.enter)="onChildEnter($event)"
+                          />
+                          @if (childFormError()) {
+                            <p class="field-error" role="alert">{{ childFormError() }}</p>
+                          }
+                          <div class="inline-actions">
+                            <button type="button" class="btn-inline" (click)="confirmarCrianca()">Salvar</button>
+                            <button type="button" class="btn-inline-ghost" (click)="cancelarCrianca()">Cancelar</button>
+                          </div>
+                        </div>
+                      } @else {
+                        <span class="person-check" aria-hidden="true">✓</span>
+                        <span class="person-name">{{ crianca.nome }} — {{ formatarIdade(crianca.idade) }}</span>
+                        <div class="person-actions">
+                          <button
+                            type="button"
+                            class="btn-text"
+                            (click)="iniciarEditarCrianca($index)"
+                            [attr.aria-label]="'Editar ' + crianca.nome"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            class="btn-text btn-text-danger"
+                            (click)="removerCrianca($index)"
+                            [attr.aria-label]="'Remover ' + crianca.nome"
+                          >
+                            Remover
+                          </button>
+                        </div>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+
+              @if (addingChild()) {
+                <div class="inline-form">
+                  <label for="crianca-nome-novo">Nome da criança</label>
+                  <input
+                    id="crianca-nome-novo"
+                    type="text"
+                    maxlength="120"
+                    autocomplete="off"
+                    placeholder="Digite o nome"
+                    [value]="childNameDraft()"
+                    (input)="onChildNameInput($event)"
+                    (keydown.enter)="onChildEnter($event)"
+                  />
+                  <label for="crianca-idade-novo">Idade</label>
+                  <input
+                    id="crianca-idade-novo"
+                    type="text"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    maxlength="2"
+                    autocomplete="off"
+                    placeholder="Ex.: 3"
+                    [value]="childAgeDraft()"
+                    (input)="onChildAgeInput($event)"
+                    (keydown.enter)="onChildEnter($event)"
+                  />
+                  @if (childFormError()) {
+                    <p class="field-error" role="alert">{{ childFormError() }}</p>
+                  }
+                  <div class="inline-actions">
+                    <button type="button" class="btn-inline" (click)="confirmarCrianca()">Adicionar</button>
+                    <button type="button" class="btn-inline-ghost" (click)="cancelarCrianca()">Cancelar</button>
+                  </div>
+                </div>
+              } @else if (editingChildIndex() === null) {
+                <button type="button" class="btn-add" (click)="iniciarAdicionarCrianca()">
+                  + ADICIONAR CRIANÇA
+                </button>
+              }
+            </section>
+
+            <section class="review-card" aria-labelledby="review-title">
+              <h3 id="review-title">SUA EQUIPE ESTÁ PRONTA! 🕷️</h3>
+              <p class="review-label">👨 ADULTOS</p>
+              <ul class="review-list">
+                @for (adulto of listaAdultos(); track $index) {
+                  <li>{{ adulto }}</li>
+                }
+              </ul>
+              @if (criancas().length > 0) {
+                <p class="review-label">🧒 CRIANÇAS</p>
+                <ul class="review-list">
+                  @for (crianca of criancas(); track $index) {
+                    <li>{{ crianca.nome }} — {{ formatarIdade(crianca.idade) }}</li>
+                  }
+                </ul>
+              }
+            </section>
+          }
 
           @if (error()) {
             <p class="error" role="alert">{{ error() }}</p>
           }
-          <button type="submit" class="btn-submit" [disabled]="loading()">
-            {{ loading() ? 'Enviando...' : 'Sim, vou!' }}
-          </button>
+
+          @if (hasNome()) {
+            <button type="submit" class="btn-submit" [disabled]="loading()">
+              {{ loading() ? 'Enviando...' : '🕷️ CONFIRMAR PRESENÇA' }}
+            </button>
+          }
         </form>
       }
     </div>

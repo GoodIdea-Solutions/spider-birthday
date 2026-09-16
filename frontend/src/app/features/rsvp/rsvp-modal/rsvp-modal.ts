@@ -1,17 +1,25 @@
-import { Component, DestroyRef, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import {
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RsvpService } from '../../../core/services/rsvp.service';
 import { RsvpModalService } from '../../../core/services/rsvp-modal.service';
 import { PartyConfigService } from '../../../core/services/party-config.service';
+
+interface AdultoExtra {
+  nome: string;
+}
+
+interface CriancaItem {
+  nome: string;
+  idade: number;
+}
+
+interface ConfirmacaoPendente {
+  nome: string;
+  extras: string[];
+  criancas: CriancaItem[];
+}
 
 @Component({
   selector: 'app-rsvp-modal',
@@ -30,33 +38,47 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
   readonly loading = signal(false);
   readonly success = signal(false);
   readonly error = signal<string | null>(null);
-  readonly heroName = signal('');
   readonly confirmacaoAberta = this.partyConfig.confirmacaoAberta;
   readonly textoPrazo = this.partyConfig.textoPrazo;
   readonly mensagemEncerrada = this.partyConfig.mensagemEncerrada;
+
+  readonly nomeAtual = signal('');
+  readonly hasNome = computed(() => this.nomeAtual().length > 0);
+  readonly extras = signal<AdultoExtra[]>([]);
+  readonly criancas = signal<CriancaItem[]>([]);
+  readonly listaAdultos = computed(() => {
+    const nome = this.nomeAtual();
+    return nome ? [nome, ...this.extras().map((a) => a.nome)] : [];
+  });
+
+  readonly addingAdult = signal(false);
+  readonly editingAdultIndex = signal<number | null>(null);
+  readonly adultDraft = signal('');
+  readonly adultFormError = signal<string | null>(null);
+
+  readonly addingChild = signal(false);
+  readonly editingChildIndex = signal<number | null>(null);
+  readonly childNameDraft = signal('');
+  readonly childAgeDraft = signal('');
+  readonly childFormError = signal<string | null>(null);
+
+  readonly listStatus = signal('');
+  readonly pending = signal<ConfirmacaoPendente | null>(null);
+
+  readonly whatsappDisponivel = computed(() => {
+    const raw = this.partyConfig.config()?.whatsappNumber;
+    if (!raw || raw.includes('[')) {
+      return false;
+    }
+    return this.sanitizeWhatsAppNumber(raw).length > 0;
+  });
 
   @ViewChild('dialog') dialogRef?: ElementRef<HTMLElement>;
   private previouslyFocused: HTMLElement | null = null;
 
   readonly form = this.fb.nonNullable.group({
     nome: ['', [Validators.required, Validators.maxLength(120)]],
-    quantidadeAdultos: [1, [Validators.required, Validators.min(0)]],
-    quantidadeCriancas: [0, [Validators.required, Validators.min(0)]],
-    telefone: [''],
-    nomesAdultos: this.fb.array<FormControl<string>>([]),
-    criancas: this.fb.array<FormGroup<{
-      nome: FormControl<string>;
-      idade: FormControl<number | null>;
-    }>>([]),
   });
-
-  get nomesAdultos(): FormArray<FormControl<string>> {
-    return this.form.controls.nomesAdultos;
-  }
-
-  get criancas() {
-    return this.form.controls.criancas;
-  }
 
   constructor() {
     effect(() => {
@@ -79,13 +101,9 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.form.controls.quantidadeAdultos.valueChanges
+    this.form.controls.nome.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((qtd) => this.sincronizarAdultos(qtd));
-
-    this.form.controls.quantidadeCriancas.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((qtd) => this.sincronizarCriancas(qtd));
+      .subscribe((value) => this.nomeAtual.set(this.normalizarNome(value)));
   }
 
   ngOnDestroy() {
@@ -94,11 +112,7 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
 
   close() {
     this.modalService.close();
-    this.success.set(false);
-    this.error.set(null);
-    this.form.reset({ nome: '', quantidadeAdultos: 1, quantidadeCriancas: 0, telefone: '' });
-    this.sincronizarAdultos(1);
-    this.sincronizarCriancas(0);
+    this.resetState();
   }
 
   onOverlayClick(event: MouseEvent) {
@@ -122,65 +136,333 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
     }
   }
 
+  onAdultEnter(event: Event) {
+    event.preventDefault();
+    this.confirmarAdulto();
+  }
+
+  onChildEnter(event: Event) {
+    event.preventDefault();
+    this.confirmarCrianca();
+  }
+
+  onAdultDraftInput(event: Event) {
+    this.adultDraft.set((event.target as HTMLInputElement).value);
+  }
+
+  onChildNameInput(event: Event) {
+    this.childNameDraft.set((event.target as HTMLInputElement).value);
+  }
+
+  onChildAgeInput(event: Event) {
+    this.childAgeDraft.set((event.target as HTMLInputElement).value);
+  }
+
+  iniciarAdicionarAdulto() {
+    this.editingAdultIndex.set(null);
+    this.adultDraft.set('');
+    this.adultFormError.set(null);
+    this.addingAdult.set(true);
+    this.focarCampo('#adulto-nome-novo');
+  }
+
+  iniciarEditarAdulto(index: number) {
+    const atual = this.extras()[index];
+    if (!atual) {
+      return;
+    }
+    this.addingAdult.set(false);
+    this.adultFormError.set(null);
+    this.adultDraft.set(atual.nome);
+    this.editingAdultIndex.set(index);
+    this.focarCampo(`#adulto-nome-${index}`);
+  }
+
+  cancelarAdulto() {
+    this.addingAdult.set(false);
+    this.editingAdultIndex.set(null);
+    this.adultDraft.set('');
+    this.adultFormError.set(null);
+  }
+
+  confirmarAdulto() {
+    const nome = this.normalizarNome(this.adultDraft());
+    const editIndex = this.editingAdultIndex();
+    const erro = this.validarNomeAdulto(nome, editIndex);
+    if (erro) {
+      this.adultFormError.set(erro);
+      return;
+    }
+
+    if (editIndex === null) {
+      this.extras.update((lista) => [...lista, { nome }]);
+      this.listStatus.set(`${nome} foi adicionado à lista de adultos.`);
+    } else {
+      this.extras.update((lista) => lista.map((item, i) => (i === editIndex ? { nome } : item)));
+      this.listStatus.set(`O nome do adulto foi atualizado para ${nome}.`);
+    }
+    this.cancelarAdulto();
+  }
+
+  removerAdulto(index: number) {
+    const removido = this.extras()[index];
+    this.extras.update((lista) => lista.filter((_, i) => i !== index));
+    if (this.editingAdultIndex() === index) {
+      this.cancelarAdulto();
+    }
+    if (removido) {
+      this.listStatus.set(`${removido.nome} foi removido da lista de adultos.`);
+    }
+  }
+
+  iniciarAdicionarCrianca() {
+    this.editingChildIndex.set(null);
+    this.childNameDraft.set('');
+    this.childAgeDraft.set('');
+    this.childFormError.set(null);
+    this.addingChild.set(true);
+    this.focarCampo('#crianca-nome-novo');
+  }
+
+  iniciarEditarCrianca(index: number) {
+    const atual = this.criancas()[index];
+    if (!atual) {
+      return;
+    }
+    this.addingChild.set(false);
+    this.childFormError.set(null);
+    this.childNameDraft.set(atual.nome);
+    this.childAgeDraft.set(String(atual.idade));
+    this.editingChildIndex.set(index);
+    this.focarCampo(`#crianca-nome-${index}`);
+  }
+
+  cancelarCrianca() {
+    this.addingChild.set(false);
+    this.editingChildIndex.set(null);
+    this.childNameDraft.set('');
+    this.childAgeDraft.set('');
+    this.childFormError.set(null);
+  }
+
+  confirmarCrianca() {
+    const nome = this.normalizarNome(this.childNameDraft());
+    const idade = this.parseIdade(this.childAgeDraft());
+    const editIndex = this.editingChildIndex();
+    const erro = this.validarCrianca(nome, idade, editIndex);
+    if (erro) {
+      this.childFormError.set(erro);
+      return;
+    }
+
+    const item: CriancaItem = { nome, idade: idade as number };
+    if (editIndex === null) {
+      this.criancas.update((lista) => [...lista, item]);
+      this.listStatus.set(`${nome} entrou na lista de crianças.`);
+    } else {
+      this.criancas.update((lista) => lista.map((c, i) => (i === editIndex ? item : c)));
+      this.listStatus.set(`Os dados de ${nome} foram atualizados.`);
+    }
+    this.cancelarCrianca();
+  }
+
+  removerCrianca(index: number) {
+    const removida = this.criancas()[index];
+    this.criancas.update((lista) => lista.filter((_, i) => i !== index));
+    if (this.editingChildIndex() === index) {
+      this.cancelarCrianca();
+    }
+    if (removida) {
+      this.listStatus.set(`${removida.nome} saiu da lista de crianças.`);
+    }
+  }
+
+  formatarIdade(idade: number): string {
+    return `${idade} ${idade === 1 ? 'ano' : 'anos'}`;
+  }
+
   submit() {
     this.error.set(null);
     if (!this.confirmacaoAberta()) {
       this.error.set(this.mensagemEncerrada());
       return;
     }
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      this.error.set('Preencha o nome do responsável, de todos os acompanhantes e a idade de cada criança.');
-      return;
-    }
-    const value = this.form.getRawValue();
-    if (value.quantidadeAdultos + value.quantidadeCriancas < 1) {
-      this.error.set('Informe ao menos 1 adulto ou 1 criança.');
+
+    this.form.markAllAsTouched();
+    if (!this.finalizarRascunhos()) {
+      this.error.set('Confira os nomes que você estava adicionando.');
       return;
     }
 
-    const nomesAdultos = value.nomesAdultos.map((n) => n.trim()).filter(Boolean);
-    const nomesCriancas = value.criancas.map((c) => c.nome.trim()).filter(Boolean);
-    const idadesCriancas = value.criancas
-      .map((c) => c.idade)
-      .filter((idade): idade is number => idade !== null && idade !== undefined && !Number.isNaN(idade));
+    const nome = this.nomeAtual();
+    if (!nome || this.form.controls.nome.invalid) {
+      this.error.set('Escreva seu nome para confirmar a presença.');
+      return;
+    }
 
-    const extrasEsperados = value.quantidadeAdultos > 1 ? value.quantidadeAdultos - 1 : 0;
-    if (nomesAdultos.length !== extrasEsperados || nomesCriancas.length !== value.quantidadeCriancas) {
-      this.error.set('Preencha o nome de cada adulto e criança.');
-      this.form.markAllAsTouched();
-      return;
-    }
-    if (idadesCriancas.length !== value.quantidadeCriancas) {
-      this.error.set('Informe a idade de cada criança.');
-      this.form.markAllAsTouched();
-      return;
-    }
+    const extras = this.extras().map((a) => a.nome);
+    const criancas = this.criancas();
+    const nomesCriancas = criancas.map((c) => c.nome);
+    const idadesCriancas = criancas.map((c) => c.idade);
 
     this.loading.set(true);
-    const nome = value.nome.trim();
     this.rsvpService
       .confirmar({
         nome,
-        quantidadeAdultos: value.quantidadeAdultos,
-        quantidadeCriancas: value.quantidadeCriancas,
-        telefone: value.telefone.trim() || null,
-        nomesAdultos,
+        quantidadeAdultos: 1 + extras.length,
+        quantidadeCriancas: criancas.length,
+        nomesAdultos: extras,
         nomesCriancas,
         idadesCriancas,
       })
       .subscribe({
         next: () => {
           this.loading.set(false);
+          this.pending.set({ nome, extras, criancas });
           this.success.set(true);
-          this.heroName.set(nome);
-          this.openWhatsApp(nome, value.quantidadeAdultos, nomesAdultos, nomesCriancas, idadesCriancas);
         },
         error: (err) => {
           this.loading.set(false);
           this.error.set(err?.error?.message || 'Falha ao confirmar. Tente de novo, herói!');
         },
       });
+  }
+
+  openWhatsApp() {
+    const dados = this.pending();
+    const cfg = this.partyConfig.config();
+    const rawNumber = cfg?.whatsappNumber;
+    if (!dados || !rawNumber || rawNumber.includes('[')) {
+      return;
+    }
+    const number = this.sanitizeWhatsAppNumber(rawNumber);
+    if (!number) {
+      return;
+    }
+    const text = this.buildWhatsAppMessage(cfg?.nomeCrianca || 'Samuel', dados);
+    const url = `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  }
+
+  private finalizarRascunhos(): boolean {
+    if (this.addingAdult() || this.editingAdultIndex() !== null) {
+      if (!this.normalizarNome(this.adultDraft())) {
+        this.cancelarAdulto();
+      } else {
+        this.confirmarAdulto();
+        if (this.adultFormError()) {
+          return false;
+        }
+      }
+    }
+    if (this.addingChild() || this.editingChildIndex() !== null) {
+      if (!this.normalizarNome(this.childNameDraft()) && !this.childAgeDraft().trim()) {
+        this.cancelarCrianca();
+      } else {
+        this.confirmarCrianca();
+        if (this.childFormError()) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private validarNomeAdulto(nome: string, editIndex: number | null): string | null {
+    if (!nome) {
+      return 'Escreva o nome do adulto.';
+    }
+    if (nome.length > 120) {
+      return 'O nome está um pouco longo. Tente um nome mais curto.';
+    }
+    const existentes = this.listaAdultos();
+    const duplicado = existentes.some((atual, i) => {
+      if (editIndex !== null && i === editIndex + 1) {
+        return false;
+      }
+      return this.mesmoNome(atual, nome);
+    });
+    if (duplicado) {
+      return 'Esse nome já está na lista de adultos.';
+    }
+    return null;
+  }
+
+  private validarCrianca(nome: string, idade: number | null, editIndex: number | null): string | null {
+    if (!nome) {
+      return 'Escreva o nome da criança.';
+    }
+    if (nome.length > 120) {
+      return 'O nome está um pouco longo. Tente um nome mais curto.';
+    }
+    if (idade === null) {
+      return 'Informe a idade da criança, só com números (0 a 17).';
+    }
+    const duplicada = this.criancas().some((atual, i) => {
+      if (editIndex !== null && i === editIndex) {
+        return false;
+      }
+      return this.mesmoNome(atual.nome, nome) && atual.idade === idade;
+    });
+    if (duplicada) {
+      return 'Essa criança já está na lista.';
+    }
+    return null;
+  }
+
+  private buildWhatsAppMessage(nomeCrianca: string, dados: ConfirmacaoPendente): string {
+    const adultos = [dados.nome, ...dados.extras].join(', ');
+    const linhas = [
+      '🕷️ HOMEM-ARANHA',
+      '━━━━━━━━━━━━━━━━',
+      '',
+      `Olá! Confirmei presença na festa do ${nomeCrianca}!`,
+      '',
+      `Responsável: ${dados.nome}`,
+      `Adultos: ${adultos}`,
+    ];
+    if (dados.criancas.length > 0) {
+      const criancas = dados.criancas
+        .map((c) => `${c.nome} (${this.formatarIdade(c.idade)})`)
+        .join(', ');
+      linhas.push(`Crianças: ${criancas}`);
+    }
+    linhas.push('', '━━━━━━━━━━━━━━━━', '🕷️ MISSÃO ACEITA!');
+    return linhas.join('\n');
+  }
+
+  private normalizarNome(valor: string): string {
+    return valor.replace(/\s+/g, ' ').trim();
+  }
+
+  private mesmoNome(a: string, b: string): boolean {
+    return a.toLocaleLowerCase('pt-BR') === b.toLocaleLowerCase('pt-BR');
+  }
+
+  private parseIdade(valor: string): number | null {
+    const trimmed = valor.trim();
+    if (!/^\d+$/.test(trimmed)) {
+      return null;
+    }
+    const idade = Number(trimmed);
+    if (!Number.isInteger(idade) || idade < 0 || idade > 17) {
+      return null;
+    }
+    return idade;
+  }
+
+  private resetState() {
+    this.success.set(false);
+    this.error.set(null);
+    this.loading.set(false);
+    this.form.reset({ nome: '' });
+    this.nomeAtual.set('');
+    this.extras.set([]);
+    this.criancas.set([]);
+    this.pending.set(null);
+    this.listStatus.set('');
+    this.cancelarAdulto();
+    this.cancelarCrianca();
   }
 
   private trapFocus(event: KeyboardEvent) {
@@ -213,108 +495,10 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
     }
   }
 
-  private sincronizarAdultos(quantidade: number) {
-    const extras = Math.max(0, (quantidade ?? 0) - 1);
-    this.ajustarFormArray(this.nomesAdultos, extras);
-  }
-
-  private sincronizarCriancas(quantidade: number) {
-    const array = this.criancas;
-    const tamanho = Math.max(0, quantidade ?? 0);
-    while (array.length > tamanho) {
-      array.removeAt(array.length - 1);
-    }
-    while (array.length < tamanho) {
-      array.push(this.novaCrianca());
-    }
-  }
-
-  private novaCrianca() {
-    return this.fb.group({
-      nome: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(120)]),
-      idade: this.fb.control<number | null>(null, {
-        validators: [Validators.required, Validators.min(0), Validators.max(17)],
-      }),
-    });
-  }
-
-  private ajustarFormArray(array: FormArray<FormControl<string>>, tamanho: number) {
-    while (array.length > tamanho) {
-      array.removeAt(array.length - 1);
-    }
-    while (array.length < tamanho) {
-      array.push(this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(120)]));
-    }
-  }
-
-  private openWhatsApp(
-    responsavel: string,
-    quantidadeAdultos: number,
-    nomesAdultos: string[],
-    nomesCriancas: string[],
-    idadesCriancas: number[]
-  ) {
-    const cfg = this.partyConfig.config();
-    const rawNumber = cfg?.whatsappNumber;
-    if (!rawNumber || rawNumber.includes('[')) {
-      return;
-    }
-    const number = this.sanitizeWhatsAppNumber(rawNumber);
-    if (!number) {
-      return;
-    }
-    const text = this.buildWhatsAppMessage(
-      cfg?.nomeCrianca || 'Samuel',
-      responsavel,
-      quantidadeAdultos,
-      nomesAdultos,
-      nomesCriancas,
-      idadesCriancas
-    );
-    const url = `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
-  }
-
-  private buildWhatsAppMessage(
-    nomeCrianca: string,
-    responsavel: string,
-    quantidadeAdultos: number,
-    nomesAdultos: string[],
-    nomesCriancas: string[],
-    idadesCriancas: number[]
-  ): string {
-    const listaAdultos =
-      quantidadeAdultos >= 1 ? [responsavel, ...nomesAdultos].join(', ') : '—';
-    const listaCriancas = this.formatarListaCriancas(nomesCriancas, idadesCriancas);
-    return [
-      '*HOMEM-ARANHA*',
-      '━━━━━━━━━━━━━━━━',
-      '',
-      `*Olá!* Confirmei presença na festa do ${nomeCrianca}!`,
-      '',
-      `*Responsável:* ${responsavel}`,
-      `*Adultos:* ${listaAdultos}`,
-      `*Crianças:* ${listaCriancas}`,
-      '',
-      '━━━━━━━━━━━━━━━━',
-      '*MISSÃO ACEITA!*',
-    ].join('\n');
-  }
-
-  private formatarListaCriancas(nomes: string[], idades: number[]): string {
-    if (nomes.length === 0) {
-      return '—';
-    }
-    return nomes
-      .map((nome, i) => this.formatarCrianca(nome, idades[i]))
-      .join(', ');
-  }
-
-  private formatarCrianca(nome: string, idade?: number): string {
-    if (idade === undefined || idade === null || Number.isNaN(idade)) {
-      return nome;
-    }
-    return `${nome} (${idade} ${idade === 1 ? 'ano' : 'anos'})`;
+  private focarCampo(selector: string) {
+    setTimeout(() => {
+      this.dialogRef?.nativeElement.querySelector<HTMLElement>(selector)?.focus();
+    }, 0);
   }
 
   private sanitizeWhatsAppNumber(value: string): string {
