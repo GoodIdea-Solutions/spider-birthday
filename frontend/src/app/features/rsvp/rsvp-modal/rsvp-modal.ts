@@ -1,6 +1,5 @@
 import { Component, DestroyRef, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RsvpService } from '../../../core/services/rsvp.service';
 import { RsvpModalService } from '../../../core/services/rsvp-modal.service';
@@ -24,7 +23,7 @@ interface ConfirmacaoPendente {
 @Component({
   selector: 'app-rsvp-modal',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule],
   templateUrl: './rsvp-modal.html',
   styleUrl: './rsvp-modal.scss',
 })
@@ -64,6 +63,8 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
 
   readonly listStatus = signal('');
   readonly pending = signal<ConfirmacaoPendente | null>(null);
+  readonly whatsappFeedback = signal<string | null>(null);
+  readonly whatsappError = signal<string | null>(null);
 
   readonly whatsappDisponivel = computed(() => {
     const raw = this.partyConfig.config()?.whatsappNumber;
@@ -329,19 +330,31 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
   }
 
   openWhatsApp() {
+    this.whatsappFeedback.set(null);
+    this.whatsappError.set(null);
+
     const dados = this.pending();
     const cfg = this.partyConfig.config();
     const rawNumber = cfg?.whatsappNumber;
     if (!dados || !rawNumber || rawNumber.includes('[')) {
+      this.whatsappError.set('Não foi possível abrir o WhatsApp agora. Tente de novo em instantes.');
       return;
     }
     const number = this.sanitizeWhatsAppNumber(rawNumber);
     if (!number) {
+      this.whatsappError.set('Não foi possível abrir o WhatsApp agora. Tente de novo em instantes.');
       return;
     }
-    const text = this.buildWhatsAppMessage(cfg?.nomeCrianca || 'Samuel', dados);
+    const text = this.buildWhatsAppMessage(cfg?.nomeCrianca || 'Samuel', cfg?.idade, dados);
     const url = `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    const popup = window.open(url, '_blank');
+    if (!popup) {
+      this.whatsappError.set(
+        'Não foi possível abrir o WhatsApp neste dispositivo. Verifique o bloqueio de pop-ups e tente novamente.'
+      );
+      return;
+    }
+    this.whatsappFeedback.set('Mensagem pronta! 💬 Agora é só enviar pelo WhatsApp.');
   }
 
   private finalizarRascunhos(): boolean {
@@ -410,13 +423,18 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
     return null;
   }
 
-  private buildWhatsAppMessage(nomeCrianca: string, dados: ConfirmacaoPendente): string {
+  private buildWhatsAppMessage(
+    nomeCrianca: string,
+    idade: string | undefined,
+    dados: ConfirmacaoPendente
+  ): string {
     const adultos = [dados.nome, ...dados.extras].join(', ');
+    const anos = this.formatarIdadeFesta(idade);
     const linhas = [
       '🕷️ HOMEM-ARANHA',
       '━━━━━━━━━━━━━━━━',
       '',
-      `Olá! Confirmei presença na festa do ${nomeCrianca}!`,
+      `Olá! Confirmei presença no aniversário de ${anos} do ${nomeCrianca}!`,
       '',
       `Responsável: ${dados.nome}`,
       `Adultos: ${adultos}`,
@@ -427,8 +445,27 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
         .join(', ');
       linhas.push(`Crianças: ${criancas}`);
     }
-    linhas.push('', '━━━━━━━━━━━━━━━━', '🕷️ MISSÃO ACEITA!');
+    linhas.push(
+      '',
+      `🎁 O ${nomeCrianca} também preparou uma lista de sugestões de presentes:`,
+      this.listaPresentesUrl(),
+      '',
+      '━━━━━━━━━━━━━━━━',
+      '🕷️ MISSÃO ACEITA!'
+    );
     return linhas.join('\n');
+  }
+
+  private listaPresentesUrl(): string {
+    return `${window.location.origin}/presentes/lista`;
+  }
+
+  private formatarIdadeFesta(idade: string | undefined): string {
+    const numero = Number.parseInt((idade || '3').trim(), 10);
+    if (!Number.isFinite(numero) || numero <= 0) {
+      return '3 anos';
+    }
+    return this.formatarIdade(numero);
   }
 
   private normalizarNome(valor: string): string {
@@ -461,6 +498,8 @@ export class RsvpModalComponent implements OnInit, OnDestroy {
     this.criancas.set([]);
     this.pending.set(null);
     this.listStatus.set('');
+    this.whatsappFeedback.set(null);
+    this.whatsappError.set(null);
     this.cancelarAdulto();
     this.cancelarCrianca();
   }

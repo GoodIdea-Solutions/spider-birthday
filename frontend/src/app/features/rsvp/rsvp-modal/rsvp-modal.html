@@ -15,23 +15,24 @@
       @if (success()) {
         <div class="success-state">
           <h2 id="rsvp-title">🕷️ MISSÃO ACEITA!</h2>
-          <p class="success-kicker">Presença confirmada!</p>
-          <p>Agora vamos avisar a família do Samuel pelo WhatsApp.</p>
-          <div class="success-actions">
-            @if (whatsappDisponivel()) {
+          <p class="success-kicker">Presença confirmada! 🎉</p>
+          @if (whatsappDisponivel()) {
+            <p>Agora vamos avisar a família do Samuel pelo WhatsApp.</p>
+            <div class="success-actions">
               <button type="button" class="btn-whatsapp" (click)="openWhatsApp()">
                 💬 ENVIAR CONFIRMAÇÃO PELO WHATSAPP
               </button>
-            }
-            <div class="gifts-cta">
-              <p class="gifts-title">🎁 E tem mais uma missão...</p>
-              <p>
-                O Samuel também preparou uma lista de sugestões de presentes para quem quiser
-                presentear o nosso pequeno Homem-Aranha. ❤️
+              <p class="whatsapp-hint">
+                Na mensagem também vai o link da lista de sugestões de presentes do Samuel. 🎁
               </p>
-              <a routerLink="/presentes" class="btn-gifts" (click)="close()">🎁 VER LISTA DE PRESENTES</a>
+              @if (whatsappFeedback()) {
+                <p class="whatsapp-feedback" role="status">{{ whatsappFeedback() }}</p>
+              }
+              @if (whatsappError()) {
+                <p class="whatsapp-error" role="alert">{{ whatsappError() }}</p>
+              }
             </div>
-          </div>
+          }
         </div>
       } @else if (!confirmacaoAberta()) {
         <div class="closed-state">
@@ -58,7 +59,6 @@
               maxlength="120"
               placeholder="Digite seu nome"
             />
-            <p class="field-hint">Ex.: Amanda Sousa Carvalho e Silva</p>
             @if (form.controls.nome.touched && form.controls.nome.invalid) {
               <p class="field-error" role="alert">Escreva seu nome para continuar.</p>
             }
