@@ -1,5 +1,6 @@
 import { Component, DestroyRef, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { RsvpService } from '../../../core/services/rsvp.service';
 import { RsvpModalService } from '../../../core/services/rsvp-modal.service';
