@@ -104,6 +104,14 @@ h1 {
   opacity: 0.8;
 }
 
+.now-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
 .now-toggle,
 .play-btn {
   flex-shrink: 0;
@@ -123,6 +131,34 @@ h1 {
 .now-toggle:hover,
 .play-btn:hover {
   background: #9f1239;
+}
+
+.mode-toggle {
+  display: inline-flex;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(5, 8, 20, 0.35);
+}
+
+.mode-btn {
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.mode-btn.active {
+  background: var(--spider-red);
+}
+
+.mode-btn:hover:not(.active) {
+  background: color-mix(in srgb, var(--spider-red) 35%, transparent);
 }
 
 .tracks {
@@ -230,9 +266,14 @@ h1 {
 
 .now-toggle:focus-visible,
 .play-btn:focus-visible,
+.mode-btn:focus-visible,
 .ytm:focus-visible {
   outline: 3px solid var(--balloon-yellow);
   outline-offset: 2px;
+}
+
+.mode-btn:focus-visible {
+  outline-offset: -2px;
 }
 
 .eq,
@@ -307,9 +348,9 @@ h1 {
     grid-template-columns: 4.5rem minmax(0, 1fr);
   }
 
-  .now-toggle {
+  .now-controls {
     grid-column: 1 / -1;
-    justify-self: start;
+    justify-content: flex-start;
   }
 }
 

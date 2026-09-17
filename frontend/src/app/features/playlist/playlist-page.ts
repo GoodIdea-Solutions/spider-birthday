@@ -13,6 +13,7 @@ export class PlaylistPageComponent implements OnInit {
   readonly tracks = this.player.tracks;
   readonly current = this.player.current;
   readonly playing = this.player.playing;
+  readonly shuffle = this.player.shuffle;
   readonly loading = computed(() => !this.player.loaded());
   readonly error = computed(() =>
     this.player.loadError() ? 'A playlist ainda não pôde ser carregada.' : null
@@ -47,5 +48,9 @@ export class PlaylistPageComponent implements OnInit {
 
   toggleCurrent(): void {
     this.player.toggle();
+  }
+
+  setShuffle(enabled: boolean): void {
+    this.player.setShuffle(enabled);
   }
 }

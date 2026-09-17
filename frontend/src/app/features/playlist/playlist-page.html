@@ -33,14 +33,36 @@
                 <p>{{ now.artista }}</p>
               }
             </div>
-            <button
-              type="button"
-              class="now-toggle"
-              [attr.aria-label]="playing() ? 'Pausar música' : 'Tocar música'"
-              (click)="toggleCurrent()"
-            >
-              {{ playing() ? 'Pausar' : 'Tocar' }}
-            </button>
+            <div class="now-controls">
+              <button
+                type="button"
+                class="now-toggle"
+                [attr.aria-label]="playing() ? 'Pausar música' : 'Tocar música'"
+                (click)="toggleCurrent()"
+              >
+                {{ playing() ? 'Pausar' : 'Tocar' }}
+              </button>
+              <div class="mode-toggle" role="group" aria-label="Ordem de reprodução">
+                <button
+                  type="button"
+                  class="mode-btn"
+                  [class.active]="!shuffle()"
+                  [attr.aria-pressed]="!shuffle()"
+                  (click)="setShuffle(false)"
+                >
+                  Na ordem
+                </button>
+                <button
+                  type="button"
+                  class="mode-btn"
+                  [class.active]="shuffle()"
+                  [attr.aria-pressed]="shuffle()"
+                  (click)="setShuffle(true)"
+                >
+                  Aleatório
+                </button>
+              </div>
+            </div>
           </div>
         </article>
       }

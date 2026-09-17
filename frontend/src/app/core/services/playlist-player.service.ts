@@ -4,6 +4,7 @@ import { PlaylistService } from './playlist.service';
 
 const STORAGE_KEY = 'spider-bg-music';
 const VOLUME_STORAGE_KEY = 'spider-bg-volume';
+const SHUFFLE_STORAGE_KEY = 'spider-bg-shuffle';
 const VOLUME_STEP = 10;
 const VOLUME_DEFAULT = 80;
 const YT_ENDED = 0;
@@ -22,6 +23,7 @@ export class PlaylistPlayerService {
   readonly loaded = signal(false);
   readonly loadError = signal(false);
   readonly volume = signal(this.readVolume());
+  readonly shuffle = signal(this.readShuffle());
   readonly volumeAtMin = computed(() => this.volume() <= 0);
   readonly volumeAtMax = computed(() => this.volume() >= 100);
   readonly available = computed(() => this.tracks().length > 0 && !!this.current());
@@ -30,7 +32,7 @@ export class PlaylistPlayerService {
   private userPaused = this.readPaused();
   private playRequested = false;
   private soundUnlocked = false;
-  private backgroundLoop = true;
+  private shuffleQueue: MusicaPlaylist[] = [];
   private unlockAttached = false;
   private unlockAbort: AbortController | null = null;
   private autoplayTimer: ReturnType<typeof setTimeout> | null = null;
@@ -70,7 +72,9 @@ export class PlaylistPlayerService {
     const stillThere = !!current && tracks.some((item) => item.id === current.id);
     if (!stillThere) {
       this.current.set(tracks[0] ?? null);
-      this.backgroundLoop = true;
+    }
+    if (this.shuffle()) {
+      this.rebuildShuffleQueue();
     }
   }
 
@@ -106,11 +110,6 @@ export class PlaylistPlayerService {
     }
     if (state === YT_ENDED) {
       this.playing.set(false);
-      if (this.backgroundLoop) {
-        this.player?.seekTo(0, true);
-        this.player?.playVideo();
-        return;
-      }
       this.playNext();
       return;
     }
@@ -167,12 +166,28 @@ export class PlaylistPlayerService {
     this.playRequested = true;
     this.soundUnlocked = true;
     this.writePreference('playing');
-    this.backgroundLoop = false;
     if (this.current()?.id === track.id) {
       this.play(true);
       return;
     }
     this.current.set(track);
+    if (this.shuffle()) {
+      this.rebuildShuffleQueue();
+    }
+  }
+
+  toggleShuffle(): void {
+    this.setShuffle(!this.shuffle());
+  }
+
+  setShuffle(enabled: boolean): void {
+    this.shuffle.set(enabled);
+    this.writeShuffle(enabled);
+    if (enabled) {
+      this.rebuildShuffleQueue();
+    } else {
+      this.shuffleQueue = [];
+    }
   }
 
   volumeUp(): void {
@@ -256,7 +271,7 @@ export class PlaylistPlayerService {
       const target = event.target;
       if (
         target instanceof Element &&
-        target.closest('.music-btn.play, .now-toggle, .play-btn')
+        target.closest('.music-btn.play, .now-toggle, .play-btn, .mode-btn')
       ) {
         return;
       }
@@ -312,8 +327,9 @@ export class PlaylistPlayerService {
     if (!tracks.length) {
       return;
     }
-    const index = current ? tracks.findIndex((item) => item.id === current.id) : -1;
-    const next = tracks[(index + 1) % tracks.length];
+    const next = this.shuffle()
+      ? this.takeShuffledNext(current)
+      : this.takeSequentialNext(tracks, current);
     if (!next) {
       return;
     }
@@ -324,6 +340,35 @@ export class PlaylistPlayerService {
       return;
     }
     this.current.set(next);
+  }
+
+  private takeSequentialNext(
+    tracks: MusicaPlaylist[],
+    current: MusicaPlaylist | null
+  ): MusicaPlaylist | null {
+    const index = current ? tracks.findIndex((item) => item.id === current.id) : -1;
+    return tracks[(index + 1) % tracks.length] ?? null;
+  }
+
+  private takeShuffledNext(current: MusicaPlaylist | null): MusicaPlaylist | null {
+    if (!this.shuffleQueue.length) {
+      this.rebuildShuffleQueue(current);
+    }
+    return this.shuffleQueue.shift() ?? current;
+  }
+
+  private rebuildShuffleQueue(except: MusicaPlaylist | null = this.current()): void {
+    const remaining = this.tracks().filter((item) => item.id !== except?.id);
+    this.shuffleQueue = this.shuffleTracks(remaining);
+  }
+
+  private shuffleTracks(items: MusicaPlaylist[]): MusicaPlaylist[] {
+    const next = [...items];
+    for (let i = next.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [next[i], next[j]] = [next[j], next[i]];
+    }
+    return next;
   }
 
   private watchAutoplay(): void {
@@ -362,6 +407,22 @@ export class PlaylistPlayerService {
   private writeVolume(value: number): void {
     try {
       sessionStorage.setItem(VOLUME_STORAGE_KEY, String(value));
+    } catch {
+      // Ignora modo privado / storage bloqueado.
+    }
+  }
+
+  private readShuffle(): boolean {
+    try {
+      return sessionStorage.getItem(SHUFFLE_STORAGE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  private writeShuffle(enabled: boolean): void {
+    try {
+      sessionStorage.setItem(SHUFFLE_STORAGE_KEY, enabled ? '1' : '0');
     } catch {
       // Ignora modo privado / storage bloqueado.
     }
