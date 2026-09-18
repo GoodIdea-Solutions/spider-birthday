@@ -84,6 +84,7 @@ export class YoutubeAudioHostComponent implements OnDestroy {
       if (this.lastVideoId !== videoId) {
         this.lastVideoId = videoId;
         this.ytPlayer.loadVideoById(videoId);
+        this.applyIframePlaybackAttrs(host);
         if (this.player.shouldResumeAfterLoad()) {
           this.player.play(false);
         }
@@ -120,13 +121,32 @@ export class YoutubeAudioHostComponent implements OnDestroy {
           iv_load_policy: 3,
         },
         events: {
-          onReady: (event) => this.player.registerPlayer(event.target),
+          onReady: (event) => {
+            this.applyIframePlaybackAttrs(host);
+            this.player.registerPlayer(event.target);
+          },
           onStateChange: (event) => this.player.onStateChange(event.data),
         },
       });
     } finally {
       this.creating = false;
     }
+  }
+
+  private applyIframePlaybackAttrs(host: HTMLElement): void {
+    let iframe: HTMLIFrameElement | null = null;
+    try {
+      iframe = this.ytPlayer?.getIframe() ?? null;
+    } catch {
+      iframe = null;
+    }
+    iframe ??= host.querySelector('iframe');
+    if (!iframe) {
+      return;
+    }
+    iframe.setAttribute('allow', 'autoplay; encrypted-media');
+    iframe.setAttribute('playsinline', 'true');
+    iframe.setAttribute('webkit-playsinline', 'true');
   }
 
   private destroyPlayer(): void {

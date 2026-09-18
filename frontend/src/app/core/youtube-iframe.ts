@@ -20,6 +20,7 @@ declare global {
       getVolume(): number;
       seekTo(seconds: number, allowSeekAhead: boolean): void;
       getCurrentTime(): number;
+      getIframe(): HTMLIFrameElement;
       destroy(): void;
     }
 

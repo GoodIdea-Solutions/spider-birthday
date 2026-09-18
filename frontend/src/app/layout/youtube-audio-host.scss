@@ -6,12 +6,19 @@
   position: fixed;
   left: 0;
   bottom: 0;
-  width: 200px;
-  height: 113px;
+  width: 2px;
+  height: 2px;
   overflow: hidden;
-  opacity: 0;
   pointer-events: none;
   z-index: 0;
+}
+
+.yt-mount,
+.yt-mount iframe {
+  width: 200px;
+  height: 113px;
+  border: 0;
+  display: block;
 }
 
 .yt-mount,

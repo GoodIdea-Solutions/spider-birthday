@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { MusicaPlaylist } from '../models/party.models';
 import { PlaylistService } from './playlist.service';
 
@@ -9,6 +9,7 @@ const REPEAT_STORAGE_KEY = 'spider-bg-repeat';
 const VOLUME_STEP = 10;
 const VOLUME_DEFAULT = 80;
 const PREVIOUS_RESTART_SECONDS = 3;
+const RESUME_DEBOUNCE_MS = 280;
 const YT_ENDED = 0;
 const YT_PLAYING = 1;
 const YT_PAUSED = 2;
@@ -41,10 +42,20 @@ export class PlaylistPlayerService {
   private unlockAbort: AbortController | null = null;
   private autoplayTimer: ReturnType<typeof setTimeout> | null = null;
   private unmuteTimer: ReturnType<typeof setTimeout> | null = null;
+  private resumeTimer: ReturnType<typeof setTimeout> | null = null;
   private loadingList = false;
+  private lifecycleAttached = false;
+  private mediaSessionHandlersAttached = false;
 
   constructor() {
     this.clearLegacyPause();
+    this.attachLifecycleResume();
+    this.attachMediaSessionHandlers();
+    effect(() => {
+      this.current();
+      this.playing();
+      untracked(() => this.syncMediaSession());
+    });
   }
 
   load(): void {
@@ -97,9 +108,11 @@ export class PlaylistPlayerService {
   unregisterPlayer(): void {
     this.clearAutoplayTimer();
     this.clearUnmuteTimer();
+    this.clearResumeTimer();
     this.detachUnlock();
     this.player = null;
     this.playing.set(false);
+    this.syncMediaSession();
   }
 
   onStateChange(state: number): void {
@@ -113,6 +126,9 @@ export class PlaylistPlayerService {
     }
     if (state === YT_PAUSED) {
       this.playing.set(false);
+      if (this.wantsUserPlayback()) {
+        this.scheduleResumePlayback();
+      }
       return;
     }
     if (state === YT_ENDED) {
@@ -163,9 +179,11 @@ export class PlaylistPlayerService {
       this.playRequested = false;
       this.writePreference('paused');
       this.autoplayBlocked.set(false);
+      this.clearResumeTimer();
     }
     this.player?.pauseVideo();
     this.playing.set(false);
+    this.syncMediaSession();
   }
 
   playTrack(track: MusicaPlaylist): void {
@@ -531,6 +549,7 @@ export class PlaylistPlayerService {
     this.soundUnlocked = true;
     this.writePreference('playing');
     this.detachUnlock();
+    this.syncMediaSession();
   }
 
   private pushHistory(track: MusicaPlaylist | null): void {
@@ -583,6 +602,97 @@ export class PlaylistPlayerService {
     }
   }
 
+  private wantsUserPlayback(): boolean {
+    return this.playRequested && !this.userPaused && this.soundUnlocked;
+  }
+
+  private attachLifecycleResume(): void {
+    if (this.lifecycleAttached || typeof document === 'undefined') {
+      return;
+    }
+    this.lifecycleAttached = true;
+    const resume = () => this.resumeIfUserWantsPlayback();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        resume();
+        return;
+      }
+      if (this.wantsUserPlayback()) {
+        this.scheduleResumePlayback();
+      }
+    });
+    window.addEventListener('pageshow', resume);
+    window.addEventListener('focus', resume);
+    document.addEventListener('resume', resume);
+  }
+
+  private scheduleResumePlayback(): void {
+    this.clearResumeTimer();
+    this.resumeTimer = setTimeout(() => {
+      this.resumeTimer = null;
+      this.resumeIfUserWantsPlayback();
+    }, RESUME_DEBOUNCE_MS);
+  }
+
+  private resumeIfUserWantsPlayback(): void {
+    if (!this.wantsUserPlayback() || !this.player || this.playing()) {
+      return;
+    }
+    this.play(false);
+  }
+
+  private attachMediaSessionHandlers(): void {
+    if (this.mediaSessionHandlersAttached || typeof navigator === 'undefined' || !navigator.mediaSession) {
+      return;
+    }
+    this.mediaSessionHandlersAttached = true;
+    const session = navigator.mediaSession;
+    this.setMediaAction('play', () => this.play(true));
+    this.setMediaAction('pause', () => this.pause(true));
+    this.setMediaAction('nexttrack', () => this.skipNext());
+    this.setMediaAction('previoustrack', () => this.skipPrevious());
+    session.playbackState = 'none';
+  }
+
+  private setMediaAction(action: MediaSessionAction, handler: () => void): void {
+    try {
+      navigator.mediaSession?.setActionHandler(action, handler);
+    } catch {
+      // Alguns navegadores rejeitam ações específicas.
+    }
+  }
+
+  private syncMediaSession(): void {
+    if (typeof navigator === 'undefined' || !navigator.mediaSession) {
+      return;
+    }
+    const session = navigator.mediaSession;
+    const track = this.current();
+    const userStarted = this.soundUnlocked || this.playRequested;
+    if (!track || !userStarted) {
+      session.metadata = null;
+      session.playbackState = 'none';
+      return;
+    }
+    try {
+      session.metadata = new MediaMetadata({
+        title: track.titulo,
+        artist: track.artista || 'Playlist do Samuel',
+        album: 'Playlist do Samuel',
+        artwork: [
+          {
+            src: `https://i.ytimg.com/vi/${track.youtubeVideoId}/hqdefault.jpg`,
+            sizes: '480x360',
+            type: 'image/jpeg',
+          },
+        ],
+      });
+    } catch {
+      // MediaMetadata pode falhar em contextos restritos.
+    }
+    session.playbackState = this.playing() ? 'playing' : 'paused';
+  }
+
   private clearAutoplayTimer(): void {
     if (this.autoplayTimer) {
       clearTimeout(this.autoplayTimer);
@@ -594,6 +704,13 @@ export class PlaylistPlayerService {
     if (this.unmuteTimer) {
       clearTimeout(this.unmuteTimer);
       this.unmuteTimer = null;
+    }
+  }
+
+  private clearResumeTimer(): void {
+    if (this.resumeTimer) {
+      clearTimeout(this.resumeTimer);
+      this.resumeTimer = null;
     }
   }
 }
