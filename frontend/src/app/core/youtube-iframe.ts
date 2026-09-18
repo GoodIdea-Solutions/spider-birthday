@@ -19,6 +19,7 @@ declare global {
       setVolume(volume: number): void;
       getVolume(): number;
       seekTo(seconds: number, allowSeekAhead: boolean): void;
+      getCurrentTime(): number;
       destroy(): void;
     }
 

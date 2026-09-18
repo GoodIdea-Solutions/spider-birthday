@@ -34,14 +34,52 @@
               }
             </div>
             <div class="now-controls">
-              <button
-                type="button"
-                class="now-toggle"
-                [attr.aria-label]="playing() ? 'Pausar música' : 'Tocar música'"
-                (click)="toggleCurrent()"
-              >
-                {{ playing() ? 'Pausar' : 'Tocar' }}
-              </button>
+              <div class="now-transport" role="group" aria-label="Controles da faixa">
+                <button
+                  type="button"
+                  class="now-skip"
+                  aria-label="Música anterior"
+                  (click)="skipPrevious()"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path fill="currentColor" d="M6 6h2v12H6V6Zm11 12V6l-8.5 6 8.5 6Z" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="now-toggle"
+                  [attr.aria-label]="playing() ? 'Pausar música' : 'Tocar música'"
+                  (click)="toggleCurrent()"
+                >
+                  {{ playing() ? 'Pausar' : 'Tocar' }}
+                </button>
+                <button
+                  type="button"
+                  class="now-skip"
+                  aria-label="Próxima música"
+                  (click)="skipNext()"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path fill="currentColor" d="M16 6h2v12h-2V6ZM7 18V6l8.5 6L7 18Z" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="now-repeat"
+                  [class.active]="repeat()"
+                  [attr.aria-pressed]="repeat()"
+                  [attr.aria-label]="repeat() ? 'Desligar repetição da música' : 'Repetir música'"
+                  (click)="toggleRepeat()"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path
+                      fill="currentColor"
+                      d="M7 7h7.5V4.5L19 8l-4.5 3.5V9H7v4H5V7h2Zm10 10H9.5v2.5L5 16l4.5-3.5V15H17v-4h2v6h-2Z"
+                    />
+                    <path fill="currentColor" d="M11.15 10.2h1.7v5.1h-1.7z" />
+                  </svg>
+                </button>
+              </div>
               <div class="mode-toggle" role="group" aria-label="Ordem de reprodução">
                 <button
                   type="button"

@@ -16,6 +16,18 @@
 
     <button
       type="button"
+      class="music-btn skip"
+      aria-label="Música anterior"
+      data-tooltip="Música anterior"
+      (click)="skipPrevious()"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path fill="currentColor" d="M6 6h2v12H6V6Zm11 12V6l-8.5 6 8.5 6Z" />
+      </svg>
+    </button>
+
+    <button
+      type="button"
       class="music-btn play"
       [class.needs-tap]="needsTap()"
       [attr.aria-label]="playLabel()"
@@ -36,7 +48,37 @@
 
     <button
       type="button"
-      class="music-btn"
+      class="music-btn skip"
+      aria-label="Próxima música"
+      data-tooltip="Próxima música"
+      (click)="skipNext()"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path fill="currentColor" d="M16 6h2v12h-2V6ZM7 18V6l8.5 6L7 18Z" />
+      </svg>
+    </button>
+
+    <button
+      type="button"
+      class="music-btn repeat"
+      [class.active]="repeat()"
+      [attr.aria-label]="repeatLabel()"
+      [attr.data-tooltip]="repeatLabel()"
+      [attr.aria-pressed]="repeat()"
+      (click)="toggleRepeat()"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path
+          fill="currentColor"
+          d="M7 7h7.5V4.5L19 8l-4.5 3.5V9H7v4H5V7h2Zm10 10H9.5v2.5L5 16l4.5-3.5V15H17v-4h2v6h-2Z"
+        />
+        <path fill="currentColor" d="M11.15 10.2h1.7v5.1h-1.7z" />
+      </svg>
+    </button>
+
+    <button
+      type="button"
+      class="music-btn volume"
       aria-label="Diminuir volume"
       data-tooltip="Diminuir volume"
       [disabled]="volumeAtMin()"
@@ -49,7 +91,7 @@
 
     <button
       type="button"
-      class="music-btn tip-end"
+      class="music-btn tip-end volume"
       aria-label="Aumentar volume"
       data-tooltip="Aumentar volume"
       [disabled]="volumeAtMax()"

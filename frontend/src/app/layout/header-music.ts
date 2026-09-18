@@ -15,13 +15,29 @@ export class HeaderMusicComponent {
   readonly autoplayBlocked = this.player.autoplayBlocked;
   readonly volumeAtMin = this.player.volumeAtMin;
   readonly volumeAtMax = this.player.volumeAtMax;
+  readonly repeat = this.player.repeat;
   readonly needsTap = computed(() => this.autoplayBlocked());
   readonly showPause = computed(() => this.player.playing() && !this.autoplayBlocked());
 
   readonly playLabel = computed(() => (this.showPause() ? 'Pausar música' : 'Tocar música'));
+  readonly repeatLabel = computed(() =>
+    this.repeat() ? 'Desligar repetição da música' : 'Repetir música'
+  );
 
   toggle(): void {
     this.player.toggle();
+  }
+
+  skipNext(): void {
+    this.player.skipNext();
+  }
+
+  skipPrevious(): void {
+    this.player.skipPrevious();
+  }
+
+  toggleRepeat(): void {
+    this.player.toggleRepeat();
   }
 
   volumeUp(): void {

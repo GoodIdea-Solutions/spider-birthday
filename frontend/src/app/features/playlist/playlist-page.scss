@@ -73,7 +73,7 @@ h1 {
 
 .now-body {
   display: grid;
-  grid-template-columns: 4.5rem minmax(0, 1fr) auto;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
   gap: 0.85rem;
   align-items: center;
 }
@@ -105,11 +105,49 @@ h1 {
 }
 
 .now-controls {
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
+}
+
+.now-transport {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.now-skip,
+.now-repeat {
+  display: inline-grid;
+  place-items: center;
+  width: 2.55rem;
+  height: 2.55rem;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: rgba(5, 8, 20, 0.35);
+  color: #fff;
+  cursor: pointer;
+}
+
+.now-skip svg,
+.now-repeat svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  display: block;
+}
+
+.now-skip:hover,
+.now-repeat:hover {
+  background: color-mix(in srgb, var(--spider-red) 35%, transparent);
+}
+
+.now-repeat.active {
+  background: var(--spider-red);
 }
 
 .now-toggle,
@@ -265,6 +303,8 @@ h1 {
 }
 
 .now-toggle:focus-visible,
+.now-skip:focus-visible,
+.now-repeat:focus-visible,
 .play-btn:focus-visible,
 .mode-btn:focus-visible,
 .ytm:focus-visible {
@@ -340,17 +380,6 @@ h1 {
     grid-column: auto;
     flex-direction: column;
     align-items: stretch;
-  }
-}
-
-@media (max-width: 520px) {
-  .now-body {
-    grid-template-columns: 4.5rem minmax(0, 1fr);
-  }
-
-  .now-controls {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
   }
 }
 

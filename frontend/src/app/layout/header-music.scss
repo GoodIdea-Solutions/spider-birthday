@@ -65,7 +65,8 @@
   background: color-mix(in srgb, var(--spider-blue) 28%, #050814);
 }
 
-.music-btn.play[aria-pressed='true'] {
+.music-btn.play[aria-pressed='true'],
+.music-btn.repeat.active {
   border-color: color-mix(in srgb, var(--spider-red) 70%, #fff);
   background: color-mix(in srgb, var(--spider-red) 42%, #050814);
 }
@@ -112,14 +113,20 @@
   opacity: 0;
 }
 
-@media (max-width: 359px) {
-  .playlist-link {
+@media (max-width: 720px) {
+  .volume {
     display: none;
   }
 
   .music-btn {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .playlist-link {
+    display: none;
   }
 }
 
