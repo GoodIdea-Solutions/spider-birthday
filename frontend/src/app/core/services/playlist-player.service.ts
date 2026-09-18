@@ -10,10 +10,21 @@ const VOLUME_STEP = 10;
 const VOLUME_DEFAULT = 80;
 const PREVIOUS_RESTART_SECONDS = 3;
 const RESUME_DEBOUNCE_MS = 280;
+const SKIP_SETTLE_MS = 1600;
+const POSITION_UPDATE_MS = 1000;
+const MEDIA_SESSION_RECLAIM_MS = 250;
 const YT_ENDED = 0;
 const YT_PLAYING = 1;
 const YT_PAUSED = 2;
 const YT_CUED = 5;
+const MEDIA_SESSION_ACTIONS: MediaSessionAction[] = [
+  'play',
+  'pause',
+  'previoustrack',
+  'nexttrack',
+  'seekbackward',
+  'seekforward',
+];
 
 @Injectable({ providedIn: 'root' })
 export class PlaylistPlayerService {
@@ -43,18 +54,23 @@ export class PlaylistPlayerService {
   private autoplayTimer: ReturnType<typeof setTimeout> | null = null;
   private unmuteTimer: ReturnType<typeof setTimeout> | null = null;
   private resumeTimer: ReturnType<typeof setTimeout> | null = null;
+  private skipTimer: ReturnType<typeof setTimeout> | null = null;
+  private reclaimTimer: ReturnType<typeof setTimeout> | null = null;
+  private positionTimer: ReturnType<typeof setInterval> | null = null;
   private loadingList = false;
   private lifecycleAttached = false;
-  private mediaSessionHandlersAttached = false;
+  private skipInProgress = false;
+  private silentAudio: HTMLAudioElement | null = null;
+  private silentAudioUrl: string | null = null;
 
   constructor() {
     this.clearLegacyPause();
     this.attachLifecycleResume();
-    this.attachMediaSessionHandlers();
+    this.registerMediaSessionHandlers();
     effect(() => {
       this.current();
       this.playing();
-      untracked(() => this.syncMediaSession());
+      untracked(() => this.syncMediaSession(true));
     });
   }
 
@@ -109,6 +125,10 @@ export class PlaylistPlayerService {
     this.clearAutoplayTimer();
     this.clearUnmuteTimer();
     this.clearResumeTimer();
+    this.clearSkipTimer();
+    this.clearReclaimTimer();
+    this.stopPositionUpdates();
+    this.pauseSilentMediaSessionAudio();
     this.detachUnlock();
     this.player = null;
     this.playing.set(false);
@@ -118,7 +138,15 @@ export class PlaylistPlayerService {
   onStateChange(state: number): void {
     if (state === YT_PLAYING) {
       this.playing.set(true);
+      this.endSkip();
       this.clearAutoplayTimer();
+      this.registerMediaSessionHandlers();
+      this.startPositionUpdates();
+      this.syncMediaSession();
+      this.scheduleMediaSessionReclaim();
+      if (this.wantsUserPlayback()) {
+        this.startSilentMediaSessionAudio();
+      }
       if (this.isAudible()) {
         this.autoplayBlocked.set(false);
       }
@@ -126,13 +154,16 @@ export class PlaylistPlayerService {
     }
     if (state === YT_PAUSED) {
       this.playing.set(false);
-      if (this.wantsUserPlayback()) {
-        this.scheduleResumePlayback();
+      this.stopPositionUpdates();
+      this.syncMediaSession();
+      if (this.shouldTreatHiddenPauseAsUserPause()) {
+        this.pause(true);
       }
       return;
     }
     if (state === YT_ENDED) {
       this.playing.set(false);
+      this.stopPositionUpdates();
       if (this.repeat()) {
         this.restartCurrent();
         return;
@@ -171,6 +202,11 @@ export class PlaylistPlayerService {
       this.player?.mute();
     }
     this.player?.playVideo();
+    if (fromUser || this.wantsUserPlayback()) {
+      this.startSilentMediaSessionAudio();
+      this.registerMediaSessionHandlers();
+      this.syncMediaSession();
+    }
   }
 
   pause(fromUser = false): void {
@@ -180,13 +216,16 @@ export class PlaylistPlayerService {
       this.writePreference('paused');
       this.autoplayBlocked.set(false);
       this.clearResumeTimer();
+      this.pauseSilentMediaSessionAudio();
     }
     this.player?.pauseVideo();
     this.playing.set(false);
+    this.stopPositionUpdates();
     this.syncMediaSession();
   }
 
   playTrack(track: MusicaPlaylist): void {
+    this.beginSkip();
     this.markUserPlayIntent();
     const current = this.current();
     if (current?.id === track.id) {
@@ -201,11 +240,13 @@ export class PlaylistPlayerService {
   }
 
   skipNext(): void {
+    this.beginSkip();
     this.markUserPlayIntent();
     this.playNext();
   }
 
   skipPrevious(): void {
+    this.beginSkip();
     this.markUserPlayIntent();
     if (this.safeCurrentTime() > PREVIOUS_RESTART_SECONDS) {
       this.restartCurrent();
@@ -371,9 +412,11 @@ export class PlaylistPlayerService {
   }
 
   private playNext(): void {
+    this.beginSkip();
     const tracks = this.tracks();
     const current = this.current();
     if (!tracks.length) {
+      this.endSkip();
       return;
     }
     const next = this.shuffle()
@@ -383,9 +426,11 @@ export class PlaylistPlayerService {
   }
 
   private playPrevious(): void {
+    this.beginSkip();
     const tracks = this.tracks();
     const current = this.current();
     if (!tracks.length) {
+      this.endSkip();
       return;
     }
     let previous: MusicaPlaylist | null = null;
@@ -406,6 +451,7 @@ export class PlaylistPlayerService {
     recordHistory = true
   ): void {
     if (!next) {
+      this.endSkip();
       return;
     }
     this.playRequested = true;
@@ -417,9 +463,12 @@ export class PlaylistPlayerService {
       this.pushHistory(current);
     }
     this.current.set(next);
+    this.registerMediaSessionHandlers();
+    this.syncMediaSession();
   }
 
   private restartCurrent(): void {
+    this.beginSkip();
     this.playRequested = true;
     try {
       this.player?.seekTo(0, true);
@@ -427,6 +476,8 @@ export class PlaylistPlayerService {
     } catch {
       // Embed pode ainda não aceitar seek/play.
     }
+    this.registerMediaSessionHandlers();
+    this.syncMediaSession();
   }
 
   private takeSequentialNext(
@@ -549,6 +600,7 @@ export class PlaylistPlayerService {
     this.soundUnlocked = true;
     this.writePreference('playing');
     this.detachUnlock();
+    this.registerMediaSessionHandlers();
     this.syncMediaSession();
   }
 
@@ -569,6 +621,14 @@ export class PlaylistPlayerService {
   private safeCurrentTime(): number {
     try {
       return this.player?.getCurrentTime() ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private safeDuration(): number {
+    try {
+      return this.player?.getDuration() ?? 0;
     } catch {
       return 0;
     }
@@ -606,24 +666,54 @@ export class PlaylistPlayerService {
     return this.playRequested && !this.userPaused && this.soundUnlocked;
   }
 
+  private shouldTreatHiddenPauseAsUserPause(): boolean {
+    if (this.skipInProgress || this.isNearTrackEnd() || !this.wantsUserPlayback()) {
+      return false;
+    }
+    return typeof document !== 'undefined' && document.hidden;
+  }
+
+  private isNearTrackEnd(): boolean {
+    const duration = this.safeDuration();
+    const position = this.safeCurrentTime();
+    if (!duration || duration <= 0 || !Number.isFinite(position)) {
+      return false;
+    }
+    return duration - position <= 1.5;
+  }
+
+  private beginSkip(): void {
+    this.skipInProgress = true;
+    this.clearSkipTimer();
+    this.skipTimer = setTimeout(() => {
+      this.skipInProgress = false;
+      this.skipTimer = null;
+    }, SKIP_SETTLE_MS);
+  }
+
+  private endSkip(): void {
+    this.skipInProgress = false;
+    this.clearSkipTimer();
+  }
+
   private attachLifecycleResume(): void {
     if (this.lifecycleAttached || typeof document === 'undefined') {
       return;
     }
     this.lifecycleAttached = true;
-    const resume = () => this.resumeIfUserWantsPlayback();
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        resume();
+    const resumeIfVisible = () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
         return;
       }
-      if (this.wantsUserPlayback()) {
-        this.scheduleResumePlayback();
+      this.scheduleResumePlayback();
+    };
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        resumeIfVisible();
       }
     });
-    window.addEventListener('pageshow', resume);
-    window.addEventListener('focus', resume);
-    document.addEventListener('resume', resume);
+    window.addEventListener('pageshow', resumeIfVisible);
+    document.addEventListener('resume', resumeIfVisible);
   }
 
   private scheduleResumePlayback(): void {
@@ -641,20 +731,25 @@ export class PlaylistPlayerService {
     this.play(false);
   }
 
-  private attachMediaSessionHandlers(): void {
-    if (this.mediaSessionHandlersAttached || typeof navigator === 'undefined' || !navigator.mediaSession) {
+  private registerMediaSessionHandlers(): void {
+    if (typeof navigator === 'undefined' || !navigator.mediaSession) {
       return;
     }
-    this.mediaSessionHandlersAttached = true;
-    const session = navigator.mediaSession;
+    for (const action of MEDIA_SESSION_ACTIONS) {
+      this.setMediaAction(action, null);
+    }
     this.setMediaAction('play', () => this.play(true));
     this.setMediaAction('pause', () => this.pause(true));
     this.setMediaAction('nexttrack', () => this.skipNext());
     this.setMediaAction('previoustrack', () => this.skipPrevious());
-    session.playbackState = 'none';
+    this.setMediaAction('seekbackward', () => this.skipPrevious());
+    this.setMediaAction('seekforward', () => this.skipNext());
   }
 
-  private setMediaAction(action: MediaSessionAction, handler: () => void): void {
+  private setMediaAction(
+    action: MediaSessionAction,
+    handler: MediaSessionActionHandler | null
+  ): void {
     try {
       navigator.mediaSession?.setActionHandler(action, handler);
     } catch {
@@ -662,9 +757,12 @@ export class PlaylistPlayerService {
     }
   }
 
-  private syncMediaSession(): void {
+  private syncMediaSession(rebindHandlers = false): void {
     if (typeof navigator === 'undefined' || !navigator.mediaSession) {
       return;
+    }
+    if (rebindHandlers) {
+      this.registerMediaSessionHandlers();
     }
     const session = navigator.mediaSession;
     const track = this.current();
@@ -672,6 +770,7 @@ export class PlaylistPlayerService {
     if (!track || !userStarted) {
       session.metadata = null;
       session.playbackState = 'none';
+      this.clearPositionState();
       return;
     }
     try {
@@ -691,6 +790,150 @@ export class PlaylistPlayerService {
       // MediaMetadata pode falhar em contextos restritos.
     }
     session.playbackState = this.playing() ? 'playing' : 'paused';
+    this.syncPositionState();
+  }
+
+  private syncPositionState(): void {
+    if (typeof navigator === 'undefined' || !navigator.mediaSession?.setPositionState) {
+      return;
+    }
+    const duration = this.safeDuration();
+    const position = this.safeCurrentTime();
+    if (!Number.isFinite(duration) || duration <= 0) {
+      return;
+    }
+    const clamped = Number.isFinite(position) ? Math.min(Math.max(position, 0), duration) : 0;
+    try {
+      navigator.mediaSession.setPositionState({
+        duration,
+        playbackRate: 1,
+        position: clamped,
+      });
+    } catch {
+      // setPositionState rejeita valores inconsistentes em alguns navegadores.
+    }
+  }
+
+  private clearPositionState(): void {
+    try {
+      navigator.mediaSession?.setPositionState?.(undefined);
+    } catch {
+      // Nem todos os navegadores aceitam limpar o estado.
+    }
+  }
+
+  private startPositionUpdates(): void {
+    this.stopPositionUpdates();
+    this.syncPositionState();
+    this.positionTimer = setInterval(() => {
+      this.syncPositionState();
+    }, POSITION_UPDATE_MS);
+  }
+
+  private stopPositionUpdates(): void {
+    if (this.positionTimer) {
+      clearInterval(this.positionTimer);
+      this.positionTimer = null;
+    }
+  }
+
+  private scheduleMediaSessionReclaim(): void {
+    this.clearReclaimTimer();
+    this.reclaimTimer = setTimeout(() => {
+      this.reclaimTimer = null;
+      this.registerMediaSessionHandlers();
+      this.syncMediaSession();
+    }, MEDIA_SESSION_RECLAIM_MS);
+  }
+
+  private startSilentMediaSessionAudio(): void {
+    if (!this.wantsUserPlayback() || typeof Audio === 'undefined') {
+      return;
+    }
+    const audio = this.ensureSilentAudio();
+    if (!audio) {
+      return;
+    }
+    try {
+      audio.currentTime = 0;
+      const playPromise = audio.play();
+      playPromise?.catch(() => {
+        // Sem gesto do usuário o áudio silencioso pode ser bloqueado.
+      });
+    } catch {
+      // Ignora falha ao reivindicar a Media Session.
+    }
+  }
+
+  private pauseSilentMediaSessionAudio(): void {
+    try {
+      this.silentAudio?.pause();
+    } catch {
+      // Ignora pause em áudio já parado.
+    }
+  }
+
+  private ensureSilentAudio(): HTMLAudioElement | null {
+    if (this.silentAudio) {
+      return this.silentAudio;
+    }
+    if (typeof document === 'undefined' || typeof Audio === 'undefined') {
+      return null;
+    }
+    const url = this.createSilentWavUrl();
+    if (!url) {
+      return null;
+    }
+    this.silentAudioUrl = url;
+    const audio = new Audio(url);
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.volume = 0.01;
+    audio.setAttribute('playsinline', 'true');
+    audio.setAttribute('aria-hidden', 'true');
+    audio.style.position = 'absolute';
+    audio.style.width = '0';
+    audio.style.height = '0';
+    audio.style.opacity = '0';
+    audio.style.pointerEvents = 'none';
+    document.body.appendChild(audio);
+    this.silentAudio = audio;
+    return audio;
+  }
+
+  private createSilentWavUrl(): string | null {
+    try {
+      const sampleRate = 8000;
+      const seconds = 2;
+      const dataSize = sampleRate * seconds;
+      const buffer = new ArrayBuffer(44 + dataSize);
+      const view = new DataView(buffer);
+      const writeString = (offset: number, value: string) => {
+        for (let i = 0; i < value.length; i++) {
+          view.setUint8(offset + i, value.charCodeAt(i));
+        }
+      };
+      writeString(0, 'RIFF');
+      view.setUint32(4, 36 + dataSize, true);
+      writeString(8, 'WAVE');
+      writeString(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate, true);
+      view.setUint16(32, 1, true);
+      view.setUint16(34, 8, true);
+      writeString(36, 'data');
+      view.setUint32(40, dataSize, true);
+      for (let i = 0; i < dataSize; i++) {
+        view.setUint8(44 + i, 128);
+      }
+      const blob = new Blob([buffer], { type: 'audio/wav' });
+      return URL.createObjectURL(blob);
+    } catch {
+      return 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+    }
   }
 
   private clearAutoplayTimer(): void {
@@ -711,6 +954,20 @@ export class PlaylistPlayerService {
     if (this.resumeTimer) {
       clearTimeout(this.resumeTimer);
       this.resumeTimer = null;
+    }
+  }
+
+  private clearSkipTimer(): void {
+    if (this.skipTimer) {
+      clearTimeout(this.skipTimer);
+      this.skipTimer = null;
+    }
+  }
+
+  private clearReclaimTimer(): void {
+    if (this.reclaimTimer) {
+      clearTimeout(this.reclaimTimer);
+      this.reclaimTimer = null;
     }
   }
 }
