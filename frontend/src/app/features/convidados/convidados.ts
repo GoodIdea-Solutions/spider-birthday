@@ -44,6 +44,26 @@ export class ConvidadosComponent implements OnInit {
 
   readonly totalPessoas = computed(() => this.totalAdultos() + this.totalCriancas());
 
+  readonly convidadosOrdenados = computed(() =>
+    [...this.convidados()].sort((a, b) => this.compararNomes(a.nome, b.nome))
+  );
+
+  readonly listaAdultosImpressao = computed(() => {
+    const nomes: string[] = [];
+    for (const c of this.convidados()) {
+      nomes.push(c.nome, ...(c.nomesAdultos ?? []));
+    }
+    return nomes.filter(Boolean).sort((a, b) => this.compararNomes(a, b));
+  });
+
+  readonly listaCriancasImpressao = computed(() => {
+    const lista: CriancaDetalhe[] = [];
+    for (const c of this.convidados()) {
+      lista.push(...this.criancasDetalhes(c));
+    }
+    return lista.sort((a, b) => this.compararNomes(a.nome, b.nome));
+  });
+
   ngOnInit() {
     this.rsvpService.listarConfirmados().subscribe({
       next: (data) => {
@@ -61,20 +81,25 @@ export class ConvidadosComponent implements OnInit {
     if (c.quantidadeAdultos <= 0) {
       return '—';
     }
-    return [c.nome, ...(c.nomesAdultos ?? [])].filter(Boolean).join(', ');
+    return [c.nome, ...(c.nomesAdultos ?? [])]
+      .filter(Boolean)
+      .sort((a, b) => this.compararNomes(a, b))
+      .join(', ');
   }
 
   criancasDetalhes(c: RsvpPublicResponse): CriancaDetalhe[] {
     const nomes = c.nomesCriancas ?? [];
     const idades = c.idadesCriancas ?? [];
-    return nomes.map((nome, i) => {
-      const idade = this.idadeValida(idades[i]) ? idades[i] : undefined;
-      return {
-        nome,
-        idade,
-        lembrancinha: idade !== undefined && idade <= 12,
-      };
-    });
+    return nomes
+      .map((nome, i) => {
+        const idade = this.idadeValida(idades[i]) ? idades[i] : undefined;
+        return {
+          nome,
+          idade,
+          lembrancinha: idade !== undefined && idade <= 12,
+        };
+      })
+      .sort((a, b) => this.compararNomes(a.nome, b.nome));
   }
 
   formatarCrianca(crianca: CriancaDetalhe): string {
@@ -99,5 +124,9 @@ export class ConvidadosComponent implements OnInit {
 
   private idadeValida(idade?: number): idade is number {
     return idade !== undefined && idade !== null && !Number.isNaN(idade);
+  }
+
+  private compararNomes(a: string, b: string): number {
+    return a.localeCompare(b, 'pt-BR', { sensitivity: 'base' });
   }
 }

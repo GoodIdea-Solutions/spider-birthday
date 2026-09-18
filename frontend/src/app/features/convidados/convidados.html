@@ -47,8 +47,8 @@
       @if (convidados().length === 0) {
         <p class="status">Nenhum herói confirmou presença ainda.</p>
       } @else {
-        <ol class="lista-scroll">
-          @for (c of convidados(); track $index) {
+        <ol class="lista-scroll no-print">
+          @for (c of convidadosOrdenados(); track c.nome + $index) {
             @let criancas = criancasDetalhes(c);
             <li class="lista-item">
               <div class="chegada">
@@ -67,7 +67,7 @@
                     @if (criancas.length === 0) {
                       —
                     } @else {
-                      @for (crianca of criancas; track $index; let last = $last) {
+                      @for (crianca of criancas; track crianca.nome + $index; let last = $last) {
                         <span
                           class="crianca-nome"
                           [class.lembrancinha]="crianca.lembrancinha"
@@ -80,6 +80,46 @@
             </li>
           }
         </ol>
+
+        <div class="print-only print-colunas">
+          <section class="print-coluna">
+            <h2>Adultos</h2>
+            @if (listaAdultosImpressao().length === 0) {
+              <p class="print-vazio">—</p>
+            } @else {
+              <ol class="print-lista">
+                @for (nome of listaAdultosImpressao(); track nome + $index) {
+                  <li>
+                    <label class="print-pessoa">
+                      <input type="checkbox" class="chegada-check" [attr.aria-label]="'Chegada de ' + nome" />
+                      <span>{{ nome }}</span>
+                    </label>
+                  </li>
+                }
+              </ol>
+            }
+          </section>
+          <section class="print-coluna">
+            <h2>Crianças</h2>
+            @if (listaCriancasImpressao().length === 0) {
+              <p class="print-vazio">—</p>
+            } @else {
+              <ol class="print-lista">
+                @for (crianca of listaCriancasImpressao(); track crianca.nome + $index) {
+                  <li>
+                    <label class="print-pessoa">
+                      <input type="checkbox" class="chegada-check" [attr.aria-label]="'Chegada de ' + crianca.nome" />
+                      <span
+                        class="crianca-nome"
+                        [class.lembrancinha]="crianca.lembrancinha"
+                      >{{ formatarCrianca(crianca) }}</span>
+                    </label>
+                  </li>
+                }
+              </ol>
+            }
+          </section>
+        </div>
       }
     }
   </div>

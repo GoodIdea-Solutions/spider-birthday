@@ -229,6 +229,10 @@ h1 {
     font-size: 0.9rem;
   }
 
+  .convidados-inner {
+    max-width: none;
+  }
+
   .totais {
     grid-template-columns: repeat(5, 1fr);
     margin-bottom: 1rem;
@@ -258,16 +262,45 @@ h1 {
     }
   }
 
-  .lista-scroll {
-    max-height: none;
-    overflow: visible;
-    border-color: #ccc;
-    background: #fff;
+  .print-only.print-colunas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    text-align: left;
+    align-items: start;
   }
 
-  .lista-item {
-    border-bottom-color: #ddd;
-    break-inside: avoid;
+  .print-coluna h2 {
+    margin: 0 0 0.6rem;
+    font-family: var(--font-display, 'Bangers', cursive);
+    font-size: 1.35rem;
+    color: #b00020;
+    letter-spacing: 0.04em;
+    border-bottom: 1.5px solid #ccc;
+    padding-bottom: 0.25rem;
+  }
+
+  .print-lista {
+    margin: 0;
+    padding: 0 0 0 1.6rem;
+    font-size: 0.95rem;
+    line-height: 1.35;
+
+    li {
+      padding: 0.18rem 0;
+      break-inside: avoid;
+    }
+  }
+
+  .print-pessoa {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .print-vazio {
+    margin: 0;
+    color: #555;
   }
 
   .chegada {
@@ -275,17 +308,14 @@ h1 {
   }
 
   .chegada-check {
-    width: 1.1rem;
-    height: 1.1rem;
-    margin-top: 0.2rem;
+    width: 0.95rem;
+    height: 0.95rem;
+    margin: 0;
+    flex-shrink: 0;
     appearance: none;
     border: 1.5px solid #333;
     border-radius: 0.15rem;
     background: #fff;
-  }
-
-  .item-name {
-    color: #1d4ed8;
   }
 
   .crianca-nome.lembrancinha {
