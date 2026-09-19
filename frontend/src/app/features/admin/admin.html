@@ -372,6 +372,16 @@
                 placeholder="https://music.youtube.com/watch?v=..."
               />
             </label>
+            <label class="span-2">
+              URL do arquivo de áudio (opcional)
+              <input
+                [(ngModel)]="playlistAudioUrl"
+                name="playlistAudioUrl"
+                type="text"
+                maxlength="2000"
+                placeholder="https://exemplo.com/musica.mp3 ou /audio/faixa.mp3"
+              />
+            </label>
             <label class="check span-2">
               <input [(ngModel)]="playlistAtivo" name="playlistAtivo" type="checkbox" />
               Visível na playlist pública
@@ -397,6 +407,7 @@
                   <span>
                     {{ item.artista || 'Sem artista' }} · ordem {{ item.ordem }} ·
                     {{ item.ativo !== false ? 'Visível' : 'Oculta' }}
+                    {{ item.audioUrl ? ' · áudio direto' : '' }}
                   </span>
                 </div>
                 <div class="row-actions">

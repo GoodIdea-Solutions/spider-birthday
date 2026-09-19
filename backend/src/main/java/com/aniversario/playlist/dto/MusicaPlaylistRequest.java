@@ -17,6 +17,9 @@ public record MusicaPlaylistRequest(
         @Size(max = 2000)
         String youtubeUrl,
 
+        @Size(max = 2000)
+        String audioUrl,
+
         @NotNull
         @Min(0)
         Integer ordem,

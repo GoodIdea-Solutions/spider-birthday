@@ -1,5 +1,12 @@
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { MusicaPlaylist } from '../models/party.models';
+import { AudioElementPlayerEngine } from '../player/audio-element-player-engine';
+import {
+  PlayerEngine,
+  PlayerEngineCallbacks,
+  trackUsesDirectAudio,
+} from '../player/player-engine';
+import { YoutubePlayerEngine } from '../player/youtube-player-engine';
 import { PlaylistService } from './playlist.service';
 
 const STORAGE_KEY = 'spider-bg-music';
@@ -13,9 +20,8 @@ const RESUME_DEBOUNCE_MS = 280;
 const SKIP_SETTLE_MS = 1600;
 const POSITION_UPDATE_MS = 1000;
 const MEDIA_SESSION_RECLAIM_MS = 250;
-const YT_ENDED = 0;
+const AUDIO_SEEK_SECONDS = 10;
 const YT_PLAYING = 1;
-const YT_PAUSED = 2;
 const YT_CUED = 5;
 const MEDIA_SESSION_ACTIONS: MediaSessionAction[] = [
   'play',
@@ -29,6 +35,8 @@ const MEDIA_SESSION_ACTIONS: MediaSessionAction[] = [
 @Injectable({ providedIn: 'root' })
 export class PlaylistPlayerService {
   private readonly playlistApi = inject(PlaylistService);
+  private readonly youtubeEngine = new YoutubePlayerEngine();
+  private readonly audioEngine = new AudioElementPlayerEngine();
 
   readonly tracks = signal<MusicaPlaylist[]>([]);
   readonly current = signal<MusicaPlaylist | null>(null);
@@ -43,7 +51,8 @@ export class PlaylistPlayerService {
   readonly volumeAtMax = computed(() => this.volume() >= 100);
   readonly available = computed(() => this.tracks().length > 0 && !!this.current());
 
-  private player: YT.Player | null = null;
+  private activeEngine: PlayerEngine | null = null;
+  private lastEngineTrackId: number | null = null;
   private userPaused = this.readPaused();
   private playRequested = false;
   private soundUnlocked = false;
@@ -63,10 +72,21 @@ export class PlaylistPlayerService {
   private silentAudio: HTMLAudioElement | null = null;
   private silentAudioUrl: string | null = null;
 
+  private readonly engineCallbacks: PlayerEngineCallbacks = {
+    playing: () => this.onEnginePlaying(),
+    paused: () => this.onEnginePaused(),
+    ended: () => this.onEngineEnded(),
+    error: () => this.onEngineError(),
+  };
+
   constructor() {
     this.clearLegacyPause();
     this.attachLifecycleResume();
     this.registerMediaSessionHandlers();
+    effect(() => {
+      const track = this.current();
+      untracked(() => this.activateEngineFor(track));
+    });
     effect(() => {
       this.current();
       this.playing();
@@ -103,6 +123,11 @@ export class PlaylistPlayerService {
     const stillThere = !!current && tracks.some((item) => item.id === current.id);
     if (!stillThere) {
       this.current.set(tracks[0] ?? null);
+    } else {
+      const updated = tracks.find((item) => item.id === current.id) ?? current;
+      if (updated !== current) {
+        this.current.set(updated);
+      }
     }
     if (this.shuffle()) {
       this.rebuildShuffleQueue();
@@ -113,8 +138,12 @@ export class PlaylistPlayerService {
   }
 
   registerPlayer(player: YT.Player): void {
-    this.player = player;
+    this.youtubeEngine.attachPlayer(player);
     this.applyVolumeLevel();
+    if (this.isAudioEngine()) {
+      this.youtubeEngine.stop();
+      return;
+    }
     if (this.shouldAutoplay() || this.playRequested) {
       this.attachUnlockOnce();
       this.startMutedAutoplay();
@@ -130,50 +159,25 @@ export class PlaylistPlayerService {
     this.stopPositionUpdates();
     this.pauseSilentMediaSessionAudio();
     this.detachUnlock();
-    this.player = null;
-    this.playing.set(false);
-    this.syncMediaSession();
+    this.youtubeEngine.detachPlayer();
+    if (!this.isAudioEngine()) {
+      this.playing.set(false);
+      this.syncMediaSession();
+    }
   }
 
   onStateChange(state: number): void {
-    if (state === YT_PLAYING) {
-      this.playing.set(true);
-      this.endSkip();
-      this.clearAutoplayTimer();
-      this.registerMediaSessionHandlers();
-      this.startPositionUpdates();
-      this.syncMediaSession();
-      this.scheduleMediaSessionReclaim();
-      if (this.wantsUserPlayback()) {
-        this.startSilentMediaSessionAudio();
+    if (this.isAudioEngine()) {
+      if (state === YT_PLAYING) {
+        this.youtubeEngine.stop();
       }
-      if (this.isAudible()) {
-        this.autoplayBlocked.set(false);
-      }
-      return;
-    }
-    if (state === YT_PAUSED) {
-      this.playing.set(false);
-      this.stopPositionUpdates();
-      this.syncMediaSession();
-      if (this.shouldTreatHiddenPauseAsUserPause()) {
-        this.pause(true);
-      }
-      return;
-    }
-    if (state === YT_ENDED) {
-      this.playing.set(false);
-      this.stopPositionUpdates();
-      if (this.repeat()) {
-        this.restartCurrent();
-        return;
-      }
-      this.playNext();
       return;
     }
     if (state === YT_CUED && this.shouldResumeAfterLoad()) {
       this.play(false);
+      return;
     }
+    this.youtubeEngine.handleStateChange(state);
   }
 
   shouldResumeAfterLoad(): boolean {
@@ -196,12 +200,24 @@ export class PlaylistPlayerService {
     if (fromUser) {
       this.markUserPlayIntent();
     }
+    const engine = this.ensureEngine();
+    if (engine.kind === 'audio') {
+      if (!fromUser && !this.soundUnlocked) {
+        return;
+      }
+      this.discardSilentMediaSessionAudio();
+      engine.setVolume(this.volume());
+      engine.play();
+      this.registerMediaSessionHandlers();
+      this.syncMediaSession();
+      return;
+    }
     if (this.soundUnlocked || fromUser) {
       this.applyVolume();
     } else {
-      this.player?.mute();
+      this.youtubeEngine.mute();
     }
-    this.player?.playVideo();
+    engine.play();
     if (fromUser || this.wantsUserPlayback()) {
       this.startSilentMediaSessionAudio();
       this.registerMediaSessionHandlers();
@@ -218,7 +234,7 @@ export class PlaylistPlayerService {
       this.clearResumeTimer();
       this.pauseSilentMediaSessionAudio();
     }
-    this.player?.pauseVideo();
+    this.activeEngine?.pause();
     this.playing.set(false);
     this.stopPositionUpdates();
     this.syncMediaSession();
@@ -290,6 +306,10 @@ export class PlaylistPlayerService {
     const next = this.clampVolume(value);
     this.volume.set(next);
     this.writeVolume(next);
+    if (this.isAudioEngine()) {
+      this.audioEngine.setVolume(next);
+      return;
+    }
     if (this.soundUnlocked && !this.autoplayBlocked()) {
       this.applyVolume();
     } else {
@@ -305,10 +325,119 @@ export class PlaylistPlayerService {
     return !this.userPaused && this.readPreference() !== 'paused';
   }
 
+  private activateEngineFor(track: MusicaPlaylist | null): void {
+    const next = this.engineFor(track);
+    const trackId = track?.id ?? null;
+    if (this.activeEngine === next && this.lastEngineTrackId === trackId) {
+      return;
+    }
+    const previous = this.activeEngine;
+    if (previous && previous !== next) {
+      this.activeEngine = next;
+      previous.detach();
+      previous.stop();
+    } else {
+      this.activeEngine = next;
+    }
+    next.attach(this.engineCallbacks);
+    this.lastEngineTrackId = trackId;
+    if (!track) {
+      next.stop();
+      return;
+    }
+    if (next.kind === 'audio') {
+      this.autoplayBlocked.set(false);
+      this.discardSilentMediaSessionAudio();
+      next.setVolume(this.volume());
+      next.load(track);
+      this.registerMediaSessionHandlers();
+      this.syncMediaSession();
+      if (this.playRequested && !this.userPaused && this.soundUnlocked) {
+        next.play();
+      }
+      return;
+    }
+    next.setVolume(this.volume());
+    next.load(track);
+    this.registerMediaSessionHandlers();
+    this.syncMediaSession();
+  }
+
+  private engineFor(track: MusicaPlaylist | null): PlayerEngine {
+    return trackUsesDirectAudio(track) ? this.audioEngine : this.youtubeEngine;
+  }
+
+  private ensureEngine(): PlayerEngine {
+    const next = this.engineFor(this.current());
+    if (this.activeEngine !== next) {
+      this.activateEngineFor(this.current());
+    }
+    return this.activeEngine ?? next;
+  }
+
+  private isAudioEngine(): boolean {
+    return this.activeEngine?.kind === 'audio';
+  }
+
+  private onEnginePlaying(): void {
+    this.playing.set(true);
+    this.endSkip();
+    this.clearAutoplayTimer();
+    this.registerMediaSessionHandlers();
+    this.startPositionUpdates();
+    this.syncMediaSession();
+    this.scheduleMediaSessionReclaim();
+    if (this.isAudioEngine()) {
+      this.discardSilentMediaSessionAudio();
+      this.autoplayBlocked.set(false);
+      return;
+    }
+    if (this.wantsUserPlayback()) {
+      this.startSilentMediaSessionAudio();
+    }
+    if (this.isAudible()) {
+      this.autoplayBlocked.set(false);
+    }
+  }
+
+  private onEnginePaused(): void {
+    this.playing.set(false);
+    this.stopPositionUpdates();
+    this.syncMediaSession();
+    if (this.isAudioEngine()) {
+      return;
+    }
+    if (this.shouldTreatHiddenPauseAsUserPause()) {
+      this.pause(true);
+    }
+  }
+
+  private onEngineEnded(): void {
+    this.playing.set(false);
+    this.stopPositionUpdates();
+    if (this.repeat()) {
+      this.restartCurrent();
+      return;
+    }
+    this.playNext();
+  }
+
+  private onEngineError(): void {
+    this.playing.set(false);
+    this.stopPositionUpdates();
+    if (this.isAudioEngine()) {
+      this.autoplayBlocked.set(true);
+    }
+    this.syncMediaSession();
+  }
+
   private startMutedAutoplay(): void {
+    if (this.isAudioEngine()) {
+      return;
+    }
     try {
-      this.player?.mute();
-      this.player?.playVideo();
+      this.youtubeEngine.mute();
+      this.youtubeEngine.play();
     } catch {
       // Embed pode ainda não aceitar play.
     }
@@ -319,7 +448,7 @@ export class PlaylistPlayerService {
   private tryUnmuteAfterStart(): void {
     this.clearUnmuteTimer();
     this.unmuteTimer = setTimeout(() => {
-      if (this.userPaused || !this.player) {
+      if (this.userPaused || this.isAudioEngine() || !this.youtubeEngine.hasPlayer()) {
         return;
       }
       if (this.volume() <= 0) {
@@ -327,8 +456,8 @@ export class PlaylistPlayerService {
         return;
       }
       try {
-        this.player.unMute();
-        this.player.setVolume(this.volume());
+        this.youtubeEngine.unMute();
+        this.youtubeEngine.setVolume(this.volume());
       } catch {
         // Alguns embeds atrasam a API de volume.
       }
@@ -337,7 +466,7 @@ export class PlaylistPlayerService {
         this.autoplayBlocked.set(false);
         return;
       }
-      this.player.mute();
+      this.youtubeEngine.mute();
       this.autoplayBlocked.set(true);
     }, 400);
   }
@@ -379,36 +508,32 @@ export class PlaylistPlayerService {
   }
 
   private isAudible(): boolean {
-    if (this.volume() <= 0 || !this.player) {
+    if (this.volume() <= 0 || !this.youtubeEngine.hasPlayer()) {
       return false;
     }
-    try {
-      return !this.player.isMuted();
-    } catch {
-      return false;
-    }
+    return !this.youtubeEngine.isMuted();
   }
 
   private applyVolume(): void {
+    if (this.isAudioEngine()) {
+      this.audioEngine.setVolume(this.volume());
+      return;
+    }
     const vol = this.volume();
-    try {
-      this.player?.setVolume(vol);
-      if (vol <= 0) {
-        this.player?.mute();
-      } else {
-        this.player?.unMute();
-      }
-    } catch {
-      // Player pode ainda não expor volume em alguns embeds.
+    this.youtubeEngine.setVolume(vol);
+    if (vol <= 0) {
+      this.youtubeEngine.mute();
+    } else {
+      this.youtubeEngine.unMute();
     }
   }
 
   private applyVolumeLevel(): void {
-    try {
-      this.player?.setVolume(this.volume());
-    } catch {
-      // Player pode ainda não expor volume em alguns embeds.
+    if (this.isAudioEngine()) {
+      this.audioEngine.setVolume(this.volume());
+      return;
     }
+    this.youtubeEngine.setVolume(this.volume());
   }
 
   private playNext(): void {
@@ -470,11 +595,12 @@ export class PlaylistPlayerService {
   private restartCurrent(): void {
     this.beginSkip();
     this.playRequested = true;
+    const engine = this.ensureEngine();
     try {
-      this.player?.seekTo(0, true);
-      this.player?.playVideo();
+      engine.seek(0);
+      engine.play();
     } catch {
-      // Embed pode ainda não aceitar seek/play.
+      // Embed/áudio pode ainda não aceitar seek/play.
     }
     this.registerMediaSessionHandlers();
     this.syncMediaSession();
@@ -524,10 +650,10 @@ export class PlaylistPlayerService {
   private watchAutoplay(): void {
     this.clearAutoplayTimer();
     this.autoplayTimer = setTimeout(() => {
-      const state = this.player?.getPlayerState();
-      if (this.userPaused) {
+      if (this.userPaused || this.isAudioEngine()) {
         return;
       }
+      const state = this.youtubeEngine.getPlayerState();
       if (state !== YT_PLAYING && !this.playing()) {
         this.autoplayBlocked.set(true);
       }
@@ -619,19 +745,11 @@ export class PlaylistPlayerService {
   }
 
   private safeCurrentTime(): number {
-    try {
-      return this.player?.getCurrentTime() ?? 0;
-    } catch {
-      return 0;
-    }
+    return this.activeEngine?.getCurrentTime() ?? 0;
   }
 
   private safeDuration(): number {
-    try {
-      return this.player?.getDuration() ?? 0;
-    } catch {
-      return 0;
-    }
+    return this.activeEngine?.getDuration() ?? 0;
   }
 
   private readPaused(): boolean {
@@ -667,6 +785,9 @@ export class PlaylistPlayerService {
   }
 
   private shouldTreatHiddenPauseAsUserPause(): boolean {
+    if (this.isAudioEngine()) {
+      return false;
+    }
     if (this.skipInProgress || this.isNearTrackEnd() || !this.wantsUserPlayback()) {
       return false;
     }
@@ -725,7 +846,14 @@ export class PlaylistPlayerService {
   }
 
   private resumeIfUserWantsPlayback(): void {
-    if (!this.wantsUserPlayback() || !this.player || this.playing()) {
+    if (!this.wantsUserPlayback() || this.playing()) {
+      return;
+    }
+    if (this.isAudioEngine()) {
+      this.audioEngine.play();
+      return;
+    }
+    if (!this.youtubeEngine.hasPlayer()) {
       return;
     }
     this.play(false);
@@ -742,8 +870,21 @@ export class PlaylistPlayerService {
     this.setMediaAction('pause', () => this.pause(true));
     this.setMediaAction('nexttrack', () => this.skipNext());
     this.setMediaAction('previoustrack', () => this.skipPrevious());
+    if (this.isAudioEngine()) {
+      this.setMediaAction('seekbackward', () => this.seekAudioBy(-AUDIO_SEEK_SECONDS));
+      this.setMediaAction('seekforward', () => this.seekAudioBy(AUDIO_SEEK_SECONDS));
+      return;
+    }
     this.setMediaAction('seekbackward', () => this.skipPrevious());
     this.setMediaAction('seekforward', () => this.skipNext());
+  }
+
+  private seekAudioBy(delta: number): void {
+    if (!this.isAudioEngine()) {
+      return;
+    }
+    this.audioEngine.seek(this.audioEngine.getCurrentTime() + delta);
+    this.syncPositionState();
   }
 
   private setMediaAction(
@@ -789,7 +930,11 @@ export class PlaylistPlayerService {
     } catch {
       // MediaMetadata pode falhar em contextos restritos.
     }
-    session.playbackState = this.playing() ? 'playing' : 'paused';
+    if (this.isAudioEngine()) {
+      session.playbackState = this.audioEngine.isPlaying() ? 'playing' : 'paused';
+    } else {
+      session.playbackState = this.playing() ? 'playing' : 'paused';
+    }
     this.syncPositionState();
   }
 
@@ -847,7 +992,7 @@ export class PlaylistPlayerService {
   }
 
   private startSilentMediaSessionAudio(): void {
-    if (!this.wantsUserPlayback() || typeof Audio === 'undefined') {
+    if (this.isAudioEngine() || !this.wantsUserPlayback() || typeof Audio === 'undefined') {
       return;
     }
     const audio = this.ensureSilentAudio();
@@ -871,6 +1016,28 @@ export class PlaylistPlayerService {
     } catch {
       // Ignora pause em áudio já parado.
     }
+  }
+
+  private discardSilentMediaSessionAudio(): void {
+    this.pauseSilentMediaSessionAudio();
+    if (this.silentAudio) {
+      try {
+        this.silentAudio.removeAttribute('src');
+        this.silentAudio.load();
+      } catch {
+        // Ignora limpeza em áudio já descartado.
+      }
+      this.silentAudio.remove();
+      this.silentAudio = null;
+    }
+    if (this.silentAudioUrl?.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(this.silentAudioUrl);
+      } catch {
+        // Ignora revoke em URL já inválida.
+      }
+    }
+    this.silentAudioUrl = null;
   }
 
   private ensureSilentAudio(): HTMLAudioElement | null {

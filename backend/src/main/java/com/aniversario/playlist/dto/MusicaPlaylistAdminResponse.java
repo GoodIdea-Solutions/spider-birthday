@@ -8,6 +8,7 @@ public record MusicaPlaylistAdminResponse(
         String youtubeMusicUrl,
         String youtubeVideoId,
         int ordem,
-        boolean ativo
+        boolean ativo,
+        String audioUrl
 ) {
 }

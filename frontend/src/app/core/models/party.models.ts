@@ -203,6 +203,7 @@ export interface MusicaPlaylist {
   ordem: number;
   youtubeUrl?: string;
   ativo?: boolean;
+  audioUrl?: string | null;
 }
 
 export interface MusicaPlaylistPayload {
@@ -211,4 +212,5 @@ export interface MusicaPlaylistPayload {
   youtubeUrl: string;
   ordem: number;
   ativo: boolean;
+  audioUrl?: string | null;
 }

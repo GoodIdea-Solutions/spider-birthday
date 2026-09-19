@@ -56,6 +56,7 @@ export class AdminComponent implements OnInit {
   playlistTitulo = '';
   playlistArtista = '';
   playlistYoutubeUrl = '';
+  playlistAudioUrl = '';
   playlistOrdem = 0;
   playlistAtivo = true;
 
@@ -496,6 +497,7 @@ export class AdminComponent implements OnInit {
     this.playlistTitulo = '';
     this.playlistArtista = '';
     this.playlistYoutubeUrl = '';
+    this.playlistAudioUrl = '';
     this.playlistOrdem = this.playlist().length;
     this.playlistAtivo = true;
   }
@@ -505,6 +507,7 @@ export class AdminComponent implements OnInit {
     this.playlistTitulo = item.titulo;
     this.playlistArtista = item.artista ?? '';
     this.playlistYoutubeUrl = item.youtubeUrl || item.youtubeMusicUrl;
+    this.playlistAudioUrl = item.audioUrl ?? '';
     this.playlistOrdem = item.ordem;
     this.playlistAtivo = item.ativo !== false;
     this.error.set(null);
@@ -525,6 +528,7 @@ export class AdminComponent implements OnInit {
       titulo,
       artista: this.playlistArtista.trim() || null,
       youtubeUrl,
+      audioUrl: this.playlistAudioUrl.trim() || null,
       ordem: Number(this.playlistOrdem) || 0,
       ativo: this.playlistAtivo,
     };

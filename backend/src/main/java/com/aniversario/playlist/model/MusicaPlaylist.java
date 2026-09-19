@@ -32,6 +32,9 @@ public class MusicaPlaylist extends AuditableEntity {
     @Column(name = "youtube_video_id", nullable = false, length = 11)
     private String youtubeVideoId;
 
+    @Column(name = "audio_url", length = 2000)
+    private String audioUrl;
+
     @Column(nullable = false)
     private Integer ordem = 0;
 

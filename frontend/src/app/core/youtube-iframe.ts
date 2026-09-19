@@ -11,6 +11,7 @@ declare global {
       constructor(elementId: string | HTMLElement, options: PlayerOptions);
       playVideo(): void;
       pauseVideo(): void;
+      stopVideo(): void;
       loadVideoById(videoId: string): void;
       getPlayerState(): number;
       unMute(): void;

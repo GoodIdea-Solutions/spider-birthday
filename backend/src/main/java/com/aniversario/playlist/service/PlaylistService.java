@@ -1,6 +1,7 @@
 package com.aniversario.playlist.service;
 
 import java.util.List;
+import java.util.Locale;
 
 import com.aniversario.exception.ApiException;
 import com.aniversario.playlist.YoutubeUrlParser;
@@ -69,6 +70,7 @@ public class PlaylistService {
         musica.setArtista(blankToNull(request.artista()));
         musica.setYoutubeVideoId(videoId);
         musica.setYoutubeUrl(YoutubeUrlParser.toYoutubeMusicUrl(videoId));
+        musica.setAudioUrl(normalizeAudioUrl(request.audioUrl()));
         musica.setOrdem(request.ordem());
         musica.setAtivo(request.ativo() == null || request.ativo());
     }
@@ -80,7 +82,8 @@ public class PlaylistService {
                 musica.getArtista(),
                 YoutubeUrlParser.toYoutubeMusicUrl(musica.getYoutubeVideoId()),
                 musica.getYoutubeVideoId(),
-                musica.getOrdem()
+                musica.getOrdem(),
+                musica.getAudioUrl()
         );
     }
 
@@ -94,7 +97,26 @@ public class PlaylistService {
                 musicUrl,
                 musica.getYoutubeVideoId(),
                 musica.getOrdem(),
-                Boolean.TRUE.equals(musica.getAtivo())
+                Boolean.TRUE.equals(musica.getAtivo()),
+                musica.getAudioUrl()
+        );
+    }
+
+    private static String normalizeAudioUrl(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String trimmed = value.trim();
+        String lower = trimmed.toLowerCase(Locale.ROOT);
+        if (lower.startsWith("javascript:") || lower.startsWith("data:")) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "URL de áudio inválida.");
+        }
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/")) {
+            return trimmed;
+        }
+        throw new ApiException(
+                HttpStatus.BAD_REQUEST,
+                "URL de áudio inválida. Use http://, https:// ou um caminho começando com /."
         );
     }
 

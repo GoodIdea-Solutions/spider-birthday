@@ -11,6 +11,7 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
+import { trackUsesDirectAudio } from '../core/player/player-engine';
 import { PlaylistPlayerService } from '../core/services/playlist-player.service';
 import '../core/youtube-iframe';
 
@@ -60,7 +61,7 @@ export class YoutubeAudioHostComponent implements OnDestroy {
       const shown = this.shown();
       const track = this.current();
       const host = this.host();
-      if (!shown || !track) {
+      if (!shown) {
         untracked(() => {
           if (this.ytPlayer) {
             this.destroyPlayer();
@@ -68,7 +69,11 @@ export class YoutubeAudioHostComponent implements OnDestroy {
         });
         return;
       }
-      if (!host) {
+      if (!track || !host) {
+        return;
+      }
+      if (trackUsesDirectAudio(track)) {
+        untracked(() => this.stopYoutubeSafely());
         return;
       }
       untracked(() => void this.ensurePlayer(host.nativeElement, track.youtubeVideoId));
@@ -97,7 +102,7 @@ export class YoutubeAudioHostComponent implements OnDestroy {
     this.creating = true;
     try {
       await this.loadApi();
-      if (!this.shown() || !window.YT?.Player || this.ytPlayer) {
+      if (!this.shown() || !window.YT?.Player || this.ytPlayer || trackUsesDirectAudio(this.current())) {
         return;
       }
       host.replaceChildren();
@@ -147,6 +152,23 @@ export class YoutubeAudioHostComponent implements OnDestroy {
     iframe.setAttribute('allow', 'autoplay; encrypted-media');
     iframe.setAttribute('playsinline', 'true');
     iframe.setAttribute('webkit-playsinline', 'true');
+  }
+
+  private stopYoutubeSafely(): void {
+    if (!this.ytPlayer) {
+      return;
+    }
+    try {
+      this.ytPlayer.pauseVideo();
+    } catch {
+      // pauseVideo pode falhar se o embed ainda não estiver pronto.
+    }
+    try {
+      this.ytPlayer.stopVideo();
+    } catch {
+      // stopVideo pode não existir em embeds antigos; pause já foi tentado.
+    }
+    this.lastVideoId = null;
   }
 
   private destroyPlayer(): void {

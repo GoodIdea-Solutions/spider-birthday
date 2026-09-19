@@ -6,6 +6,7 @@ public record MusicaPlaylistResponse(
         String artista,
         String youtubeMusicUrl,
         String youtubeVideoId,
-        int ordem
+        int ordem,
+        String audioUrl
 ) {
 }
